@@ -1,0 +1,39 @@
+import Image from "next/image";
+import { site } from "@/lib/site";
+import { IconArrow } from "./Icons";
+
+export default function Feature() {
+  return (
+    <section className="bg-cream px-4 pb-8 pt-2">
+      <a
+        href={site.whatsapp}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Prenez soin de vous — réserver un soin"
+        className="relative isolate flex h-[200px] items-center justify-end overflow-hidden rounded-2xl"
+      >
+        <Image
+          src="/salon-2.jpg"
+          alt="Espace bien-être et head spa de la Maison de Beauté CYLIA"
+          fill
+          sizes="100vw"
+          className="-z-10 object-cover object-top"
+        />
+        <div
+          className="absolute inset-0 -z-10 bg-gradient-to-l from-noir/90 via-noir/65 to-noir/25"
+          aria-hidden="true"
+        />
+
+        <div className="px-6 py-5 text-right">
+          <p className="font-serif text-[1.75rem] font-light leading-tight text-white">
+            Prenez soin
+            <span className="mt-0.5 block font-script text-[2.1rem] leading-tight text-gold">
+              de vous
+            </span>
+          </p>
+          <IconArrow className="ml-auto mt-2 h-5 w-5 text-gold" />
+        </div>
+      </a>
+    </section>
+  );
+}
