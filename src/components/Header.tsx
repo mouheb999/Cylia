@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { site } from "@/lib/site";
 import { IconBag, IconClose, IconMenu } from "./Icons";
 
@@ -10,6 +11,7 @@ const liens = [
   { label: "Services", href: "#services" },
   { label: "Galerie", href: "#galerie" },
   { label: "Contact", href: "#contact" },
+  { label: "Réserver", href: "/reserver" },
 ];
 
 export default function Header() {
@@ -73,15 +75,13 @@ export default function Header() {
             </li>
           ))}
         </ul>
-        <a
-          href={site.whatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/reserver"
           onClick={() => setOuvert(false)}
           className="gold-gradient mt-5 block rounded-full py-3 text-center text-sm font-medium tracking-[0.18em] text-noir uppercase"
         >
           Réserver
-        </a>
+        </Link>
       </nav>
     </header>
   );

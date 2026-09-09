@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { site } from "@/lib/site";
 import {
   IconClock,
@@ -39,7 +40,7 @@ export default function Footer() {
         <p className="mt-4">
           <a
             href={`tel:${site.telephoneLien}`}
-            className="inline-flex items-center gap-2 font-serif text-xl tracking-wide text-gold"
+            className="inline-flex items-center gap-2 font-serif text-xl tracking-wide text-gold lining-nums"
           >
             <IconPhone className="h-4 w-4" />
             {site.telephone}
@@ -47,14 +48,21 @@ export default function Footer() {
         </p>
       </address>
 
+      <Link
+        href="/reserver"
+        className="gold-gradient mx-auto mt-8 flex w-full max-w-[20rem] items-center justify-center rounded-full py-4 font-serif text-lg text-noir"
+      >
+        Réserver en ligne
+      </Link>
+
       <a
         href={site.whatsapp}
         target="_blank"
         rel="noopener noreferrer"
-        className="gold-gradient mx-auto mt-8 flex w-full max-w-[20rem] items-center justify-center gap-2.5 rounded-full py-4 font-serif text-lg text-noir"
+        className="mx-auto mt-3 flex w-full max-w-[20rem] items-center justify-center gap-2.5 rounded-full border border-gold/35 py-3.5 font-serif text-base text-gold"
       >
         <IconWhatsApp className="h-5 w-5" />
-        Réserver sur WhatsApp
+        Écrire sur WhatsApp
       </a>
 
       <a

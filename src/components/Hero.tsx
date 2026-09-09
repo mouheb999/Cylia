@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { site } from "@/lib/site";
+import Link from "next/link";
 import { IconArrow } from "./Icons";
 
 export default function Hero() {
@@ -38,15 +38,13 @@ export default function Hero() {
           dans un seul lieu.
         </p>
 
-        <a
-          href={site.whatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/reserver"
           className="gold-gradient mx-auto mt-8 flex w-full max-w-[20rem] items-center justify-center gap-3 rounded-full py-4 font-serif text-lg text-noir shadow-lg shadow-black/40"
         >
           Réserver
           <IconArrow className="h-4 w-4" />
-        </a>
+        </Link>
       </div>
     </section>
   );

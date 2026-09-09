@@ -1,14 +1,12 @@
 import Image from "next/image";
-import { site } from "@/lib/site";
+import Link from "next/link";
 import { IconArrow } from "./Icons";
 
 export default function Feature() {
   return (
     <section className="bg-cream px-4 pb-8 pt-2">
-      <a
-        href={site.whatsapp}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href="/reserver"
         aria-label="Prenez soin de vous — réserver un soin"
         className="relative isolate flex h-[200px] items-center justify-end overflow-hidden rounded-2xl"
       >
@@ -33,7 +31,7 @@ export default function Feature() {
           </p>
           <IconArrow className="ml-auto mt-2 h-5 w-5 text-gold" />
         </div>
-      </a>
+      </Link>
     </section>
   );
 }

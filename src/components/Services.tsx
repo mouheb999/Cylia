@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { IconArrow, IconBienEtre, IconCoiffure, IconEsthetique } from "./Icons";
-import { site } from "@/lib/site";
 
 const services = [
   {
@@ -25,10 +25,8 @@ export default function Services() {
       <ul className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-3">
         {services.map(({ titre, description, Icone }) => (
           <li key={titre}>
-            <a
-              href={site.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/reserver"
               className="flex h-full flex-col items-center rounded-2xl border border-sand bg-white px-2.5 py-5 text-center shadow-[0_2px_12px_rgba(42,37,33,0.04)]"
             >
               <Icone className="h-10 w-10 text-gold-deep" />
@@ -39,7 +37,7 @@ export default function Services() {
                 {description}
               </p>
               <IconArrow className="mt-auto pt-3 h-4 w-4 box-content text-gold-deep" />
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

@@ -17,11 +17,25 @@ npm run build   # build de production
 
 ```
 src/app/layout.tsx        polices (Cormorant Garamond, Jost, Parisienne), métadonnées, icônes
-src/app/page.tsx          assemblage des sections
+src/app/page.tsx          page d'accueil
+src/app/reserver/page.tsx tunnel de réservation
 src/app/globals.css       thème Tailwind (couleurs, polices, dégradé doré)
 src/components/           Header, Hero, Services, Feature, Galerie, Footer, Icons
+src/components/reservation/  étapes du tunnel de réservation
+src/lib/reservation/      catalogue, calcul des créneaux, stockage
 src/lib/site.ts           coordonnées du salon (adresse, horaires, téléphone, WhatsApp)
 ```
+
+## Réservation
+
+Le tunnel `/reserver` calcule de vrais créneaux (horaires du salon, durée de la
+prestation, postes disponibles) mais **fonctionne sans back-end** : les
+réservations restent dans le navigateur de la visiteuse et le salon est prévenu
+par le bouton WhatsApp de l'écran de confirmation.
+
+Prestations, durées, horaires et mode démonstration se règlent dans
+`src/lib/reservation/catalogue.ts`. Le fonctionnement détaillé et la marche à
+suivre pour brancher Supabase sont dans **[docs/RESERVATION.md](docs/RESERVATION.md)**.
 
 Toutes les informations de contact sont centralisées dans `src/lib/site.ts` :
 il suffit de les modifier à cet endroit.
