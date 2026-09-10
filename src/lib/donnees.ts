@@ -59,7 +59,7 @@ const REPLI: DonneesPubliques = {
  */
 const lireDonneesPubliques = unstable_cache(
   async (): Promise<DonneesPubliques> => {
-    const { data, error } = await clientPublic.rpc("donnees_publiques");
+    const { data, error } = await clientPublic().rpc("donnees_publiques");
     if (error) throw error;
 
     const brut = data as Partial<DonneesPubliques> | null;

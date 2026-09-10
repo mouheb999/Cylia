@@ -70,7 +70,7 @@ export async function creneauxDisponibles(
   // Seule l'occupation du jour reste à demander : elle change d'une minute à
   // l'autre et ne peut pas être mise en cache. Le reste vient déjà du cache.
   try {
-    const { data, error } = await clientPublic.rpc("occupation_du_jour", {
+    const { data, error } = await clientPublic().rpc("occupation_du_jour", {
       p_date: dateCle,
     });
     if (error) throw error;
@@ -109,7 +109,7 @@ export async function confirmerReservation(demande: {
   note?: string;
 }): Promise<ReponseReservation> {
   try {
-    const { data, error } = await clientPublic.rpc("creer_reservation", {
+    const { data, error } = await clientPublic().rpc("creer_reservation", {
       p_prestation_ids: demande.prestationIds,
       p_date: demande.dateCle,
       p_heure_minutes: demande.heureMinutes,

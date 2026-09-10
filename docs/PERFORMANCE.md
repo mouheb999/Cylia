@@ -42,13 +42,18 @@ lecture locale, sans réseau. S'il est absent, aucun client Supabase n'est
 construit et aucune requête d'authentification n'est envoyée. Avant, chaque
 page en payait une.
 
-## Vercel tourne à Francfort
+## Vercel doit tourner à Francfort
 
-`vercel.json` épingle les fonctions à `fra1`, la région du projet Supabase
-(`eu-central-1`). Sans cela, Vercel choisit sa région par défaut — souvent
-Washington — et chaque requête à la base traverse l'Atlantique deux fois. Le
-trajet le plus rapide reste celui qu'on ne fait pas ; quand il faut le faire,
-autant qu'il soit court.
+**À régler à la main, une fois** : Vercel → Settings → Functions → Function
+Region → `fra1` (Frankfurt), la région du projet Supabase (`eu-central-1`).
+Sans cela, Vercel choisit sa région par défaut — souvent Washington — et
+chaque requête à la base traverse l'Atlantique deux fois. Le trajet le plus
+rapide reste celui qu'on ne fait pas ; quand il faut le faire, autant qu'il
+soit court.
+
+Ce réglage vivait un temps dans un `vercel.json`, mais la clé `regions` n'est
+pas acceptée sur tous les plans et faisait échouer le déploiement. Le tableau
+de bord fonctionne partout.
 
 ## Ce qui n'est pas mis en cache, et pourquoi
 

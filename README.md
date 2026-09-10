@@ -29,6 +29,16 @@ et la clé *publiable*, qui partent de toute façon dans le navigateur. Rien de
 secret n'y figure — la protection des données est assurée par RLS côté base
 (voir [docs/BASE.md](docs/BASE.md)).
 
+Deux fois plutôt qu'une, un déploiement a échoué parce qu'un module refusait de
+se charger sans ces variables. Avant de pousser un changement qui touche à
+Supabase, vérifier **les deux** builds :
+
+```bash
+npm run build                          # avec .env.local
+mv .env.local /tmp && npm run build    # comme un Vercel non configuré
+mv /tmp/.env.local .                   # (à remettre)
+```
+
 Sans ces variables, le site démarre — et se **construit** — quand même : il
 affiche le catalogue de repli, et `/admin` renvoie vers une page de connexion
 qui explique ce qui manque. Sur Vercel, les deux variables se déclarent dans

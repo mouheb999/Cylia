@@ -66,7 +66,7 @@ export async function passerCommande(demande: {
   note?: string;
 }): Promise<ReponseCommande> {
   try {
-    const { data, error } = await clientPublic.rpc("creer_commande", {
+    const { data, error } = await clientPublic().rpc("creer_commande", {
       p_articles: demande.articles.map((a) => ({
         produit_id: a.produit_id,
         quantite: a.quantite,
