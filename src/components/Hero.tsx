@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import salon1 from "@/images/salon-1.jpg";
 import { IconArrow } from "./Icons";
 
 export default function Hero() {
@@ -7,10 +8,11 @@ export default function Hero() {
     <section id="haut" className="bg-noir">
       <div className="relative aspect-[4/5] w-full">
         <Image
-          src="/salon-1.jpg"
+          src={salon1}
           alt="Les postes de coiffure de la Maison de Beauté CYLIA à Sousse"
           fill
           priority
+          placeholder="blur"
           sizes="100vw"
           className="object-cover object-center"
         />

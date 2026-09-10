@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import salon2 from "@/images/salon-2.jpg";
 import { IconArrow } from "./Icons";
 
 export default function Feature() {
@@ -11,9 +12,10 @@ export default function Feature() {
         className="relative isolate flex h-[200px] items-center justify-end overflow-hidden rounded-2xl"
       >
         <Image
-          src="/salon-2.jpg"
+          src={salon2}
           alt="Soin du visage à la Maison de Beauté CYLIA"
           fill
+          placeholder="blur"
           sizes="100vw"
           className="-z-10 object-cover object-center"
         />

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import logo from "@/images/logo.png";
 import Link from "next/link";
 import { carteIntegree, lienItineraire, lienMaps, site } from "@/lib/site";
 import {
@@ -13,10 +14,8 @@ export default function Footer() {
   return (
     <footer id="contact" className="bg-noir px-6 pb-10 pt-10 text-center">
       <Image
-        src="/logo.png"
+        src={logo}
         alt="CYLIA Maison de Beauté"
-        width={512}
-        height={512}
         className="mx-auto h-20 w-20"
       />
 

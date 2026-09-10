@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import logo from "@/images/logo.png";
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { usePanier } from "@/lib/panier";
@@ -39,10 +40,8 @@ export default function Header() {
 
         <Link href="/" aria-label={site.nom} className="justify-self-center">
           <Image
-            src="/logo.png"
+            src={logo}
             alt="CYLIA Maison de Beauté"
-            width={512}
-            height={512}
             priority
             className="h-16 w-16"
           />
