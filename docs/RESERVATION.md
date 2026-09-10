@@ -8,8 +8,8 @@ Le tunnel de réservation (`/reserver`) est complet et utilisable :
 2. **Date & heure** — les quatorze prochains jours, puis la grille des créneaux
    réellement disponibles pour la prestation choisie.
 3. **Coordonnées** — nom et téléphone, validés avant l'envoi.
-4. **Confirmation** — récapitulatif, référence (`CY-1209-3K7`) et bouton qui
-   ouvre WhatsApp avec le récapitulatif pré-écrit pour le salon.
+4. **Confirmation** — récapitulatif complet et référence (`CY-1209-3K7`) à
+   conserver par la cliente.
 
 Les créneaux ne sont pas décoratifs : ils sont calculés à partir des horaires
 d'ouverture, de la durée de la prestation, du nombre de postes du salon et des
@@ -22,12 +22,17 @@ rendez-vous déjà posés.
 - une réservation n'est enregistrée que dans le navigateur qui l'a prise
   (`localStorage`) : elle disparaît si la cliente change de téléphone ou vide
   son navigateur ;
-- le salon n'est averti de rien — d'où le bouton « Envoyer au salon » qui
-  transmet le récapitulatif par WhatsApp, seul canal réel pour l'instant ;
+- **le salon n'est averti de rien** : la réservation ne quitte pas le
+  téléphone de la cliente. C'est la limite principale de cette étape, et elle
+  disparaît avec le back-end ;
 - deux clientes différentes ne se voient pas : chacune peut réserver le même
   créneau.
 
-Un bandeau le dit à l'écran tant que `MODE_DEMO` vaut `true`.
+Deux bandeaux le disent à l'écran tant que `MODE_DEMO` vaut `true` : un sous
+le tunnel, un sur l'écran de confirmation.
+
+En attendant, les moyens de contact réels restent le téléphone et WhatsApp,
+présents en pied de page du site.
 
 ## Comment sont calculés les créneaux
 
@@ -105,7 +110,10 @@ par ce changement de store :
 
 - **la concurrence** — vérifier au moment de l'écriture que le créneau est
   toujours libre, sinon deux clientes peuvent réserver en même temps ;
-- **la notification du salon** — e-mail ou WhatsApp Business API ;
-- **la page d'administration** — voir et annuler les rendez-vous ;
+- **la notification du salon** — e-mail ou WhatsApp Business API, c'est ce qui
+  rend la réservation réellement utile ;
+- **la page d'administration** — voir, confirmer et annuler les rendez-vous ;
+  inutile de la construire avant le back-end : au-dessus de `localStorage`,
+  elle n'afficherait que les réservations prises sur ce même appareil ;
 - **les vraies indisponibilités** — congés, jours fériés, absences d'une
   employée, qui aujourd'hui n'existent nulle part.

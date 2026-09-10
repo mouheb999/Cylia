@@ -30,8 +30,8 @@ src/lib/site.ts           coordonnées du salon (adresse, horaires, téléphone,
 
 Le tunnel `/reserver` calcule de vrais créneaux (horaires du salon, durée de la
 prestation, postes disponibles) mais **fonctionne sans back-end** : les
-réservations restent dans le navigateur de la visiteuse et le salon est prévenu
-par le bouton WhatsApp de l'écran de confirmation.
+réservations restent dans le navigateur de la visiteuse et ne parviennent pas
+encore au salon. Un bandeau le signale à l'écran tant que `MODE_DEMO` est actif.
 
 Prestations, durées, horaires et mode démonstration se règlent dans
 `src/lib/reservation/catalogue.ts`. Le fonctionnement détaillé et la marche à
@@ -60,7 +60,7 @@ Les icônes d'onglet (`src/app/icon.png`, `src/app/apple-icon.png`) sont génér
 ## Notes
 
 - Aucune librairie d'animation, aucun carrousel, aucun effet au défilement.
-- Les boutons « Réserver » ouvrent WhatsApp (`wa.me/21654395168`) ; le numéro du
-  pied de page est cliquable pour appeler.
+- Les boutons « Réserver » mènent au tunnel `/reserver` ; le pied de page garde
+  WhatsApp et le numéro cliquable comme moyens de contact directs.
 - Les cartes Services s'affichent sur trois colonnes dès 360 px de large et
   passent en colonne unique en dessous.

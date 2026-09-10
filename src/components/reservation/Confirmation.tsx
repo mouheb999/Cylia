@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { prestationParId } from "@/lib/reservation";
+import { MODE_DEMO, prestationParId } from "@/lib/reservation";
 import type { Reservation } from "@/lib/reservation";
-import { site } from "@/lib/site";
-import { IconWhatsApp } from "@/components/Icons";
 import { formatDateLongue } from "./EtapeCoordonnees";
 
 type Props = {
@@ -14,13 +12,6 @@ type Props = {
 
 export default function Confirmation({ reservation, onRecommencer }: Props) {
   const prestation = prestationParId(reservation.prestationId);
-  const recapitulatif = [
-    `Bonjour, je viens de réserver sur votre site :`,
-    `${prestation?.nom ?? "Prestation"}`,
-    `${formatDateLongue(reservation.date)} à ${reservation.heure}`,
-    `Au nom de ${reservation.nom} (${reservation.telephone})`,
-    `Référence ${reservation.reference}`,
-  ].join("\n");
 
   return (
     <div className="px-5 pb-16 text-center">
@@ -50,41 +41,45 @@ export default function Confirmation({ reservation, onRecommencer }: Props) {
           </dd>
         </div>
         <div className="mt-2.5 flex justify-between gap-4">
+          <dt className="font-light text-white/50">Durée</dt>
+          <dd className="text-right text-cream">{prestation?.dureeMinutes} min</dd>
+        </div>
+        <div className="mt-2.5 flex justify-between gap-4">
           <dt className="font-light text-white/50">Au nom de</dt>
           <dd className="text-right text-cream">{reservation.nom}</dd>
         </div>
         <div className="mt-2.5 flex justify-between gap-4 border-t border-white/8 pt-2.5">
           <dt className="font-light text-white/50">Référence</dt>
-          <dd className="text-right font-serif tracking-wider text-gold lining-nums">{reservation.reference}</dd>
+          <dd className="text-right font-serif tracking-wider text-gold lining-nums">
+            {reservation.reference}
+          </dd>
         </div>
       </dl>
 
       <p className="mt-5 text-[0.8rem] font-light leading-relaxed text-white/50">
-        Envoyez le récapitulatif au salon pour que votre créneau soit confirmé.
+        Conservez votre référence&nbsp;: elle nous permet de retrouver votre
+        rendez-vous.
       </p>
 
-      <a
-        href={`${site.whatsapp}?text=${encodeURIComponent(recapitulatif)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="gold-gradient mt-4 flex w-full items-center justify-center gap-2.5 rounded-full py-4 font-serif text-lg text-noir"
-      >
-        <IconWhatsApp className="h-5 w-5" />
-        Envoyer au salon
-      </a>
-
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-7 flex flex-col gap-3">
         <button
           type="button"
           onClick={onRecommencer}
-          className="rounded-full border border-white/15 py-3 text-sm text-white/70"
+          className="gold-gradient rounded-full py-3.5 font-serif text-base text-noir"
         >
           Prendre un autre rendez-vous
         </button>
-        <Link href="/" className="py-1 text-sm font-light text-white/45">
+        <Link href="/" className="py-2 text-sm font-light text-white/50">
           Retour à l&apos;accueil
         </Link>
       </div>
+
+      {MODE_DEMO && (
+        <p className="mt-10 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-center text-[0.7rem] font-light leading-relaxed text-white/40">
+          Démonstration — la réservation reste sur cet appareil, le salon n&apos;en
+          est pas encore averti.
+        </p>
+      )}
     </div>
   );
 }
