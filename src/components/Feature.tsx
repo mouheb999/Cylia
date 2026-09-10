@@ -12,10 +12,10 @@ export default function Feature() {
       >
         <Image
           src="/salon-2.jpg"
-          alt="Espace bien-être et head spa de la Maison de Beauté CYLIA"
+          alt="Soin du visage à la Maison de Beauté CYLIA"
           fill
           sizes="100vw"
-          className="-z-10 object-cover object-top"
+          className="-z-10 object-cover object-center"
         />
         <div
           className="absolute inset-0 -z-10 bg-gradient-to-l from-noir/90 via-noir/65 to-noir/25"

@@ -5,10 +5,10 @@ import { IconArrow } from "./Icons";
 export default function Hero() {
   return (
     <section id="haut" className="bg-noir">
-      <div className="relative aspect-[16/10] w-full">
+      <div className="relative aspect-[4/5] w-full">
         <Image
           src="/salon-1.jpg"
-          alt="L'intérieur de la Maison de Beauté CYLIA à Sousse"
+          alt="Les postes de coiffure de la Maison de Beauté CYLIA à Sousse"
           fill
           priority
           sizes="100vw"

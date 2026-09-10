@@ -52,20 +52,27 @@ de partage de la fiche Google du salon dans `site.maps.lienFiche`.
 
 ## Images
 
-Les visuels de `public/` sont des **images provisoires** extraites des captures
-fournies (maquette et compte Instagram du salon) : leur définition est faible.
-Pour la mise en ligne, remplacer les fichiers en gardant les mêmes noms — le
-code n'a pas besoin d'être modifié :
+Les photos de `public/` sont celles du salon, en 1179 px de large. Pour en
+changer, remplacer les fichiers en gardant les mêmes noms — le code n'a pas
+besoin d'être modifié :
 
 | Fichier | Usage | Format conseillé |
 | --- | --- | --- |
 | `logo.png` | logo dans l'en-tête et le pied de page | carré, fond transparent |
-| `salon-1.jpg` | photo du hero (intérieur du salon) | paysage, ~16:10, ≥ 1600 px de large |
+| `salon-1.jpg` | photo du hero (postes de coiffure) | portrait, ~4:5, ≥ 1200 px de large |
 | `salon-2.jpg` | bandeau « Prenez soin de vous » | paysage, ~16:9, ≥ 1200 px de large |
 | `galerie-1…4.jpg` | grille de la galerie | portrait 4:5, ≥ 800 px de large |
 
+Le hero et la galerie recadrent en `object-cover` : un sujet trop près d'un bord
+peut être rogné sur les écrans étroits.
+
 Les icônes d'onglet (`src/app/icon.png`, `src/app/apple-icon.png`) sont générées
 à partir du logo ; les régénérer si le logo change.
+
+La galerie montre aujourd'hui le lieu et un soin. Des photos de coiffure
+terminée — brushing, coloration, balayage — y auraient toute leur place : c'est
+ce que les clientes regardent en premier. Les ajouter en pleine définition dans
+`public/` et compléter la liste de `src/components/Galerie.tsx`.
 
 ## Notes
 

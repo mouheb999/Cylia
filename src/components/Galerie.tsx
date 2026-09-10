@@ -1,10 +1,10 @@
 import Image from "next/image";
 
 const photos = [
-  { src: "/galerie-1.jpg", alt: "Brushing wavy réalisé au salon CYLIA" },
-  { src: "/galerie-2.jpg", alt: "Coiffeuse CYLIA en plein soin capillaire" },
-  { src: "/galerie-3.jpg", alt: "Coloration blond polaire signée CYLIA" },
-  { src: "/galerie-4.jpg", alt: "Cliente après un soin visage chez CYLIA" },
+  { src: "/galerie-1.jpg", alt: "L'espace d'accueil de la Maison de Beauté CYLIA" },
+  { src: "/galerie-2.jpg", alt: "Soin du visage en cabine à la Maison de Beauté CYLIA" },
+  { src: "/galerie-3.jpg", alt: "La réception CYLIA et son logo lumineux" },
+  { src: "/galerie-4.jpg", alt: "Linge brodé et pinceaux de maquillage CYLIA" },
 ];
 
 export default function Galerie() {
