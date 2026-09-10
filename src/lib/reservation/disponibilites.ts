@@ -1,5 +1,5 @@
-import { HORAIRES, JOURS_PROPOSES, MODE_DEMO, prestationParId } from "./catalogue";
-import type { Creneau, Intervalle, Prestation, Reservation } from "./types";
+import { HORAIRES, JOURS_PROPOSES, MODE_DEMO, dureeTotale } from "./catalogue";
+import type { Creneau, Intervalle, Reservation } from "./types";
 
 /** "AAAA-MM-JJ" pour une date locale (pas d'UTC : le fuseau décalerait le jour). */
 export function versCleDate(date: Date): string {
@@ -84,12 +84,13 @@ function seChevauchent(a: Intervalle, b: Intervalle): boolean {
  * lorsque tous les postes sont occupés.
  */
 export function creneauxDuJour({
-  prestation,
+  dureeMinutes,
   dateCle,
   reservations,
   maintenant = new Date(),
 }: {
-  prestation: Prestation;
+  /** Durée totale du rendez-vous, toutes prestations cumulées. */
+  dureeMinutes: number;
   dateCle: string;
   reservations: Reservation[];
   maintenant?: Date;
@@ -98,7 +99,7 @@ export function creneauxDuJour({
     ...occupationSimulee(dateCle),
     ...reservations.map((r) => {
       const debut = heureVersMinutes(r.heure);
-      return { debut, fin: debut + dureeDe(r) };
+      return { debut, fin: debut + dureeTotale(r.prestationIds) };
     }),
   ];
 
@@ -110,19 +111,14 @@ export function creneauxDuJour({
   const creneaux: Creneau[] = [];
   for (
     let debut = HORAIRES.ouverture;
-    debut + prestation.dureeMinutes <= HORAIRES.fermeture;
+    debut + dureeMinutes <= HORAIRES.fermeture;
     debut += HORAIRES.pas
   ) {
-    const candidat: Intervalle = { debut, fin: debut + prestation.dureeMinutes };
+    const candidat: Intervalle = { debut, fin: debut + dureeMinutes };
     const simultanes = occupees.filter((o) => seChevauchent(candidat, o)).length;
     const libre = debut >= plancher && simultanes < HORAIRES.capaciteSimultanee;
     creneaux.push({ heure: minutesVersHeure(debut), disponible: libre });
   }
 
   return creneaux;
-}
-
-/** Durée d'une réservation, retrouvée depuis le catalogue. */
-function dureeDe(reservation: Reservation): number {
-  return prestationParId(reservation.prestationId)?.dureeMinutes ?? HORAIRES.pas;
 }

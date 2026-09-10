@@ -27,7 +27,8 @@ export type Creneau = {
 };
 
 export type NouvelleReservation = {
-  prestationId: string;
+  /** Prestations du rendez-vous, dans l'ordre choisi. Leurs durées s'additionnent. */
+  prestationIds: string[];
   /** Date au format "AAAA-MM-JJ". */
   date: string;
   /** Heure de début au format "HH:MM". */

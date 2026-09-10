@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { depuisCleDate, store } from "@/lib/reservation";
-import type { Prestation, Reservation } from "@/lib/reservation";
+import { depuisCleDate, prestationParId, store } from "@/lib/reservation";
+import type { Reservation } from "@/lib/reservation";
 
 type Props = {
-  prestation: Prestation;
+  prestationIds: readonly string[];
+  dureeMinutes: number;
   dateCle: string;
   heure: string;
   onRetour: () => void;
@@ -26,8 +27,16 @@ export function formatDateLongue(dateCle: string): string {
   });
 }
 
+export function formatDuree(minutes: number): string {
+  const heures = Math.floor(minutes / 60);
+  const reste = minutes % 60;
+  if (heures === 0) return `${reste} min`;
+  return reste === 0 ? `${heures} h` : `${heures} h ${reste}`;
+}
+
 export default function EtapeCoordonnees({
-  prestation,
+  prestationIds,
+  dureeMinutes,
   dateCle,
   heure,
   onRetour,
@@ -52,7 +61,7 @@ export default function EtapeCoordonnees({
 
     setEnvoi(true);
     const reservation = await store.creer({
-      prestationId: prestation.id,
+      prestationIds: [...prestationIds],
       date: dateCle,
       heure,
       nom: nom.trim(),
@@ -76,19 +85,27 @@ export default function EtapeCoordonnees({
       </h2>
 
       <dl className="mt-5 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-3.5 text-sm">
-        <div className="flex justify-between gap-4">
-          <dt className="font-light text-white/50">Prestation</dt>
-          <dd className="text-right text-cream">{prestation.nom}</dd>
-        </div>
-        <div className="mt-2 flex justify-between gap-4">
+        {prestationIds.map((id, index) => {
+          const prestation = prestationParId(id);
+          if (!prestation) return null;
+          return (
+            <div key={id} className={`flex justify-between gap-4 ${index > 0 ? "mt-2" : ""}`}>
+              <dt className="font-light text-white/50">
+                {index === 0 ? (prestationIds.length > 1 ? "Prestations" : "Prestation") : ""}
+              </dt>
+              <dd className="text-right text-cream">{prestation.nom}</dd>
+            </div>
+          );
+        })}
+        <div className="mt-2 flex justify-between gap-4 border-t border-white/10 pt-2">
           <dt className="font-light text-white/50">Rendez-vous</dt>
           <dd className="text-right text-cream">
             {formatDateLongue(dateCle)} à {heure}
           </dd>
         </div>
         <div className="mt-2 flex justify-between gap-4">
-          <dt className="font-light text-white/50">Durée</dt>
-          <dd className="text-right text-cream">{prestation.dureeMinutes} min</dd>
+          <dt className="font-light text-white/50">Durée totale</dt>
+          <dd className="text-right text-cream">{formatDuree(dureeMinutes)}</dd>
         </div>
       </dl>
 

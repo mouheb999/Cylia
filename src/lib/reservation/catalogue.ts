@@ -78,3 +78,11 @@ export function prestationParId(id: string): Prestation | undefined {
 export function prestationsDeCategorie(categorie: string): Prestation[] {
   return PRESTATIONS.filter((p) => p.categorie === categorie);
 }
+
+/** Durée totale d'un ensemble de prestations enchaînées. */
+export function dureeTotale(prestationIds: readonly string[]): number {
+  return prestationIds.reduce((total, id) => total + (prestationParId(id)?.dureeMinutes ?? 0), 0);
+}
+
+/** Amplitude d'ouverture, en minutes : une visite plus longue ne tient pas dans une journée. */
+export const AMPLITUDE_JOURNEE = HORAIRES.fermeture - HORAIRES.ouverture;

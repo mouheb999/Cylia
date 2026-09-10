@@ -1,6 +1,7 @@
 import type { NouvelleReservation, Reservation, StoreReservations } from "./types";
 
-const CLE_STOCKAGE = "cylia.reservations.v1";
+// v2 : une réservation porte désormais plusieurs prestations.
+const CLE_STOCKAGE = "cylia.reservations.v2";
 
 /** Référence lisible, ex. « CY-0912-4F7 ». */
 function genererReference(date: string): string {

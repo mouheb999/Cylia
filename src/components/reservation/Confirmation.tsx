@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { MODE_DEMO, prestationParId } from "@/lib/reservation";
+import { MODE_DEMO, dureeTotale, prestationParId } from "@/lib/reservation";
 import type { Reservation } from "@/lib/reservation";
-import { formatDateLongue } from "./EtapeCoordonnees";
+import { formatDateLongue, formatDuree } from "./EtapeCoordonnees";
 
 type Props = {
   reservation: Reservation;
@@ -11,7 +11,9 @@ type Props = {
 };
 
 export default function Confirmation({ reservation, onRecommencer }: Props) {
-  const prestation = prestationParId(reservation.prestationId);
+  const prestations = reservation.prestationIds
+    .map((id) => prestationParId(id))
+    .filter((p) => p !== undefined);
 
   return (
     <div className="px-5 pb-16 text-center">
@@ -30,19 +32,28 @@ export default function Confirmation({ reservation, onRecommencer }: Props) {
       </h2>
 
       <dl className="mt-7 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-5 text-left text-sm">
-        <div className="flex justify-between gap-4">
-          <dt className="font-light text-white/50">Prestation</dt>
-          <dd className="text-right text-cream">{prestation?.nom}</dd>
-        </div>
-        <div className="mt-2.5 flex justify-between gap-4">
+        {prestations.map((prestation, index) => (
+          <div
+            key={prestation.id}
+            className={`flex justify-between gap-4 ${index > 0 ? "mt-2.5" : ""}`}
+          >
+            <dt className="font-light text-white/50">
+              {index === 0 ? (prestations.length > 1 ? "Prestations" : "Prestation") : ""}
+            </dt>
+            <dd className="text-right text-cream">{prestation.nom}</dd>
+          </div>
+        ))}
+        <div className="mt-2.5 flex justify-between gap-4 border-t border-white/8 pt-2.5">
           <dt className="font-light text-white/50">Rendez-vous</dt>
           <dd className="text-right text-cream">
             {formatDateLongue(reservation.date)} à {reservation.heure}
           </dd>
         </div>
         <div className="mt-2.5 flex justify-between gap-4">
-          <dt className="font-light text-white/50">Durée</dt>
-          <dd className="text-right text-cream">{prestation?.dureeMinutes} min</dd>
+          <dt className="font-light text-white/50">Durée totale</dt>
+          <dd className="text-right text-cream">
+            {formatDuree(dureeTotale(reservation.prestationIds))}
+          </dd>
         </div>
         <div className="mt-2.5 flex justify-between gap-4">
           <dt className="font-light text-white/50">Au nom de</dt>

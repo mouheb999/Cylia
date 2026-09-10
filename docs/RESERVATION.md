@@ -4,16 +4,20 @@
 
 Le tunnel de réservation (`/reserver`) est complet et utilisable :
 
-1. **Prestation** — trois catégories, quinze prestations, chacune avec sa durée.
+1. **Prestations** — trois catégories, quinze prestations. Plusieurs peuvent
+   être retenues pour une même visite : elles s'ajoutent au panier, leurs durées
+   s'additionnent et le compteur du sac, dans l'en-tête, suit la sélection.
 2. **Date & heure** — les quatorze prochains jours, puis la grille des créneaux
    réellement disponibles pour la prestation choisie.
-3. **Coordonnées** — nom et téléphone, validés avant l'envoi.
+3. **Coordonnées** — nom et téléphone, validés avant l'envoi, avec le
+   récapitulatif de toutes les prestations retenues.
 4. **Confirmation** — récapitulatif complet et référence (`CY-1209-3K7`) à
    conserver par la cliente.
 
 Les créneaux ne sont pas décoratifs : ils sont calculés à partir des horaires
-d'ouverture, de la durée de la prestation, du nombre de postes du salon et des
-rendez-vous déjà posés.
+d'ouverture, de la **durée totale** de la visite, du nombre de postes du salon
+et des rendez-vous déjà posés. Un panier de 2 h 30 ne verra donc que les
+créneaux où le salon a 2 h 30 devant lui.
 
 ## Ce qui n'existe pas encore
 
@@ -40,8 +44,11 @@ présents en pied de page du site.
 
 - La journée est découpée par pas de 30 min entre l'ouverture (10h) et la
   fermeture (20h).
-- Un créneau n'est proposé que si la prestation **tient entièrement** avant la
-  fermeture : un balayage de 2h30 ne peut pas commencer à 18h30.
+- Un créneau n'est proposé que si la visite **tient entièrement** avant la
+  fermeture : un balayage de 2h30 ne peut pas commencer à 18h30. Plus le panier
+  est rempli, plus les créneaux se raréfient — c'est voulu.
+- Un panier plus long que la journée d'ouverture (10 h) ne propose aucune date :
+  le récapitulatif invite alors à retirer une prestation.
 - Le salon mène plusieurs rendez-vous de front (`capaciteSimultanee`, 3 postes) :
   un horaire n'est refusé que lorsque **tous** les postes sont occupés. C'est
   pourquoi un créneau que vous venez de réserver peut rester ouvert — il reste
@@ -52,6 +59,13 @@ présents en pied de page du site.
   donne toujours la même grille, la démo est donc reproductible d'un
   rechargement à l'autre. Environ deux tiers des créneaux restent libres, et
   les prestations longues sont logiquement plus difficiles à placer.
+
+## Le panier
+
+`src/lib/panier.ts` tient la sélection hors de React : un petit store maison lu
+par `useSyncExternalStore`, sauvegardé dans `localStorage`. C'est ce qui permet
+au compteur de l'en-tête et au tunnel de rester d'accord, y compris après un
+changement de page ou un rechargement. Le panier est vidé après confirmation.
 
 ## Réglages courants
 
@@ -83,14 +97,15 @@ La bascule tient en trois étapes :
 
    ```sql
    create table reservations (
-     reference    text primary key,
-     prestation_id text not null,
-     date         date not null,
-     heure        text not null,
-     nom          text not null,
-     telephone    text not null,
-     note         text,
-     cree_le      timestamptz not null default now()
+     reference      text primary key,
+     -- une visite peut enchaîner plusieurs prestations
+     prestation_ids text[] not null,
+     date           date not null,
+     heure          text not null,
+     nom            text not null,
+     telephone      text not null,
+     note           text,
+     cree_le        timestamptz not null default now()
    );
    ```
 

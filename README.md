@@ -23,6 +23,7 @@ src/app/globals.css       thème Tailwind (couleurs, polices, dégradé doré)
 src/components/           Header, Hero, Services, Feature, Galerie, Footer, Icons
 src/components/reservation/  étapes du tunnel de réservation
 src/lib/reservation/      catalogue, calcul des créneaux, stockage
+src/lib/panier.ts         prestations retenues, partagées entre l'en-tête et le tunnel
 src/lib/site.ts           coordonnées du salon (adresse, horaires, téléphone, WhatsApp)
 ```
 
@@ -32,6 +33,10 @@ Le tunnel `/reserver` calcule de vrais créneaux (horaires du salon, durée de l
 prestation, postes disponibles) mais **fonctionne sans back-end** : les
 réservations restent dans le navigateur de la visiteuse et ne parviennent pas
 encore au salon. Un bandeau le signale à l'écran tant que `MODE_DEMO` est actif.
+
+Plusieurs prestations peuvent être réunies dans une même visite : le sac de
+l'en-tête compte la sélection et les durées s'additionnent pour trouver un
+créneau assez long.
 
 Prestations, durées, horaires et mode démonstration se règlent dans
 `src/lib/reservation/catalogue.ts`. Le fonctionnement détaillé et la marche à
