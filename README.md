@@ -40,6 +40,11 @@ suivre pour brancher Supabase sont dans **[docs/RESERVATION.md](docs/RESERVATION
 Toutes les informations de contact sont centralisées dans `src/lib/site.ts` :
 il suffit de les modifier à cet endroit.
 
+La carte et le bouton « Itinéraire » du pied de page interrogent Google Maps
+par l'adresse (`site.maps.requete`), sans clé d'API. Le repère tombe donc sur
+l'adresse indiquée, pas forcément sur la porte : pour l'ajuster, coller le lien
+de partage de la fiche Google du salon dans `site.maps.lienFiche`.
+
 ## Images
 
 Les visuels de `public/` sont des **images provisoires** extraites des captures

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { carteIntegree, lienItineraire, lienMaps, site } from "@/lib/site";
 import {
   IconClock,
   IconInstagram,
@@ -23,14 +23,19 @@ export default function Footer() {
       <div className="gold-rule mx-auto mt-6 h-px w-20" aria-hidden="true" />
 
       <address className="mt-6 not-italic">
-        <p className="flex items-start justify-center gap-2 text-[0.9rem] font-light leading-relaxed text-white/75">
+        <a
+          href={lienMaps}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start justify-center gap-2 text-[0.9rem] font-light leading-relaxed text-white/75"
+        >
           <IconPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
           <span>
             {site.adresse.ligne1}
             <br />
             {site.adresse.ligne2}
           </span>
-        </p>
+        </a>
 
         <p className="mt-4 flex items-center justify-center gap-2 text-[0.9rem] font-light text-white/75">
           <IconClock className="h-4 w-4 shrink-0 text-gold" />
@@ -63,6 +68,29 @@ export default function Footer() {
       >
         <IconWhatsApp className="h-5 w-5" />
         Écrire sur WhatsApp
+      </a>
+
+      {/* Le fond sombre évite un rectangle clair si la carte tarde ou si le
+          réseau de la visiteuse bloque Google. L'itinéraire juste en dessous
+          reste alors le chemin utile. */}
+      <div className="mx-auto mt-9 max-w-[22rem] overflow-hidden rounded-2xl border border-white/10 bg-noir-soft">
+        <iframe
+          src={carteIntegree}
+          title={`Emplacement de ${site.nom} sur Google Maps`}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="block h-[180px] w-full border-0"
+        />
+      </div>
+
+      <a
+        href={lienItineraire}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mx-auto mt-3 flex w-full max-w-[22rem] items-center justify-center gap-2 rounded-full border border-white/15 py-3 text-sm font-light text-white/75"
+      >
+        <IconPin className="h-4 w-4 text-gold" />
+        Itinéraire
       </a>
 
       <a
