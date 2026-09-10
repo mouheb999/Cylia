@@ -13,6 +13,8 @@ import {
 import { infosSite } from "@/lib/site";
 import { clesJours } from "@/lib/temps-salon";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Réserver — CYLIA Maison de Beauté",
   description:

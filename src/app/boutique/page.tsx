@@ -9,6 +9,8 @@ import { chargerContenus, chargerProduits, chargerReglages } from "@/lib/donnees
 import { formatPrix } from "@/lib/format";
 import { infosSite } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Boutique — CYLIA Maison de Beauté",
   description:

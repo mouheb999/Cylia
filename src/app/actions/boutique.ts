@@ -1,6 +1,7 @@
 "use server";
 
 import { clientPublic } from "@/lib/supabase/public";
+import { DELAI_ECRITURE } from "@/lib/supabase/config";
 
 export type ArticleCommande = {
   produit_id: string;
@@ -77,7 +78,7 @@ export async function passerCommande(demande: {
       p_ville: demande.ville,
       p_email: demande.email || null,
       p_note: demande.note || null,
-    });
+    }).abortSignal(AbortSignal.timeout(DELAI_ECRITURE));
     if (error) throw error;
     return { ok: true, commande: data as CommandeConfirmee };
   } catch (erreur) {

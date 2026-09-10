@@ -20,3 +20,22 @@ export function exigerConfig(): void {
     );
   }
 }
+
+/**
+ * Délais au-delà desquels on cesse d'attendre Supabase.
+ *
+ * Sans plafond, une base qui ne répond pas ne renvoie pas une erreur : elle
+ * fait attendre. Le rendu d'une page reste alors suspendu, le build dépasse sa
+ * limite de 60 s par page, et une panne passagère devient un déploiement
+ * échoué. Ces valeurs transforment « ça pend » en « ça a échoué », ce que le
+ * code sait déjà traiter.
+ */
+export const DELAI_LECTURE = 6_000;
+export const DELAI_ECRITURE = 15_000;
+export const DELAI_SESSION = 8_000;
+
+/** `fetch` qui abandonne au bout de `ms`, pour les clients qui n'exposent pas de signal. */
+export function fetchAvecDelai(ms: number): typeof fetch {
+  return (entree, options) =>
+    fetch(entree, { ...options, signal: AbortSignal.timeout(ms) });
+}

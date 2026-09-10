@@ -1,6 +1,7 @@
 "use server";
 
 import { clientPublic } from "@/lib/supabase/public";
+import { DELAI_ECRITURE, DELAI_LECTURE } from "@/lib/supabase/config";
 import { chargerDonnees } from "@/lib/donnees";
 import { amplitudeJournee, creneauxDuJour } from "@/lib/creneaux";
 import type { Creneau, Intervalle } from "@/lib/creneaux";
@@ -70,9 +71,9 @@ export async function creneauxDisponibles(
   // Seule l'occupation du jour reste à demander : elle change d'une minute à
   // l'autre et ne peut pas être mise en cache. Le reste vient déjà du cache.
   try {
-    const { data, error } = await clientPublic().rpc("occupation_du_jour", {
-      p_date: dateCle,
-    });
+    const { data, error } = await clientPublic()
+      .rpc("occupation_du_jour", { p_date: dateCle })
+      .abortSignal(AbortSignal.timeout(DELAI_LECTURE));
     if (error) throw error;
     occupation = (data ?? []) as Intervalle[];
   } catch (erreur) {
@@ -116,7 +117,11 @@ export async function confirmerReservation(demande: {
       p_nom: demande.nom,
       p_telephone: demande.telephone,
       p_note: demande.note ?? null,
-    });
+    })
+      // Plus patient qu'une lecture : abandonner une écriture qui a peut-être
+      // abouti laisserait la cliente devant une erreur et le salon avec un
+      // rendez-vous.
+      .abortSignal(AbortSignal.timeout(DELAI_ECRITURE));
     if (error) throw error;
     return { ok: true, reservation: data as Reservation };
   } catch (erreur) {

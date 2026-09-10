@@ -9,6 +9,8 @@ import { chargerContenus, chargerProduit, chargerReglages } from "@/lib/donnees"
 import { formatPrix } from "@/lib/format";
 import { infosSite } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: PageProps<"/boutique/[slug]">): Promise<Metadata> {

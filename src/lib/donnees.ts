@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { clientPublic } from "@/lib/supabase/public";
-import { supabaseConfigure } from "@/lib/supabase/config";
+import { DELAI_LECTURE, supabaseConfigure } from "@/lib/supabase/config";
 import {
   CATEGORIES_DEFAUT,
   PRESTATIONS_DEFAUT,
@@ -59,7 +59,9 @@ const REPLI: DonneesPubliques = {
  */
 const lireDonneesPubliques = unstable_cache(
   async (): Promise<DonneesPubliques> => {
-    const { data, error } = await clientPublic().rpc("donnees_publiques");
+    const { data, error } = await clientPublic()
+      .rpc("donnees_publiques")
+      .abortSignal(AbortSignal.timeout(DELAI_LECTURE));
     if (error) throw error;
 
     const brut = data as Partial<DonneesPubliques> | null;

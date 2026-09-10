@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
-import { SUPABASE_CLE, SUPABASE_URL, exigerConfig } from "./config";
+import {
+  DELAI_SESSION,
+  SUPABASE_CLE,
+  SUPABASE_URL,
+  exigerConfig,
+  fetchAvecDelai,
+} from "./config";
 import type { Database } from "./types";
 
 /**
@@ -20,6 +26,7 @@ export async function clientServeur() {
   exigerConfig();
 
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_CLE, {
+    global: { fetch: fetchAvecDelai(DELAI_SESSION) },
     cookies: {
       getAll() {
         return cookieStore.getAll();

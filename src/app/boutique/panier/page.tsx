@@ -5,6 +5,8 @@ import PanierClient from "@/components/boutique/PanierClient";
 import { chargerContenus, chargerProduits, chargerReglages } from "@/lib/donnees";
 import { infosSite } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Mon panier — CYLIA Maison de Beauté",
   robots: { index: false },

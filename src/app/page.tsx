@@ -14,6 +14,17 @@ import {
 } from "@/lib/donnees";
 import { infosSite } from "@/lib/site";
 
+/**
+ * Rendu à la demande, toujours.
+ *
+ * Cette page lit des données qui vivent dans Supabase. Sans cette ligne, Next
+ * tente de la pré-rendre pendant le build : une base qui bégaie ce jour-là fait
+ * alors échouer le déploiement, alors que le site saurait très bien s'afficher
+ * avec son catalogue de repli. Le contenu reste rapide grâce au cache de
+ * `chargerDonnees()`, pas grâce au pré-rendu.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   const [categories, photos, produits, contenus, reglages] = await Promise.all([
     chargerCategories(),

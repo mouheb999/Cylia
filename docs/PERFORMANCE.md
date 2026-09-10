@@ -55,6 +55,38 @@ Ce réglage vivait un temps dans un `vercel.json`, mais la clé `regions` n'est
 pas acceptée sur tous les plans et faisait échouer le déploiement. Le tableau
 de bord fonctionne partout.
 
+## Une base qui ne répond pas n'est pas une base qui refuse
+
+Une panne réseau renvoie une erreur : le code la rattrape et sert le catalogue
+de repli. Une base **surchargée ou en train de redémarrer** ne renvoie rien du
+tout — elle fait attendre. Sans plafond, le rendu reste suspendu, et Next
+abandonne la page au bout de soixante secondes. Un redémarrage de Supabase de
+quelques minutes suffisait alors à faire échouer un déploiement entier.
+
+Chaque appel porte donc un délai (`src/lib/supabase/config.ts`) :
+
+| Appel | Délai | Pourquoi |
+| --- | --- | --- |
+| lectures publiques | 6 s | au-delà, le catalogue de repli vaut mieux qu'une page qui ne vient pas |
+| session, panneau | 8 s | l'administratrice préfère un refus net à un écran figé |
+| écritures (réserver, commander) | 15 s | abandonner une écriture qui a peut-être abouti laisserait la cliente devant une erreur et le salon avec un rendez-vous — on attend plus longtemps avant de renoncer |
+
+Vérifié en pointant le site vers un serveur qui accepte la connexion puis se
+tait : la page d'accueil répond en 6,2 s avec son contenu de repli, là où elle
+attendait indéfiniment auparavant.
+
+## Le build ne dépend plus de la base
+
+Les pages publiques portent `export const dynamic = "force-dynamic"`. Next ne
+tente plus de les pré-rendre pendant le build, donc **aucun appel à Supabase
+n'est fait au moment de construire le site** — vérifiable dans le journal de
+build, qui ne contient plus une seule ligne `[cylia]`.
+
+Rien n'est perdu : ces pages étaient déjà rendues à la demande, et leur vitesse
+vient du cache de `chargerDonnees()`, pas du pré-rendu. Ce qui est gagné, c'est
+qu'une base indisponible ne peut plus empêcher de déployer — au pire, le site
+déployé s'affiche en mode repli le temps que la base revienne.
+
 ## Ce qui n'est pas mis en cache, et pourquoi
 
 | Lecture | Cache | Raison |
