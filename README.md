@@ -1,91 +1,104 @@
 # CYLIA Maison de Beauté
 
-Site vitrine mobile-first (une seule page) pour **CYLIA Maison de Beauté** — spa,
-esthétique et coiffure, Av. 14 Janvier, Sousse.
+Site du salon **CYLIA Maison de Beauté** — spa, esthétique et coiffure,
+Av. 14 Janvier, Sousse. Mobile d'abord.
 
-Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · déployable sur Vercel.
+Le site fait trois choses :
+
+- il **prend des rendez-vous** en ligne, avec de vrais créneaux et un vrai
+  planning côté salon ;
+- il **vend des cosmétiques**, panier et commande compris ;
+- il **se modifie tout seul** : textes, photos, prestations et produits se
+  changent depuis le site, sans toucher au code ni redéployer.
+
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Supabase ·
+déployable sur Vercel.
 
 ## Démarrer
 
 ```bash
+cp .env.example .env.local   # URL et clé publiable du projet Supabase
 npm install
 npm run dev     # http://localhost:3000
 npm run build   # build de production
+npm run lint
 ```
+
+`.env.example` contient les vraies valeurs du projet : ce sont l'URL publique
+et la clé *publiable*, qui partent de toute façon dans le navigateur. Rien de
+secret n'y figure — la protection des données est assurée par RLS côté base
+(voir [docs/BASE.md](docs/BASE.md)).
+
+Sans ces variables, le site démarre quand même : il affiche le catalogue de
+repli et la page d'administration explique ce qui manque.
 
 ## Structure
 
 ```
-src/app/layout.tsx        polices (Cormorant Garamond, Jost, Parisienne), métadonnées, icônes
-src/app/page.tsx          page d'accueil
-src/app/reserver/page.tsx tunnel de réservation
-src/app/globals.css       thème Tailwind (couleurs, polices, dégradé doré)
-src/components/           Header, Hero, Services, Feature, Galerie, Footer, Icons
-src/components/reservation/  étapes du tunnel de réservation
-src/lib/reservation/      catalogue, calcul des créneaux, stockage
-src/lib/panier.ts         prestations retenues, partagées entre l'en-tête et le tunnel
-src/lib/site.ts           coordonnées du salon (adresse, horaires, téléphone, WhatsApp)
+src/app/layout.tsx              polices, métadonnées, contexte d'édition
+src/app/page.tsx                accueil
+src/app/reserver/               tunnel de réservation
+src/app/boutique/               vitrine, fiche produit, panier & commande
+src/app/admin/                  panneau du salon (connexion + 7 écrans)
+src/app/actions/                actions serveur (réservation, boutique, admin, auth)
+src/proxy.ts                    rafraîchit la session, barre l'entrée du panneau
+
+src/components/                 Header, Hero, Services, Feature, Galerie, Footer
+src/components/reservation/     étapes du tunnel
+src/components/boutique/        cartes produit, panier, fiches
+src/components/admin/           écrans du panneau
+src/components/edition/         mode édition (contexte, blocs modifiables, feuille)
+src/components/ui/              feuille coulissante, classes de champs
+
+src/lib/supabase/               clients navigateur & serveur, types de la base
+src/lib/donnees.ts              lectures publiques (avec repli si la base tombe)
+src/lib/donnees-admin.ts        lectures du panneau
+src/lib/contenu.ts              clés et valeurs par défaut des blocs modifiables
+src/lib/creneaux.ts             calcul des créneaux (fonction pure)
+src/lib/temps-salon.ts          « aujourd'hui » à l'heure de Tunis
+src/lib/panier.ts               prestations retenues
+src/lib/panier-boutique.ts      panier de la boutique
+
+supabase/migrations/            schéma, RLS, fonctions, données de départ
 ```
 
-## Réservation
+## Documentation
 
-Le tunnel `/reserver` calcule de vrais créneaux (horaires du salon, durée de la
-prestation, postes disponibles) mais **fonctionne sans back-end** : les
-réservations restent dans le navigateur de la visiteuse et ne parviennent pas
-encore au salon. Un bandeau le signale à l'écran tant que `MODE_DEMO` est actif.
-
-Plusieurs prestations peuvent être réunies dans une même visite : le sac de
-l'en-tête compte la sélection et les durées s'additionnent pour trouver un
-créneau assez long.
-
-Prestations, durées, horaires et mode démonstration se règlent dans
-`src/lib/reservation/catalogue.ts`. Le fonctionnement détaillé et la marche à
-suivre pour brancher Supabase sont dans **[docs/RESERVATION.md](docs/RESERVATION.md)**.
-
-Toutes les informations de contact sont centralisées dans `src/lib/site.ts` :
-il suffit de les modifier à cet endroit.
-
-La carte et le bouton « Itinéraire » du pied de page interrogent Google Maps
-par l'adresse (`site.maps.requete`), sans clé d'API. Le repère tombe donc sur
-l'adresse indiquée, pas forcément sur la porte : pour l'ajuster, coller le lien
-de partage de la fiche Google du salon dans `site.maps.lienFiche`.
+| Sujet | Fichier |
+| --- | --- |
+| Réservation : créneaux, concurrence, réglages | [docs/RESERVATION.md](docs/RESERVATION.md) |
+| Panneau d'administration et mode édition | [docs/ADMINISTRATION.md](docs/ADMINISTRATION.md) |
+| Base de données : tables, RLS, fonctions | [docs/BASE.md](docs/BASE.md) |
+| Boutique : panier, commande, stock | [docs/BOUTIQUE.md](docs/BOUTIQUE.md) |
 
 ## Images
 
-Les photos vivent dans `src/images/` et sont importées par les composants, pas
-référencées par une URL publique. Ce détail compte : Next leur donne alors une
-adresse qui contient une empreinte du contenu
+Les photos livrées avec le site vivent dans `src/images/` et sont importées par
+les composants, pas référencées par une URL publique. Ce détail compte : Next
+leur donne alors une adresse qui contient une empreinte du contenu
 (`/_next/static/media/salon-1.248889ftl1pmn.jpg`). Remplacer une photo change
 l'empreinte, donc l'adresse, et **aucun cache ne peut resservir l'ancienne**.
-Une photo posée dans `public/` garde au contraire la même URL d'une version à
-l'autre : le CDN et le navigateur continuent de servir l'ancienne image, parfois
-plusieurs heures.
-
-Elles font 1179 px de large. Pour en changer, remplacer les fichiers en gardant
-les mêmes noms — le code n'a pas besoin d'être modifié :
 
 | Fichier | Usage | Format conseillé |
 | --- | --- | --- |
 | `src/images/logo.png` | logo dans l'en-tête et le pied de page | carré, fond transparent |
-| `src/images/salon-1.jpg` | photo du hero (postes de coiffure) | portrait, ~4:5, ≥ 1200 px de large |
+| `src/images/salon-1.jpg` | photo du hero | portrait, ~4:5, ≥ 1200 px de large |
 | `src/images/salon-2.jpg` | bandeau « Prenez soin de vous » | paysage, ~16:9, ≥ 1200 px de large |
 | `src/images/galerie-1…4.jpg` | grille de la galerie | portrait 4:5, ≥ 800 px de large |
 
-Le hero et la galerie recadrent en `object-cover` : un sujet trop près d'un bord
-peut être rogné sur les écrans étroits.
+Les photos déposées **depuis le mode édition** ne passent pas par là : elles
+vont dans le stockage Supabase (bucket `media`), sous un nom unique tiré au
+hasard. Même effet, même garantie de fraîcheur. Elles priment sur les photos
+d'origine ; « Remettre la version d'origine » les efface et rend la main au
+fichier livré.
 
-Les icônes d'onglet (`src/app/icon.png`, `src/app/apple-icon.png`) sont générées
-à partir du logo ; les régénérer si le logo change.
-
-La galerie montre aujourd'hui le lieu et un soin. Des photos de coiffure
-terminée — brushing, coloration, balayage — y auraient toute leur place : c'est
-ce que les clientes regardent en premier. Les ajouter en pleine définition dans
-`src/images/` et compléter la liste de `src/components/Galerie.tsx`.
+Les icônes d'onglet (`src/app/icon.png`, `src/app/apple-icon.png`) sont
+générées à partir du logo ; les régénérer si le logo change.
 
 ## Notes
 
 - Aucune librairie d'animation, aucun carrousel, aucun effet au défilement.
-- Les boutons « Réserver » mènent au tunnel `/reserver` ; le pied de page garde
-  WhatsApp et le numéro cliquable comme moyens de contact directs.
-- Les cartes Services s'affichent sur trois colonnes dès 360 px de large et
-  passent en colonne unique en dessous.
+- Toutes les pages sont rendues à la demande : elles lisent les cookies de
+  session et le contenu à jour, il n'y a rien à revalider.
+- Le paiement de la boutique se fait **à la livraison**. Aucun moyen de
+  paiement en ligne n'est intégré.

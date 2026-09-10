@@ -1,108 +1,154 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
-  AMPLITUDE_JOURNEE,
-  CATEGORIES,
-  MODE_DEMO,
-  creneauxDuJour,
-  dureeTotale,
-  joursProposes,
-  prestationParId,
-  prestationsDeCategorie,
-  store,
-  versCleDate,
-} from "@/lib/reservation";
-import type { CategorieId, Creneau, Reservation } from "@/lib/reservation";
-import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
+  confirmerReservation,
+  creneauxDisponibles,
+  type ReponseCreneaux,
+} from "@/app/actions/reservation";
+import { boutonFantome, boutonOr } from "@/components/ui/champs";
+import { useEdition } from "@/components/edition/ContexteEdition";
 import { IconArrow } from "@/components/Icons";
-import EtapeCoordonnees from "./EtapeCoordonnees";
+import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
+import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
+import type { Categorie, Prestation, Reservation } from "@/lib/supabase/types";
 import Confirmation from "./Confirmation";
+import EtapeCoordonnees from "./EtapeCoordonnees";
+import FeuillePrestation from "./FeuillePrestation";
 
 const ETAPES = ["Prestations", "Date & heure", "Coordonnées"];
 
-function formatDuree(minutes: number): string {
-  const heures = Math.floor(minutes / 60);
-  const reste = minutes % 60;
-  if (heures === 0) return `${reste} min`;
-  return reste === 0 ? `${heures} h` : `${heures} h ${reste}`;
-}
+type Props = {
+  categories: Categorie[];
+  prestations: Prestation[];
+  /** Dates proposées, calculées à l'heure du salon par le serveur. */
+  joursCles: string[];
+  devise: string;
+  telephoneSalon: string;
+  reservationActive: boolean;
+  categorieInitiale?: string;
+};
 
-function formatJourCourt(date: Date) {
-  return {
-    jourSemaine: date.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""),
-    jour: date.getDate(),
-    mois: date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
-  };
-}
-
-export default function FluxReservation() {
-  const [etape, setEtape] = useState(0);
-  const [categorie, setCategorie] = useState<CategorieId>("coiffure");
-  const [dateCle, setDateCle] = useState<string | null>(null);
-  const [heure, setHeure] = useState<string | null>(null);
-  const [calcul, setCalcul] = useState<{
-    cle: string;
-    creneaux: Creneau[];
-    /** Heures déjà réservées par la visiteuse ce jour-là. */
-    miennes: string[];
-  } | null>(null);
-  const [confirmee, setConfirmee] = useState<Reservation | null>(null);
-
+export default function FluxReservation({
+  categories,
+  prestations,
+  joursCles,
+  devise,
+  telephoneSalon,
+  reservationActive,
+  categorieInitiale,
+}: Props) {
+  const edition = useEdition();
   const panier = usePanier();
-  const duree = dureeTotale(panier);
 
-  // Ce composant n'est rendu que dans le navigateur (voir FluxReservationClient) :
-  // « aujourd'hui » est donc toujours celui de la visiteuse.
-  const jours = useMemo(() => joursProposes(), []);
+  const [etape, setEtape] = useState(0);
+  const [categorie, setCategorie] = useState(
+    categorieInitiale && categories.some((c) => c.id === categorieInitiale)
+      ? categorieInitiale
+      : (categories[0]?.id ?? ""),
+  );
+  const [dateCle, setDateCle] = useState<string | null>(null);
+  const [heureMinutes, setHeureMinutes] = useState<number | null>(null);
+  const [calcul, setCalcul] = useState<{ cle: string; reponse: ReponseCreneaux } | null>(null);
+  const [confirmee, setConfirmee] = useState<Reservation | null>(null);
+  const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
+  const [envoi, demarrerEnvoi] = useTransition();
+  const [fiche, setFiche] = useState<Prestation | null | undefined>(undefined);
 
-  // Un panier vide ramène à la première étape sans passer par un état parallèle.
-  const etapeCourante = panier.length === 0 ? 0 : etape;
-  const tropLong = duree > AMPLITUDE_JOURNEE;
-  const cleCalcul = dateCle && panier.length > 0 ? `${panier.join(",")}|${dateCle}` : null;
+  const parId = useMemo(
+    () => new Map(prestations.map((p) => [p.id, p])),
+    [prestations],
+  );
+
+  // Le panier survit aux rechargements : une prestation retirée du catalogue
+  // entre-temps ne doit pas bloquer le tunnel.
+  const selection = useMemo(
+    () => panier.filter((id) => parId.has(id)),
+    [panier, parId],
+  );
+  const duree = selection.reduce((total, id) => total + (parId.get(id)?.duree_minutes ?? 0), 0);
+  const prixConnu = selection.every((id) => parId.get(id)?.prix != null);
+  const prixTotal = selection.reduce((total, id) => total + (parId.get(id)?.prix ?? 0), 0);
+
+  const etapeCourante = selection.length === 0 ? 0 : etape;
+  const cleCalcul = dateCle && selection.length > 0 ? `${selection.join(",")}|${dateCle}` : null;
 
   useEffect(() => {
-    if (!dateCle || panier.length === 0 || tropLong) return;
-    const cle = `${panier.join(",")}|${dateCle}`;
+    if (!cleCalcul || !dateCle) return;
     let annule = false;
-    Promise.all([store.reservationsDuJour(dateCle), store.mesReservations()]).then(
-      ([reservations, miennes]) => {
-        if (annule) return;
-        setCalcul({
-          cle,
-          creneaux: creneauxDuJour({ dureeMinutes: duree, dateCle, reservations }),
-          miennes: miennes.filter((r) => r.date === dateCle).map((r) => r.heure),
-        });
-      },
-    );
+    // Pas besoin d'effacer le calcul précédent : `aJour` ne retient que celui
+    // dont la clé correspond à la sélection courante, les autres sont ignorés.
+    creneauxDisponibles([...selection], dateCle).then((reponse) => {
+      if (!annule) setCalcul({ cle: cleCalcul, reponse });
+    });
     return () => {
       annule = true;
     };
-  }, [panier, dateCle, duree, tropLong]);
+  }, [cleCalcul, dateCle, selection]);
 
-  // Tant que le calcul en cours ne correspond pas à la sélection, on affiche l'attente.
-  const aJour = calcul && calcul.cle === cleCalcul ? calcul : null;
-  const creneaux = aJour?.creneaux ?? null;
-  const miennes = aJour?.miennes ?? [];
+  // Tant que le calcul en cours ne correspond pas à la sélection, on attend.
+  const aJour = calcul && calcul.cle === cleCalcul ? calcul.reponse : null;
+  const creneaux = aJour?.ok ? aJour.creneaux : null;
+  const messageCreneaux = aJour && !aJour.ok ? aJour.message : null;
 
   function allerAuxCreneaux() {
-    setHeure(null);
-    if (!dateCle && jours[0]) setDateCle(versCleDate(jours[0]));
+    setHeureMinutes(null);
+    if (!dateCle && joursCles[0]) setDateCle(joursCles[0]);
     setEtape(1);
+  }
+
+  function valider(donnees: { nom: string; telephone: string; note: string }) {
+    if (!dateCle || heureMinutes === null) return;
+    setErreurEnvoi(null);
+    demarrerEnvoi(async () => {
+      const reponse = await confirmerReservation({
+        prestationIds: [...selection],
+        dateCle,
+        heureMinutes,
+        nom: donnees.nom,
+        telephone: donnees.telephone,
+        note: donnees.note || undefined,
+      });
+      if (!reponse.ok) {
+        setErreurEnvoi(reponse.message);
+        return;
+      }
+      viderPanier();
+      setConfirmee(reponse.reservation);
+    });
   }
 
   if (confirmee) {
     return (
       <Confirmation
         reservation={confirmee}
+        telephoneSalon={telephoneSalon}
         onRecommencer={() => {
           setConfirmee(null);
-          setHeure(null);
+          setHeureMinutes(null);
           setEtape(0);
         }}
       />
     );
   }
+
+  if (!reservationActive) {
+    return (
+      <div className="px-5 pb-16">
+        <p className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-8 text-center text-sm font-light leading-relaxed text-white/60">
+          La réservation en ligne est momentanément suspendue.
+          <br />
+          Appelez le salon au{" "}
+          <a href={`tel:${telephoneSalon}`} className="text-gold">
+            {telephoneSalon}
+          </a>
+          .
+        </p>
+      </div>
+    );
+  }
+
+  const dePrestation = prestations.filter((p) => p.categorie_id === categorie);
 
   return (
     <div className="px-5 pb-16">
@@ -136,7 +182,7 @@ export default function FluxReservation() {
           </p>
 
           <div className="mt-5 flex gap-2" role="tablist" aria-label="Catégories">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <button
                 key={c.id}
                 type="button"
@@ -155,8 +201,8 @@ export default function FluxReservation() {
           </div>
 
           <ul className="mt-5 space-y-2.5">
-            {prestationsDeCategorie(categorie).map((p) => {
-              const retenue = panier.includes(p.id);
+            {dePrestation.map((p) => {
+              const retenue = selection.includes(p.id);
               return (
                 <li key={p.id}>
                   <button
@@ -174,8 +220,14 @@ export default function FluxReservation() {
                         {p.nom}
                       </span>
                       <span className="mt-0.5 block text-xs font-light text-white/45">
-                        {formatDuree(p.dureeMinutes)}
+                        {formatDuree(p.duree_minutes)}
+                        {p.prix != null && ` · ${formatPrix(p.prix, devise)}`}
                       </span>
+                      {p.description && (
+                        <span className="mt-1 block text-xs font-light leading-snug text-white/35">
+                          {p.description}
+                        </span>
+                      )}
                     </span>
                     <span
                       aria-hidden="true"
@@ -186,24 +238,50 @@ export default function FluxReservation() {
                       {retenue ? "✓" : "+"}
                     </span>
                   </button>
+
+                  {edition.actif && (
+                    <button
+                      type="button"
+                      onClick={() => setFiche(p)}
+                      className="mt-1 w-full rounded-lg border border-dashed border-gold/40 py-1.5 text-xs text-gold/80"
+                    >
+                      Modifier « {p.nom} »
+                    </button>
+                  )}
                 </li>
               );
             })}
           </ul>
 
-          {panier.length > 0 && (
+          {edition.actif && (
+            <button
+              type="button"
+              onClick={() => setFiche(null)}
+              className="gold-gradient mt-4 w-full rounded-full py-3 font-serif text-base text-noir"
+            >
+              Ajouter une prestation
+            </button>
+          )}
+
+          {dePrestation.length === 0 && !edition.actif && (
+            <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-light text-white/50">
+              Aucune prestation dans cette catégorie pour le moment.
+            </p>
+          )}
+
+          {selection.length > 0 && (
             <div className="mt-6 rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-4">
               <p className="text-[0.7rem] uppercase tracking-[0.2em] text-gold">Votre visite</p>
               <ul className="mt-3 space-y-2">
-                {panier.map((id) => {
-                  const p = prestationParId(id);
+                {selection.map((id) => {
+                  const p = parId.get(id);
                   if (!p) return null;
                   return (
                     <li key={id} className="flex items-center justify-between gap-3 text-sm">
                       <span className="text-cream">{p.nom}</span>
                       <span className="flex items-center gap-3">
                         <span className="text-xs font-light text-white/45">
-                          {formatDuree(p.dureeMinutes)}
+                          {formatDuree(p.duree_minutes)}
                         </span>
                         <button
                           type="button"
@@ -220,23 +298,22 @@ export default function FluxReservation() {
               </ul>
               <p className="mt-3 border-t border-white/10 pt-3 text-sm text-white/70">
                 Durée totale&nbsp;: <span className="text-gold">{formatDuree(duree)}</span>
+                {prixConnu && prixTotal > 0 && (
+                  <>
+                    {" · "}
+                    <span className="text-gold lining-nums">{formatPrix(prixTotal, devise)}</span>
+                  </>
+                )}
               </p>
 
-              {tropLong ? (
-                <p className="mt-3 text-xs font-light leading-relaxed text-white/55">
-                  Cette combinaison dépasse une journée d&apos;ouverture. Retirez une
-                  prestation ou réservez-la séparément.
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={allerAuxCreneaux}
-                  className="gold-gradient mt-4 flex w-full items-center justify-center gap-3 rounded-full py-3.5 font-serif text-base text-noir"
-                >
-                  Choisir un créneau
-                  <IconArrow className="h-4 w-4" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={allerAuxCreneaux}
+                className={`${boutonOr} mt-4 flex w-full items-center justify-center gap-3`}
+              >
+                Choisir un créneau
+                <IconArrow className="h-4 w-4" />
+              </button>
             </div>
           )}
         </section>
@@ -248,14 +325,13 @@ export default function FluxReservation() {
             Quand vous convient-il&nbsp;?
           </h2>
           <p className="mt-1.5 text-xs font-light text-white/50">
-            {panier.length} prestation{panier.length > 1 ? "s" : ""} · {formatDuree(duree)}
+            {selection.length} prestation{selection.length > 1 ? "s" : ""} · {formatDuree(duree)}
           </p>
 
           <div className="-mx-5 mt-5 overflow-x-auto px-5">
             <div className="flex gap-2">
-              {jours.map((jour) => {
-                const cle = versCleDate(jour);
-                const { jourSemaine, jour: numero, mois } = formatJourCourt(jour);
+              {joursCles.map((cle) => {
+                const { jourSemaine, jour, mois } = formatJourCourt(depuisCleDate(cle));
                 const actif = cle === dateCle;
                 return (
                   <button
@@ -263,7 +339,7 @@ export default function FluxReservation() {
                     type="button"
                     onClick={() => {
                       setDateCle(cle);
-                      setHeure(null);
+                      setHeureMinutes(null);
                     }}
                     aria-pressed={actif}
                     className={`w-[3.9rem] shrink-0 rounded-xl border py-2.5 text-center transition-colors ${
@@ -276,7 +352,7 @@ export default function FluxReservation() {
                     <span
                       className={`block font-serif text-lg lining-nums ${actif ? "text-gold" : "text-cream"}`}
                     >
-                      {numero}
+                      {jour}
                     </span>
                     <span className={`block text-[0.6rem] ${actif ? "text-gold/80" : "text-white/35"}`}>
                       {mois}
@@ -288,7 +364,11 @@ export default function FluxReservation() {
           </div>
 
           <div className="mt-6" aria-live="polite">
-            {creneaux === null ? (
+            {messageCreneaux ? (
+              <p className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-light text-white/55">
+                {messageCreneaux}
+              </p>
+            ) : creneaux === null ? (
               <p className="py-8 text-center text-sm font-light text-white/40">
                 Recherche des disponibilités…
               </p>
@@ -300,51 +380,38 @@ export default function FluxReservation() {
               </p>
             ) : (
               <ul className="grid grid-cols-4 gap-2">
-                {creneaux.map((creneau) => {
-                  const dejaMienne = miennes.includes(creneau.heure);
-                  return (
-                    <li key={creneau.heure}>
-                      <button
-                        type="button"
-                        disabled={!creneau.disponible || dejaMienne}
-                        onClick={() => setHeure(creneau.heure)}
-                        aria-pressed={heure === creneau.heure}
-                        title={dejaMienne ? "Vous avez déjà un rendez-vous à cette heure" : undefined}
-                        className={`w-full rounded-lg border py-2.5 text-sm transition-colors ${
-                          dejaMienne
-                            ? "cursor-not-allowed border-gold/40 bg-gold/10 text-gold/70"
-                            : heure === creneau.heure
-                              ? "border-gold bg-gold/20 text-gold"
-                              : creneau.disponible
-                                ? "border-white/12 bg-white/[0.03] text-cream"
-                                : "cursor-not-allowed border-white/5 text-white/20 line-through"
-                        }`}
-                      >
-                        {creneau.heure}
-                        {dejaMienne && (
-                          <span className="mt-0.5 block text-[0.55rem] leading-none">votre RDV</span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
+                {creneaux.map((creneau) => (
+                  <li key={creneau.minutes}>
+                    <button
+                      type="button"
+                      disabled={!creneau.disponible}
+                      onClick={() => setHeureMinutes(creneau.minutes)}
+                      aria-pressed={heureMinutes === creneau.minutes}
+                      className={`w-full rounded-lg border py-2.5 text-sm transition-colors ${
+                        heureMinutes === creneau.minutes
+                          ? "border-gold bg-gold/20 text-gold"
+                          : creneau.disponible
+                            ? "border-white/12 bg-white/[0.03] text-cream"
+                            : "cursor-not-allowed border-white/5 text-white/20 line-through"
+                      }`}
+                    >
+                      {creneau.heure}
+                    </button>
+                  </li>
+                ))}
               </ul>
             )}
           </div>
 
           <div className="mt-7 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setEtape(0)}
-              className="rounded-full border border-white/15 px-5 py-3 text-sm text-white/70"
-            >
+            <button type="button" onClick={() => setEtape(0)} className={boutonFantome}>
               Retour
             </button>
             <button
               type="button"
-              disabled={!heure}
+              disabled={heureMinutes === null}
               onClick={() => setEtape(2)}
-              className="gold-gradient flex-1 rounded-full py-3 font-serif text-base text-noir disabled:opacity-35"
+              className={`${boutonOr} flex-1 disabled:opacity-35`}
             >
               Continuer
             </button>
@@ -352,25 +419,29 @@ export default function FluxReservation() {
         </section>
       )}
 
-      {etapeCourante === 2 && dateCle && heure && (
+      {etapeCourante === 2 && dateCle && heureMinutes !== null && (
         <EtapeCoordonnees
-          prestationIds={panier}
+          prestationsNom={selection.map((id) => parId.get(id)?.nom ?? id)}
           dureeMinutes={duree}
           dateCle={dateCle}
-          heure={heure}
+          heure={
+            creneaux?.find((c) => c.minutes === heureMinutes)?.heure ??
+            `${String(Math.floor(heureMinutes / 60)).padStart(2, "0")}:${String(heureMinutes % 60).padStart(2, "0")}`
+          }
+          erreur={erreurEnvoi}
+          envoi={envoi}
           onRetour={() => setEtape(1)}
-          onConfirmee={(reservation) => {
-            viderPanier();
-            setConfirmee(reservation);
-          }}
+          onValider={valider}
         />
       )}
 
-      {MODE_DEMO && (
-        <p className="mt-10 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-center text-[0.7rem] font-light leading-relaxed text-white/40">
-          Démonstration — les créneaux occupés sont simulés et les réservations
-          restent sur cet appareil.
-        </p>
+      {fiche !== undefined && (
+        <FeuillePrestation
+          prestation={fiche}
+          categories={categories}
+          categorieParDefaut={categorie}
+          onFermer={() => setFiche(undefined)}
+        />
       )}
     </div>
   );

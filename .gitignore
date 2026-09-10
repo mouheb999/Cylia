@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Sauf le gabarit : l'URL et la clé publiable ne sont pas des secrets.
+!.env.example
 
 # vercel
 .vercel

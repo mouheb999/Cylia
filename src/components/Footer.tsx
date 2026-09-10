@@ -1,7 +1,9 @@
 import Image from "next/image";
-import logo from "@/images/logo.png";
 import Link from "next/link";
-import { carteIntegree, lienItineraire, lienMaps, site } from "@/lib/site";
+import logo from "@/images/logo.png";
+import { Texte } from "@/components/edition/Modifiable";
+import { CONTENUS_DEFAUT } from "@/lib/contenu";
+import type { InfosSite } from "@/lib/site";
 import {
   IconClock,
   IconInstagram,
@@ -10,35 +12,43 @@ import {
   IconWhatsApp,
 } from "./Icons";
 
-export default function Footer() {
+export default function Footer({ site }: { site: InfosSite }) {
   return (
     <footer id="contact" className="bg-noir px-6 pb-10 pt-10 text-center">
-      <Image
-        src={logo}
-        alt="CYLIA Maison de Beauté"
-        className="mx-auto h-20 w-20"
-      />
+      <Image src={logo} alt={site.nom} className="mx-auto h-20 w-20" />
 
       <div className="gold-rule mx-auto mt-6 h-px w-20" aria-hidden="true" />
 
       <address className="mt-6 not-italic">
         <a
-          href={lienMaps}
+          href={site.lienMaps}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-start justify-center gap-2 text-[0.9rem] font-light leading-relaxed text-white/75"
         >
           <IconPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
           <span>
-            {site.adresse.ligne1}
+            <Texte
+              cle="contact.adresse1"
+              titre="Adresse, 1re ligne"
+              defaut={CONTENUS_DEFAUT["contact.adresse1"]}
+            />
             <br />
-            {site.adresse.ligne2}
+            <Texte
+              cle="contact.adresse2"
+              titre="Adresse, 2e ligne"
+              defaut={CONTENUS_DEFAUT["contact.adresse2"]}
+            />
           </span>
         </a>
 
         <p className="mt-4 flex items-center justify-center gap-2 text-[0.9rem] font-light text-white/75">
           <IconClock className="h-4 w-4 shrink-0 text-gold" />
-          {site.horaires}
+          <Texte
+            cle="contact.horaires"
+            titre="Horaires affichés"
+            defaut={CONTENUS_DEFAUT["contact.horaires"]}
+          />
         </p>
 
         <p className="mt-4">
@@ -47,7 +57,11 @@ export default function Footer() {
             className="inline-flex items-center gap-2 font-serif text-xl tracking-wide text-gold lining-nums"
           >
             <IconPhone className="h-4 w-4" />
-            {site.telephone}
+            <Texte
+              cle="contact.telephone"
+              titre="Numéro affiché"
+              defaut={CONTENUS_DEFAUT["contact.telephone"]}
+            />
           </a>
         </p>
       </address>
@@ -56,7 +70,11 @@ export default function Footer() {
         href="/reserver"
         className="gold-gradient mx-auto mt-8 flex w-full max-w-[20rem] items-center justify-center rounded-full py-4 font-serif text-lg text-noir"
       >
-        Réserver en ligne
+        <Texte
+          cle="footer.bouton"
+          titre="Bouton du pied de page"
+          defaut={CONTENUS_DEFAUT["footer.bouton"]}
+        />
       </Link>
 
       <a
@@ -74,7 +92,7 @@ export default function Footer() {
           reste alors le chemin utile. */}
       <div className="mx-auto mt-9 max-w-[22rem] overflow-hidden rounded-2xl border border-white/10 bg-noir-soft">
         <iframe
-          src={carteIntegree}
+          src={site.carteIntegree}
           title={`Emplacement de ${site.nom} sur Google Maps`}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
@@ -83,7 +101,7 @@ export default function Footer() {
       </div>
 
       <a
-        href={lienItineraire}
+        href={site.lienItineraire}
         target="_blank"
         rel="noopener noreferrer"
         className="mx-auto mt-3 flex w-full max-w-[22rem] items-center justify-center gap-2 rounded-full border border-white/15 py-3 text-sm font-light text-white/75"
@@ -99,7 +117,7 @@ export default function Footer() {
         className="mt-6 inline-flex items-center gap-2 text-xs font-light uppercase tracking-[0.2em] text-white/55"
       >
         <IconInstagram className="h-4 w-4 text-gold" />
-        cyliamaisondebeaute
+        {site.instagramLibelle}
       </a>
 
       <p className="mt-8 text-[0.7rem] font-light tracking-wide text-white/35">

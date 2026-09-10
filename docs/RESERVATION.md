@@ -1,64 +1,98 @@
-# Réservation en ligne — fonctionnement et suite
+# Réservation en ligne
 
-## Ce qui marche aujourd'hui
+## Le parcours
 
-Le tunnel de réservation (`/reserver`) est complet et utilisable :
+`/reserver`, en trois étapes :
 
-1. **Prestations** — trois catégories, quinze prestations. Plusieurs peuvent
-   être retenues pour une même visite : elles s'ajoutent au panier, leurs durées
-   s'additionnent et le compteur du sac, dans l'en-tête, suit la sélection.
-2. **Date & heure** — les quatorze prochains jours, puis la grille des créneaux
-   réellement disponibles pour la prestation choisie.
-3. **Coordonnées** — nom et téléphone, validés avant l'envoi, avec le
-   récapitulatif de toutes les prestations retenues.
-4. **Confirmation** — récapitulatif complet et référence (`CY-1209-3K7`) à
-   conserver par la cliente.
+1. **Prestations** — catégories et prestations lues dans la base. Plusieurs
+   peuvent être retenues pour une même visite : elles s'ajoutent au panier,
+   leurs durées s'additionnent, le compteur du sac suit la sélection.
+2. **Date & heure** — les prochains jours, puis la grille des créneaux
+   réellement libres pour la durée totale demandée.
+3. **Coordonnées** — nom et téléphone, validés avant l'envoi.
 
-Les créneaux ne sont pas décoratifs : ils sont calculés à partir des horaires
-d'ouverture, de la **durée totale** de la visite, du nombre de postes du salon
-et des rendez-vous déjà posés. Un panier de 2 h 30 ne verra donc que les
-créneaux où le salon a 2 h 30 devant lui.
+Puis la confirmation, avec une référence (`CY-1209-3K7`) à conserver.
 
-## Ce qui n'existe pas encore
-
-**Il n'y a pas de back-end.** Concrètement :
-
-- une réservation n'est enregistrée que dans le navigateur qui l'a prise
-  (`localStorage`) : elle disparaît si la cliente change de téléphone ou vide
-  son navigateur ;
-- **le salon n'est averti de rien** : la réservation ne quitte pas le
-  téléphone de la cliente. C'est la limite principale de cette étape, et elle
-  disparaît avec le back-end ;
-- deux clientes différentes ne se voient pas : chacune peut réserver le même
-  créneau.
-
-Deux bandeaux le disent à l'écran tant que `MODE_DEMO` vaut `true` : un sous
-le tunnel, un sur l'écran de confirmation.
-
-En attendant, les moyens de contact réels restent le téléphone et WhatsApp,
-présents en pied de page du site.
+La réservation part dans la base. Le salon la voit dans son panneau
+(`/admin/reservations`) et la fait passer de « à confirmer » à « confirmé »,
+« terminé » ou « annulé ».
 
 ## Comment sont calculés les créneaux
 
-`src/lib/reservation/disponibilites.ts`
+Deux fois, et ce n'est pas un oubli.
 
-- La journée est découpée par pas de 30 min entre l'ouverture (10h) et la
-  fermeture (20h).
-- Un créneau n'est proposé que si la visite **tient entièrement** avant la
-  fermeture : un balayage de 2h30 ne peut pas commencer à 18h30. Plus le panier
-  est rempli, plus les créneaux se raréfient — c'est voulu.
-- Un panier plus long que la journée d'ouverture (10 h) ne propose aucune date :
-  le récapitulatif invite alors à retirer une prestation.
-- Le salon mène plusieurs rendez-vous de front (`capaciteSimultanee`, 3 postes) :
-  un horaire n'est refusé que lorsque **tous** les postes sont occupés. C'est
-  pourquoi un créneau que vous venez de réserver peut rester ouvert — il reste
-  deux places. Vos propres rendez-vous sont marqués « votre RDV ».
-- Le jour même, les créneaux à moins d'une heure sont retirés.
-- **L'occupation de démonstration** (`occupationSimulee`) remplit le planning
-  avec 7 à 11 rendez-vous par jour. Elle est *déterministe* : une même date
-  donne toujours la même grille, la démo est donc reproductible d'un
-  rechargement à l'autre. Environ deux tiers des créneaux restent libres, et
-  les prestations longues sont logiquement plus difficiles à placer.
+**Pour l'affichage** — `src/lib/creneaux.ts`, fonction pure appelée par
+l'action serveur `creneauxDisponibles`. Elle part des réglages du salon, de
+l'occupation du jour (`occupation_du_jour`, qui ne renvoie que des intervalles,
+jamais un nom ni un numéro) et des fermetures.
+
+**Pour l'écriture** — `creer_reservation`, côté base. Elle refait tous les
+contrôles, et c'est elle qui fait foi.
+
+Pourquoi deux fois : entre le moment où la grille s'affiche sur le téléphone
+d'une cliente et celui où elle appuie sur « Confirmer », une autre cliente a pu
+prendre la dernière place. Seul le contrôle fait **au moment de l'écriture**,
+dans la même transaction que l'insertion, ferme cette course. L'affichage, lui,
+n'est qu'une bonne approximation — utile, mais pas une promesse.
+
+Les règles, dans les deux cas :
+
+- la journée est découpée par pas de `pas_minutes` entre l'ouverture et la
+  fermeture ;
+- un créneau n'est proposé que si la visite **tient entièrement** avant la
+  fermeture : un balayage de 2 h 30 ne peut pas commencer à 18 h 30. Plus le
+  panier est rempli, plus les créneaux se raréfient — c'est voulu ;
+- le salon mène plusieurs rendez-vous de front (`capacite_simultanee`) : un
+  horaire n'est refusé que lorsque **toutes** les places sont prises ;
+- le jour même, les créneaux à moins de `delai_minimum_minutes` sont retirés ;
+- les jours de fermeture (congés, fériés) ne proposent rien.
+
+## L'heure du salon
+
+Le serveur peut tourner à Francfort, la cliente être à Paris : ni l'un ni
+l'autre ne décide de la date du jour. Seule compte l'heure de Sousse.
+
+`src/lib/temps-salon.ts` la calcule côté serveur (`Africa/Tunis`) et envoie au
+navigateur une liste de dates déjà arrêtée. `maintenant_salon()` fait le même
+calcul côté base. Les deux sont d'accord par construction — c'est ce qui évite
+qu'un créneau affiché comme « aujourd'hui » soit refusé comme « déjà passé ».
+
+## Ce que le navigateur ne décide pas
+
+`creer_reservation` ne fait confiance à rien de ce qui arrive :
+
+| Envoyé par le navigateur | Ce que fait la base |
+| --- | --- |
+| identifiants des prestations | relit nom, durée et prix dans `prestations` |
+| durée totale | *n'est pas envoyée* — elle est recalculée |
+| prix | *n'est pas envoyé* — il est recalculé |
+| date et heure | revérifiées contre horaires, fermetures et délai minimum |
+| nom, téléphone | longueur et format contrôlés |
+
+Un identifiant inconnu, une prestation désactivée ou un doublon font échouer la
+demande. Les noms des prestations sont **figés** dans la réservation
+(`prestations_nom`) : renommer « Head Spa » demain ne réécrit pas l'historique
+du salon.
+
+## Réglages
+
+Tout se règle depuis `/admin/reglages`, sans redéploiement :
+
+| Réglage | Effet |
+| --- | --- |
+| ouverture / fermeture | amplitude horaire |
+| pas des créneaux | espacement de la grille (30 min par défaut) |
+| rendez-vous en même temps | nombre de postes ou de cabines |
+| délai minimum | délai entre maintenant et un rendez-vous le jour même |
+| jours proposés | longueur du sélecteur de date |
+| réservation ouverte | coupe la prise de rendez-vous en ligne |
+| jours de fermeture | congés et fériés, par période |
+
+Les prestations (nom, catégorie, durée, prix, description) se gèrent dans
+`/admin/prestations`, ou directement sur `/reserver` en mode édition.
+
+Une prestation « retirée » est **désactivée, jamais effacée** : les rendez-vous
+qui la mentionnent restent lisibles.
 
 ## Le panier
 
@@ -67,68 +101,15 @@ par `useSyncExternalStore`, sauvegardé dans `localStorage`. C'est ce qui permet
 au compteur de l'en-tête et au tunnel de rester d'accord, y compris après un
 changement de page ou un rechargement. Le panier est vidé après confirmation.
 
-## Réglages courants
+Une prestation retirée du catalogue entre deux visites disparaît du panier au
+lieu de bloquer le tunnel.
 
-Tout est dans `src/lib/reservation/catalogue.ts` :
+## Ce qui n'existe pas encore
 
-| Réglage | Effet |
-| --- | --- |
-| `MODE_DEMO` | `false` : plus d'occupation simulée ni de bandeau de démonstration |
-| `HORAIRES.ouverture` / `fermeture` | amplitude horaire, en minutes depuis minuit |
-| `HORAIRES.pas` | espacement de la grille (30 min) |
-| `HORAIRES.capaciteSimultanee` | nombre de rendez-vous menés de front |
-| `HORAIRES.delaiMinimumMinutes` | délai minimum pour un rendez-vous le jour même |
-| `JOURS_PROPOSES` | nombre de jours affichés dans le sélecteur |
-| `PRESTATIONS` | liste des prestations et **durées** |
-
-Les durées sont des valeurs de travail, à confirmer avec le salon. Aucun tarif
-n'est affiché tant que la grille n'est pas validée.
-
-## Brancher un vrai back-end (Supabase)
-
-L'interface d'écran ne connaît pas le stockage : elle passe par l'interface
-`StoreReservations` (`src/lib/reservation/types.ts`), qui a trois méthodes —
-`reservationsDuJour`, `creer`, `mesReservations`. Elles sont déjà asynchrones,
-justement pour qu'un appel réseau ne change rien aux composants.
-
-La bascule tient en trois étapes :
-
-1. Créer la table côté Supabase :
-
-   ```sql
-   create table reservations (
-     reference      text primary key,
-     -- une visite peut enchaîner plusieurs prestations
-     prestation_ids text[] not null,
-     date           date not null,
-     heure          text not null,
-     nom            text not null,
-     telephone      text not null,
-     note           text,
-     cree_le        timestamptz not null default now()
-   );
-   ```
-
-2. Écrire `src/lib/reservation/store-supabase.ts` en implémentant la même
-   interface `StoreReservations`.
-
-3. Dans `src/lib/reservation/index.ts`, remplacer une seule ligne :
-
-   ```ts
-   export const store: StoreReservations = storeSupabase;
-   ```
-
-Puis passer `MODE_DEMO` à `false`. Aucun composant d'interface n'est touché.
-
-Restent à traiter le jour où le back-end arrive, et qui ne sont *pas* résolus
-par ce changement de store :
-
-- **la concurrence** — vérifier au moment de l'écriture que le créneau est
-  toujours libre, sinon deux clientes peuvent réserver en même temps ;
-- **la notification du salon** — e-mail ou WhatsApp Business API, c'est ce qui
-  rend la réservation réellement utile ;
-- **la page d'administration** — voir, confirmer et annuler les rendez-vous ;
-  inutile de la construire avant le back-end : au-dessus de `localStorage`,
-  elle n'afficherait que les réservations prises sur ce même appareil ;
-- **les vraies indisponibilités** — congés, jours fériés, absences d'une
-  employée, qui aujourd'hui n'existent nulle part.
+- **Aucune notification.** Le salon doit ouvrir son panneau pour voir les
+  nouvelles demandes ; ni e-mail, ni SMS, ni WhatsApp ne partent. C'est la
+  première chose à ajouter.
+- **Aucun rappel** à la cliente la veille du rendez-vous.
+- **Pas de gestion par employée** : la capacité est un nombre de places, pas un
+  planning individuel.
+- **Pas d'acompte** ni de paiement en ligne.

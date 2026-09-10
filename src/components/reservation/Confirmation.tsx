@@ -1,20 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { MODE_DEMO, dureeTotale, prestationParId } from "@/lib/reservation";
-import type { Reservation } from "@/lib/reservation";
-import { formatDateLongue, formatDuree } from "./EtapeCoordonnees";
+import { formatDateLongue, formatDuree, minutesVersHeure } from "@/lib/format";
+import type { Reservation } from "@/lib/supabase/types";
 
-type Props = {
+export default function Confirmation({
+  reservation,
+  telephoneSalon,
+  onRecommencer,
+}: {
   reservation: Reservation;
+  telephoneSalon: string;
   onRecommencer: () => void;
-};
-
-export default function Confirmation({ reservation, onRecommencer }: Props) {
-  const prestations = reservation.prestationIds
-    .map((id) => prestationParId(id))
-    .filter((p) => p !== undefined);
-
+}) {
   return (
     <div className="px-5 pb-16 text-center">
       <div
@@ -32,28 +30,27 @@ export default function Confirmation({ reservation, onRecommencer }: Props) {
       </h2>
 
       <dl className="mt-7 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-5 text-left text-sm">
-        {prestations.map((prestation, index) => (
-          <div
-            key={prestation.id}
-            className={`flex justify-between gap-4 ${index > 0 ? "mt-2.5" : ""}`}
-          >
+        {reservation.prestations_nom.map((nom, index) => (
+          <div key={nom} className={`flex justify-between gap-4 ${index > 0 ? "mt-2.5" : ""}`}>
             <dt className="font-light text-white/50">
-              {index === 0 ? (prestations.length > 1 ? "Prestations" : "Prestation") : ""}
+              {index === 0
+                ? reservation.prestations_nom.length > 1
+                  ? "Prestations"
+                  : "Prestation"
+                : ""}
             </dt>
-            <dd className="text-right text-cream">{prestation.nom}</dd>
+            <dd className="text-right text-cream">{nom}</dd>
           </div>
         ))}
         <div className="mt-2.5 flex justify-between gap-4 border-t border-white/8 pt-2.5">
           <dt className="font-light text-white/50">Rendez-vous</dt>
           <dd className="text-right text-cream">
-            {formatDateLongue(reservation.date)} à {reservation.heure}
+            {formatDateLongue(reservation.date)} à {minutesVersHeure(reservation.heure_minutes)}
           </dd>
         </div>
         <div className="mt-2.5 flex justify-between gap-4">
           <dt className="font-light text-white/50">Durée totale</dt>
-          <dd className="text-right text-cream">
-            {formatDuree(dureeTotale(reservation.prestationIds))}
-          </dd>
+          <dd className="text-right text-cream">{formatDuree(reservation.duree_minutes)}</dd>
         </div>
         <div className="mt-2.5 flex justify-between gap-4">
           <dt className="font-light text-white/50">Au nom de</dt>
@@ -68,9 +65,17 @@ export default function Confirmation({ reservation, onRecommencer }: Props) {
       </dl>
 
       <p className="mt-5 text-[0.8rem] font-light leading-relaxed text-white/50">
+        Le salon a reçu votre demande et vous rappelle pour la confirmer.
         Conservez votre référence&nbsp;: elle nous permet de retrouver votre
         rendez-vous.
       </p>
+
+      <a
+        href={`tel:${telephoneSalon}`}
+        className="mt-4 inline-block text-sm font-light text-gold"
+      >
+        Une question&nbsp;? Appelez le salon
+      </a>
 
       <div className="mt-7 flex flex-col gap-3">
         <button
@@ -84,13 +89,6 @@ export default function Confirmation({ reservation, onRecommencer }: Props) {
           Retour à l&apos;accueil
         </Link>
       </div>
-
-      {MODE_DEMO && (
-        <p className="mt-10 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3 text-center text-[0.7rem] font-light leading-relaxed text-white/40">
-          Démonstration — la réservation reste sur cet appareil, le salon n&apos;en
-          est pas encore averti.
-        </p>
-      )}
     </div>
   );
 }
