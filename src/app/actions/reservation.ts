@@ -1,7 +1,7 @@
 "use server";
 
-import { clientServeur } from "@/lib/supabase/serveur";
-import { chargerPrestations, chargerReglages } from "@/lib/donnees";
+import { clientPublic } from "@/lib/supabase/public";
+import { chargerDonnees } from "@/lib/donnees";
 import { amplitudeJournee, creneauxDuJour } from "@/lib/creneaux";
 import type { Creneau, Intervalle } from "@/lib/creneaux";
 import { clesJours, maintenantSalon } from "@/lib/temps-salon";
@@ -37,7 +37,7 @@ function messageErreur(erreur: unknown): string {
 
 /** Dates proposées dans le sélecteur, calculées à l'heure du salon. */
 export async function joursReservables(): Promise<string[]> {
-  const reglages = await chargerReglages();
+  const { reglages } = await chargerDonnees();
   return clesJours(reglages.jours_proposes);
 }
 
@@ -51,7 +51,7 @@ export async function creneauxDisponibles(
   prestationIds: string[],
   dateCle: string,
 ): Promise<ReponseCreneaux> {
-  const [reglages, prestations] = await Promise.all([chargerReglages(), chargerPrestations()]);
+  const { reglages, prestations, fermetures } = await chargerDonnees();
 
   const choisies = prestationIds.map((id) => prestations.find((p) => p.id === id));
   if (choisies.length === 0 || choisies.some((p) => p === undefined)) {
@@ -64,23 +64,17 @@ export async function creneauxDisponibles(
   }
 
   const maintenant = maintenantSalon();
+  const ferme = fermetures.some((f) => f.debut <= dateCle && dateCle <= f.fin);
   let occupation: Intervalle[] = [];
-  let ferme = false;
 
+  // Seule l'occupation du jour reste à demander : elle change d'une minute à
+  // l'autre et ne peut pas être mise en cache. Le reste vient déjà du cache.
   try {
-    const supabase = await clientServeur();
-    const [occupe, fermetures] = await Promise.all([
-      supabase.rpc("occupation_du_jour", { p_date: dateCle }),
-      supabase
-        .from("fermetures")
-        .select("id")
-        .lte("date_debut", dateCle)
-        .gte("date_fin", dateCle)
-        .limit(1),
-    ]);
-    if (occupe.error) throw occupe.error;
-    occupation = occupe.data ?? [];
-    ferme = (fermetures.data?.length ?? 0) > 0;
+    const { data, error } = await clientPublic.rpc("occupation_du_jour", {
+      p_date: dateCle,
+    });
+    if (error) throw error;
+    occupation = (data ?? []) as Intervalle[];
   } catch (erreur) {
     console.error("[cylia] disponibilités :", erreur);
     return {
@@ -115,8 +109,7 @@ export async function confirmerReservation(demande: {
   note?: string;
 }): Promise<ReponseReservation> {
   try {
-    const supabase = await clientServeur();
-    const { data, error } = await supabase.rpc("creer_reservation", {
+    const { data, error } = await clientPublic.rpc("creer_reservation", {
       p_prestation_ids: demande.prestationIds,
       p_date: demande.dateCle,
       p_heure_minutes: demande.heureMinutes,

@@ -55,7 +55,7 @@ src/components/edition/         mode édition (contexte, blocs modifiables, feui
 src/components/ui/              feuille coulissante, classes de champs
 
 src/lib/supabase/               clients navigateur & serveur, types de la base
-src/lib/donnees.ts              lectures publiques (avec repli si la base tombe)
+src/lib/donnees.ts              lectures publiques : un appel, mis en cache, avec repli
 src/lib/donnees-admin.ts        lectures du panneau
 src/lib/contenu.ts              clés et valeurs par défaut des blocs modifiables
 src/lib/creneaux.ts             calcul des créneaux (fonction pure)
@@ -74,6 +74,7 @@ supabase/migrations/            schéma, RLS, fonctions, données de départ
 | Panneau d'administration et mode édition | [docs/ADMINISTRATION.md](docs/ADMINISTRATION.md) |
 | Base de données : tables, RLS, fonctions | [docs/BASE.md](docs/BASE.md) |
 | Boutique : panier, commande, stock | [docs/BOUTIQUE.md](docs/BOUTIQUE.md) |
+| Vitesse : cache, allers-retours, région | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 
 ## Images
 

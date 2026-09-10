@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { adminConnecte, clientServeur } from "@/lib/supabase/serveur";
+import { TAG_SITE } from "@/lib/donnees";
 import type {
   Reglages,
   StatutCommande,
@@ -25,7 +26,14 @@ async function exigerAdmin() {
   return admin;
 }
 
+/**
+ * Les données publiques sont servies depuis un cache partagé : sans cette
+ * invalidation, une correction faite dans le panneau resterait invisible
+ * jusqu'à une heure. `updateTag` périme l'entrée tout de suite, pour que
+ * l'administratrice voie sa propre modification à la page suivante.
+ */
 function rafraichir() {
+  updateTag(TAG_SITE);
   revalidatePath("/", "layout");
 }
 

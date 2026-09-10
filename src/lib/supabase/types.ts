@@ -166,6 +166,7 @@ export type Database = {
     Views: Record<never, never>;
     Functions: {
       est_admin: { Args: Record<never, never>; Returns: boolean };
+      donnees_publiques: { Args: Record<never, never>; Returns: unknown };
       occupation_du_jour: {
         Args: { p_date: string };
         Returns: { debut: number; fin: number }[];

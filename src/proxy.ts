@@ -14,6 +14,24 @@ export async function proxy(request: NextRequest) {
   const reponse = NextResponse.next({ request });
   if (!supabaseConfigure) return reponse;
 
+  const chemin = request.nextUrl.pathname;
+  const session = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
+
+  // Sans cookie de session — le cas de presque toutes les visiteuses — il n'y
+  // a rien à rafraîchir. Inutile de construire un client Supabase à chaque
+  // page pour apprendre qu'il n'y a pas de session.
+  if (!session) {
+    if (chemin.startsWith("/admin") && !chemin.startsWith("/admin/connexion")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/connexion";
+      url.searchParams.set("suite", chemin);
+      return NextResponse.redirect(url);
+    }
+    return reponse;
+  }
+
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_CLE, {
     cookies: {
       getAll() {
@@ -32,7 +50,6 @@ export async function proxy(request: NextRequest) {
   // Sans lui, les administratrices se retrouvent déconnectées au hasard.
   const { data } = await supabase.auth.getClaims();
 
-  const chemin = request.nextUrl.pathname;
   const versConnexion = chemin.startsWith("/admin/connexion");
 
   if (chemin.startsWith("/admin") && !versConnexion && !data?.claims) {

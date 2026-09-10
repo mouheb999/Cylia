@@ -39,6 +39,18 @@ export async function clientServeur() {
 }
 
 /**
+ * Y a-t-il seulement une session à vérifier ?
+ *
+ * `@supabase/ssr` range la session dans un cookie `sb-<projet>-auth-token`,
+ * parfois découpé en morceaux numérotés. Une visiteuse n'en a aucun — et c'est
+ * l'écrasante majorité du trafic. Le repérer coûte une lecture locale et évite
+ * de créer un client et d'interroger Supabase sur chaque page du site.
+ */
+function porteUneSession(noms: readonly string[]): boolean {
+  return noms.some((nom) => nom.startsWith("sb-") && nom.includes("auth-token"));
+}
+
+/**
  * Administratrice connectée, ou `null`.
  *
  * `getUser()` — et non `getSession()` : la session vient d'un cookie que le
@@ -47,6 +59,11 @@ export async function clientServeur() {
  */
 export async function adminConnecte() {
   try {
+    // Lire les cookies suffit à marquer la route comme rendue à la demande :
+    // le raccourci ci-dessous ne fige donc rien au pré-rendu.
+    const cookieStore = await cookies();
+    if (!porteUneSession(cookieStore.getAll().map((c) => c.name))) return null;
+
     const supabase = await clientServeur();
     const {
       data: { user },
