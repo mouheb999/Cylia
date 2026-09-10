@@ -62,8 +62,12 @@ export default function EtapeCoordonnees({
     onConfirmee(reservation);
   }
 
+  // `text-base` (16 px) n'est pas décoratif : en dessous de 16 px, Safari iOS
+  // zoome sur le champ à la mise au point et ne dézoome jamais ensuite.
+  // `scroll-mt-28` garde le champ visible sous l'en-tête collant quand le
+  // clavier le fait défiler.
   const champ =
-    "mt-1.5 w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3 text-cream placeholder:text-white/25 focus:border-gold focus:outline-none";
+    "mt-1.5 w-full scroll-mt-28 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3 text-base text-cream placeholder:text-white/25 focus:border-gold focus:outline-none";
 
   return (
     <section aria-labelledby="titre-coordonnees">
@@ -96,6 +100,7 @@ export default function EtapeCoordonnees({
             value={nom}
             onChange={(e) => setNom(e.target.value)}
             autoComplete="name"
+            autoCapitalize="words"
             placeholder="Votre nom"
             aria-invalid={Boolean(erreurs.nom)}
             className={champ}
@@ -111,6 +116,7 @@ export default function EtapeCoordonnees({
             value={telephone}
             onChange={(e) => setTelephone(e.target.value)}
             autoComplete="tel"
+            autoCorrect="off"
             placeholder="54 395 168"
             aria-invalid={Boolean(erreurs.telephone)}
             className={champ}

@@ -19,6 +19,15 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* L'en-tête est collant : sans cette marge, un champ amené à l'écran par le
+     clavier se retrouve caché derrière. */
+  scroll-padding-top: 6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
