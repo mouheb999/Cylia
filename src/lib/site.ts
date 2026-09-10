@@ -9,17 +9,25 @@ export const site = {
     ligne2: "Av. 14 Janvier, Sousse 4059",
   },
   horaires: "Tous les jours, 10h – 20h",
-  /**
-   * Adresse envoyée à Google Maps pour la carte et l'itinéraire.
-   *
-   * Elle situe le salon à l'adresse indiquée, pas nécessairement sur la porte :
-   * pour un repère exact, ouvrir la fiche Google du salon, « Partager » →
-   * « Copier le lien », et remplacer `lienFiche` par ce lien.
-   */
   maps: {
+    /**
+     * Fiche Google du salon. Ce lien ouvre le repère exact — c'est lui qu'on
+     * utilise partout où la visiteuse quitte le site pour Google Maps.
+     */
+    lienFiche: "https://maps.app.goo.gl/SbZT2huAiBvk8foH8",
+    /**
+     * Adresse utilisée pour la carte intégrée et l'itinéraire.
+     *
+     * Un lien court `maps.app.goo.gl` ne peut servir ni à l'une ni à l'autre :
+     * il redirige vers google.com, qui refuse d'être affiché dans un cadre et
+     * n'accepte pas de lien court comme destination d'itinéraire. Ces deux
+     * usages passent donc par le nom et l'adresse du salon.
+     *
+     * Pour un repère au mètre près sur la carte intégrée, remplacer `requete`
+     * par les coordonnées de la fiche, au format « latitude,longitude ». On les
+     * lit dans l'URL longue de Google Maps sur ordinateur, juste après le `@`.
+     */
     requete: "CYLIA Maison de Beauté, Immeuble Misk Elil, Avenue 14 Janvier, Sousse 4059",
-    /** Lien de la fiche Google Business, s'il est connu. Prioritaire sur la requête. */
-    lienFiche: "",
   },
 } as const;
 
