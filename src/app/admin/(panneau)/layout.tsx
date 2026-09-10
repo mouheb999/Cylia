@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import BoutonDeconnexion from "@/components/admin/BoutonDeconnexion";
 import NavAdmin from "@/components/admin/NavAdmin";
 import { adminConnecte } from "@/lib/supabase/serveur";
-import { supabaseConfigure } from "@/lib/supabase/config";
 
 /**
  * Seconde barrière du panneau.
@@ -14,7 +13,9 @@ import { supabaseConfigure } from "@/lib/supabase/config";
  * `administrateurs`.
  */
 export default async function LayoutPanneau({ children }: LayoutProps<"/admin">) {
-  if (!supabaseConfigure) redirect("/admin/connexion");
+  // `adminConnecte()` lit les cookies, donc la route se rend à la demande, et
+  // renvoie `null` aussi bien pour une visiteuse que pour un site pas encore
+  // relié à sa base. Les deux cas mènent au même endroit.
   const admin = await adminConnecte();
   if (!admin) redirect("/admin/connexion");
 

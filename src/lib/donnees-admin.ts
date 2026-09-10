@@ -1,5 +1,8 @@
 import "server-only";
+import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { clientServeur } from "@/lib/supabase/serveur";
+import { supabaseConfigure } from "@/lib/supabase/config";
 import type {
   ArticleCommande,
   Categorie,
@@ -19,12 +22,25 @@ import type {
  * voir aussi ce qu'il a retiré de la vitrine. Ces requêtes ne passent que si
  * RLS reconnaît une session administratrice — le layout du panneau l'a déjà
  * vérifié, la base le revérifie.
+ *
+ * Toutes passent par `clientPanneau()`, qui garantit deux choses avant la
+ * moindre requête : que la route se rend à la demande, et qu'un site déployé
+ * sans variables d'environnement renvoie vers la page de connexion — laquelle
+ * explique précisément ce qui manque — au lieu de faire échouer le build.
  */
+async function clientPanneau() {
+  // Avant tout aiguillage : sans cela, un `redirect` pris pendant le pré-rendu
+  // se retrouverait figé dans la page.
+  await connection();
+  if (!supabaseConfigure) redirect("/admin/connexion");
+  return clientServeur();
+}
+
 
 export type CommandeDetaillee = Commande & { articles: ArticleCommande[] };
 
 export async function statistiques(): Promise<Record<string, number>> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   const { data, error } = await supabase.rpc("statistiques_admin");
   if (error) throw error;
   return (data ?? {}) as Record<string, number>;
@@ -36,7 +52,7 @@ export async function reservationsAdmin(options: {
   statut?: StatutReservation;
   limite?: number;
 }): Promise<Reservation[]> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   let requete = supabase.from("reservations").select("*");
   if (options.depuis) requete = requete.gte("date", options.depuis);
   if (options.jusqua) requete = requete.lte("date", options.jusqua);
@@ -51,7 +67,7 @@ export async function reservationsAdmin(options: {
 }
 
 export async function commandesAdmin(statut?: StatutCommande): Promise<CommandeDetaillee[]> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   let requete = supabase.from("commandes").select("*");
   if (statut) requete = requete.eq("statut", statut);
 
@@ -82,7 +98,7 @@ export async function commandesAdmin(statut?: StatutCommande): Promise<CommandeD
 }
 
 export async function prestationsAdmin(): Promise<Prestation[]> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   const { data, error } = await supabase
     .from("prestations")
     .select("*")
@@ -93,28 +109,28 @@ export async function prestationsAdmin(): Promise<Prestation[]> {
 }
 
 export async function categoriesAdmin(): Promise<Categorie[]> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   const { data, error } = await supabase.from("categories").select("*").order("ordre");
   if (error) throw error;
   return data as Categorie[];
 }
 
 export async function produitsAdmin(): Promise<Produit[]> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   const { data, error } = await supabase.from("produits").select("*").order("ordre");
   if (error) throw error;
   return data as Produit[];
 }
 
 export async function fermeturesAdmin(): Promise<Fermeture[]> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   const { data, error } = await supabase.from("fermetures").select("*").order("date_debut");
   if (error) throw error;
   return data as Fermeture[];
 }
 
 export async function contenusAdmin(): Promise<Record<string, string>> {
-  const supabase = await clientServeur();
+  const supabase = await clientPanneau();
   const { data, error } = await supabase.from("contenus").select("cle, valeur");
   if (error) throw error;
   return Object.fromEntries((data ?? []).map((c) => [c.cle, c.valeur]));

@@ -29,8 +29,12 @@ et la clé *publiable*, qui partent de toute façon dans le navigateur. Rien de
 secret n'y figure — la protection des données est assurée par RLS côté base
 (voir [docs/BASE.md](docs/BASE.md)).
 
-Sans ces variables, le site démarre quand même : il affiche le catalogue de
-repli et la page d'administration explique ce qui manque.
+Sans ces variables, le site démarre — et se **construit** — quand même : il
+affiche le catalogue de repli, et `/admin` renvoie vers une page de connexion
+qui explique ce qui manque. Sur Vercel, les deux variables se déclarent dans
+Settings → Environment Variables, pour les trois environnements ; un
+déploiement qui ne les a pas donne un site vitrine sans réservation ni
+boutique.
 
 ## Structure
 

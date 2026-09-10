@@ -11,8 +11,13 @@ import type { Database } from "./types";
  * d'une visiteuse se retrouverait servie à la suivante.
  */
 export async function clientServeur() {
-  exigerConfig();
+  // `cookies()` d'abord, `exigerConfig()` ensuite, et l'ordre n'est pas
+  // cosmétique : lire les cookies apprend à Next que la route se rend à la
+  // demande. Jeter avant cet appel, c'est jeter pendant le pré-rendu du build
+  // — et un déploiement sans variables d'environnement échoue au lieu de
+  // livrer un site qui explique ce qui lui manque.
   const cookieStore = await cookies();
+  exigerConfig();
 
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_CLE, {
     cookies: {
