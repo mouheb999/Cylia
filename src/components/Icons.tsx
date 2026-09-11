@@ -120,3 +120,32 @@ export function IconInstagram({ className }: IconProps) {
     </svg>
   );
 }
+
+export function IconFacebook({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...base} strokeWidth={1.3}>
+      <path d="M14.6 21.5v-8h2.7l.5-3.2h-3.2V8.2c0-.9.3-1.6 1.6-1.6h1.7V3.7a19 19 0 0 0-2.5-.2c-2.5 0-4.2 1.5-4.2 4.4v2.4H8.2v3.2H11v8" />
+    </svg>
+  );
+}
+
+export function IconTikTok({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...base} strokeWidth={1.3}>
+      {/* La note : corps de la croche, puis le crochet qui part vers la droite. */}
+      <path d="M13.6 3v11.4a3.4 3.4 0 1 1-2.6-3.3" />
+      <path d="M13.6 3c.3 1.6 1.1 2.8 2.3 3.5a5.3 5.3 0 0 0 2.6.8" />
+    </svg>
+  );
+}
+
+/** Téléphone fixe : le combiné posé sur sa base. */
+export function IconFixe({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...base} strokeWidth={1.3}>
+      <rect x="3" y="13" width="18" height="7.5" rx="1.6" />
+      <path d="M6.5 13V8.2A3.2 3.2 0 0 1 9.7 5h4.6a3.2 3.2 0 0 1 3.2 3.2V13" />
+      <path d="M6.6 16.6h3M14.4 16.6h3" />
+    </svg>
+  );
+}

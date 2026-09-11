@@ -6,9 +6,12 @@ import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import type { InfosSite } from "@/lib/site";
 import {
   IconClock,
+  IconFacebook,
+  IconFixe,
   IconInstagram,
   IconPhone,
   IconPin,
+  IconTikTok,
   IconWhatsApp,
 } from "./Icons";
 
@@ -64,6 +67,22 @@ export default function Footer({ site }: { site: InfosSite }) {
             />
           </a>
         </p>
+
+        {site.fixe && (
+          <p className="mt-2">
+            <a
+              href={`tel:${site.fixeLien}`}
+              className="inline-flex items-center gap-2 font-serif text-base tracking-wide text-white/70 lining-nums"
+            >
+              <IconFixe className="h-4 w-4 text-gold" />
+              <Texte
+                cle="contact.fixe"
+                titre="Numéro de fixe"
+                defaut={CONTENUS_DEFAUT["contact.fixe"]}
+              />
+            </a>
+          </p>
+        )}
       </address>
 
       <Link
@@ -85,6 +104,11 @@ export default function Footer({ site }: { site: InfosSite }) {
       >
         <IconWhatsApp className="h-5 w-5" />
         Écrire sur WhatsApp
+        {site.whatsappNumero && (
+          <span className="text-sm font-light text-gold/70 lining-nums">
+            {site.whatsappNumero}
+          </span>
+        )}
       </a>
 
       {/* Le fond sombre évite un rectangle clair si la carte tarde ou si le
@@ -110,15 +134,31 @@ export default function Footer({ site }: { site: InfosSite }) {
         Itinéraire
       </a>
 
-      <a
-        href={site.instagram}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-6 inline-flex items-center gap-2 text-xs font-light uppercase tracking-[0.2em] text-white/55"
-      >
-        <IconInstagram className="h-4 w-4 text-gold" />
+      <ul className="mt-8 flex items-center justify-center gap-3">
+        {[
+          { lien: site.instagram, libelle: site.instagramLibelle, nom: "Instagram", Icone: IconInstagram },
+          { lien: site.facebook, libelle: site.nom, nom: "Facebook", Icone: IconFacebook },
+          { lien: site.tiktok, libelle: site.tiktokLibelle, nom: "TikTok", Icone: IconTikTok },
+        ]
+          .filter((reseau) => reseau.lien)
+          .map(({ lien, libelle, nom, Icone }) => (
+            <li key={nom}>
+              <a
+                href={lien}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${nom} — ${libelle}`}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-gold"
+              >
+                <Icone className="h-5 w-5" />
+              </a>
+            </li>
+          ))}
+      </ul>
+
+      <p className="mt-3 text-[0.7rem] font-light uppercase tracking-[0.2em] text-white/40">
         {site.instagramLibelle}
-      </a>
+      </p>
 
       <p className="mt-8 text-[0.7rem] font-light tracking-wide text-white/35">
         © {new Date().getFullYear()} {site.nom}

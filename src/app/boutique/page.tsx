@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import GrilleProduits from "@/components/boutique/GrilleProduits";
 import { Texte } from "@/components/edition/Modifiable";
-import { CONTENUS_DEFAUT } from "@/lib/contenu";
+import { CONTENUS_DEFAUT, valeurContenu } from "@/lib/contenu";
 import { chargerContenus, chargerProduits, chargerReglages } from "@/lib/donnees";
 import { formatPrix } from "@/lib/format";
 import { infosSite } from "@/lib/site";
@@ -25,6 +25,8 @@ export default async function PageBoutique() {
   ]);
 
   const site = infosSite(contenus);
+  const partenaireLien = valeurContenu(contenus, "boutique.partenaire_lien");
+  const partenaireLibelle = valeurContenu(contenus, "boutique.partenaire_libelle");
 
   return (
     <>
@@ -93,6 +95,19 @@ export default async function PageBoutique() {
               >
                 Voir mon panier
               </Link>
+
+              {partenaireLien && (
+                <p className="mt-6 text-center text-xs font-light text-muted">
+                  <a
+                    href={partenaireLien}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-gold-deep/40 underline-offset-4"
+                  >
+                    {partenaireLibelle}
+                  </a>
+                </p>
+              )}
             </>
           )}
         </div>

@@ -12,9 +12,15 @@ export type InfosSite = {
   nom: string;
   telephone: string;
   telephoneLien: string;
+  fixe: string;
+  fixeLien: string;
   whatsapp: string;
+  whatsappNumero: string;
   instagram: string;
   instagramLibelle: string;
+  facebook: string;
+  tiktok: string;
+  tiktokLibelle: string;
   adresse: { ligne1: string; ligne2: string };
   horaires: string;
   /** Ouvre Google Maps sur le salon (l'application native sur téléphone). */
@@ -34,9 +40,15 @@ export function infosSite(contenus: ContenuMap = {}): InfosSite {
     nom: lire("site.nom"),
     telephone: lire("contact.telephone"),
     telephoneLien: lire("contact.telephone_lien"),
+    fixe: lire("contact.fixe"),
+    fixeLien: lire("contact.fixe_lien"),
     whatsapp: lire("contact.whatsapp"),
+    whatsappNumero: lire("contact.whatsapp_numero"),
     instagram: lire("contact.instagram"),
     instagramLibelle: lire("contact.instagram_libelle"),
+    facebook: lire("contact.facebook"),
+    tiktok: lire("contact.tiktok"),
+    tiktokLibelle: lire("contact.tiktok_libelle"),
     adresse: { ligne1: lire("contact.adresse1"), ligne2: lire("contact.adresse2") },
     horaires: lire("contact.horaires"),
     lienMaps: fiche || `https://www.google.com/maps/search/?api=1&query=${requete}`,

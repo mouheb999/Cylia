@@ -34,6 +34,8 @@ export const CONTENUS_DEFAUT = {
   "boutique.titre": "Notre",
   "boutique.titre_script": "boutique",
   "boutique.texte": "Livraison partout en Tunisie · paiement à la livraison.",
+  "boutique.partenaire_libelle": "Distribué par Maison Keune Tunisie",
+  "boutique.partenaire_lien": "https://www.maisonkeune.tn/",
 
   "reserver.surtitre": "Prendre rendez-vous",
   "reserver.titre": "Réservez votre",
@@ -44,9 +46,20 @@ export const CONTENUS_DEFAUT = {
   "contact.horaires": "Tous les jours, 10h – 20h",
   "contact.telephone": "54 395 168",
   "contact.telephone_lien": "+21654395168",
-  "contact.whatsapp": "https://wa.me/21654395168",
+  "contact.fixe": "73 807 936",
+  "contact.fixe_lien": "+21673807936",
+  "contact.whatsapp_numero": "51 395 169",
+  "contact.whatsapp": "https://wa.me/21651395169",
   "contact.instagram": "https://www.instagram.com/cyliamaisondebeaute/",
   "contact.instagram_libelle": "cyliamaisondebeaute",
+  "contact.facebook": "https://www.facebook.com/share/1CQZPiXwWH/?mibextid=wwXIfr",
+  /**
+   * Le salon a donné le nom du compte TikTok, pas son adresse. On reprend donc
+   * le pseudo d'Instagram, qui est presque toujours le même d'un réseau à
+   * l'autre — à corriger d'un geste en mode édition si ce n'est pas le cas.
+   */
+  "contact.tiktok": "https://www.tiktok.com/@cyliamaisondebeaute",
+  "contact.tiktok_libelle": "cylia maison de beauté",
   "footer.bouton": "Réserver en ligne",
 
   /**
@@ -83,7 +96,14 @@ export const GROUPES_CONTENU: { titre: string; cles: CleContenu[] }[] = [
   },
   {
     titre: "Page boutique",
-    cles: ["boutique.surtitre", "boutique.titre", "boutique.titre_script", "boutique.texte"],
+    cles: [
+      "boutique.surtitre",
+      "boutique.titre",
+      "boutique.titre_script",
+      "boutique.texte",
+      "boutique.partenaire_libelle",
+      "boutique.partenaire_lien",
+    ],
   },
   {
     titre: "Page réservation",
@@ -98,9 +118,15 @@ export const GROUPES_CONTENU: { titre: string; cles: CleContenu[] }[] = [
       "contact.horaires",
       "contact.telephone",
       "contact.telephone_lien",
+      "contact.fixe",
+      "contact.fixe_lien",
+      "contact.whatsapp_numero",
       "contact.whatsapp",
       "contact.instagram",
       "contact.instagram_libelle",
+      "contact.facebook",
+      "contact.tiktok",
+      "contact.tiktok_libelle",
       "footer.bouton",
       "maps.lien_fiche",
       "maps.requete",
