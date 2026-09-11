@@ -87,6 +87,25 @@ vient du cache de `chargerDonnees()`, pas du pré-rendu. Ce qui est gagné, c'es
 qu'une base indisponible ne peut plus empêcher de déployer — au pire, le site
 déployé s'affiche en mode repli le temps que la base revienne.
 
+## Trois filets, pas un
+
+Quand la base tombe, le site dégrade par paliers plutôt que de s'effondrer :
+
+1. **Le cache périmé.** Tant qu'une entrée existe, `unstable_cache` sert la
+   version précédente pendant que la revalidation échoue en arrière-plan. C'est
+   la protection principale, et elle est gratuite. Vérifié en coupant une
+   fausse base en cours de route : la boutique a continué d'afficher ses
+   produits sans qu'aucun repli ne soit lu.
+2. **La dernière réponse valable**, gardée en mémoire d'instance. Elle sert
+   quand le cache n'a rien — instance fraîche, cache vidé — et que la base est
+   toujours muette.
+3. **Le catalogue écrit en dur** (`src/lib/catalogue-defaut.ts`). Le dernier
+   recours : les prestations s'affichent, la boutique est vide, la réservation
+   dit franchement que les disponibilités ne sont pas accessibles.
+
+Un démarrage à froid saute directement du premier au troisième, puisque la
+mémoire d'instance est repartie de zéro.
+
 ## Ce qui n'est pas mis en cache, et pourquoi
 
 | Lecture | Cache | Raison |

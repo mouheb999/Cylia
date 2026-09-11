@@ -83,20 +83,40 @@ const lireDonneesPubliques = unstable_cache(
 );
 
 /**
+ * Dernière réponse réussie de la base, gardée en mémoire.
+ *
+ * C'est le troisième filet, pas le premier. Quand une entrée de cache existe,
+ * `unstable_cache` sert la version périmée pendant que la revalidation échoue
+ * en arrière-plan — vérifié en coupant une fausse base : la boutique a continué
+ * d'afficher ses produits sans qu'une seule ligne de repli ne soit lue.
+ *
+ * Ce qu'il couvre, c'est l'autre cas : une instance fraîche, ou un cache vidé,
+ * pendant que la base est encore muette. Là, `unstable_cache` n'a rien à
+ * servir. Plutôt que de retomber sur le catalogue écrit en dur — boutique vide,
+ * prix disparus — on ressert la dernière réponse valable que cette instance a
+ * vue. Mémoire d'instance : un démarrage à froid la perd, et le catalogue écrit
+ * en dur reprend alors la main.
+ */
+let derniereBonne: DonneesPubliques | null = null;
+
+/**
  * `cache()` par-dessus : une même requête peut demander les données à cinq
  * endroits, elles ne sont désérialisées qu'une fois.
  *
- * Ne jette jamais. Si la base est injoignable, le site s'affiche avec ses
- * valeurs de repli plutôt que de rendre une page d'erreur à une cliente qui
- * voulait un numéro de téléphone.
+ * Ne jette jamais. Une cliente venue chercher un numéro de téléphone ne doit
+ * pas tomber sur une page d'erreur parce que la base fait la sourde oreille.
  */
 export const chargerDonnees = cache(async (): Promise<DonneesPubliques> => {
   if (!supabaseConfigure) return REPLI;
   try {
-    return await lireDonneesPubliques();
+    derniereBonne = await lireDonneesPubliques();
+    return derniereBonne;
   } catch (erreur) {
-    console.error("[cylia] lecture des données publiques impossible :", erreur);
-    return REPLI;
+    console.error(
+      "[cylia] lecture des données publiques impossible :",
+      erreur instanceof Error ? erreur.message : erreur,
+    );
+    return derniereBonne ?? REPLI;
   }
 });
 
