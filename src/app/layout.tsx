@@ -45,6 +45,20 @@ export const viewport: Viewport = {
   themeColor: "#0b0a09",
 };
 
+/**
+ * Tout le site se rend à la demande.
+ *
+ * Cette mise en page lit le contenu éditable et la session : aucune page n'est
+ * servie depuis un pré-rendu, la liste des routes le confirmait déjà. Le dire
+ * ici plutôt que page par page a un effet concret — Next cesse d'essayer de
+ * pré-rendre quoi que ce soit, donc **le build ne parle plus du tout à la
+ * base**. Une base en panne ne peut alors plus faire échouer un déploiement,
+ * ce qui est exactement ce qui s'est produit le 10 septembre.
+ *
+ * La vitesse ne vient pas de là : elle vient du cache de `chargerDonnees()`.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Le contenu part dans le HTML de chaque page ; le fait d'être administratrice
   // décide seulement de l'apparition de la barre d'édition.
