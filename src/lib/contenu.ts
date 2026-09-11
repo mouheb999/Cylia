@@ -53,12 +53,8 @@ export const CONTENUS_DEFAUT = {
   "contact.instagram": "https://www.instagram.com/cyliamaisondebeaute/",
   "contact.instagram_libelle": "cyliamaisondebeaute",
   "contact.facebook": "https://www.facebook.com/share/1CQZPiXwWH/?mibextid=wwXIfr",
-  /**
-   * Le salon a donné le nom du compte TikTok, pas son adresse. On reprend donc
-   * le pseudo d'Instagram, qui est presque toujours le même d'un réseau à
-   * l'autre — à corriger d'un geste en mode édition si ce n'est pas le cas.
-   */
-  "contact.tiktok": "https://www.tiktok.com/@cyliamaisondebeaute",
+  /** Pseudo TikTok confirmé par le salon — il diffère de celui d'Instagram. */
+  "contact.tiktok": "https://www.tiktok.com/@cylia.maison.de.b",
   "contact.tiktok_libelle": "cylia maison de beauté",
   "footer.bouton": "Réserver en ligne",
 
