@@ -46,6 +46,30 @@ Deux réglages, dans `/admin/reglages` :
 
 Ces règles sont appliquées côté base, pas dans la page.
 
+## Le catalogue Keune
+
+Les 202 références Keune vendues au salon ont été relevées sur
+[maisonkeune.tn](https://www.maisonkeune.tn/), le distributeur Keune en Tunisie
+déjà cité en bas de la boutique, et semées par
+`supabase/migrations/0011_catalogue_keune.sql`. Trois choix méritent d'être
+connus, parce qu'ils viennent d'un écart entre la source et cette table :
+
+- **Une taille, un produit.** `produits` n'a qu'un prix par ligne. Un soin
+  vendu en 250 ml et en 1000 ml est donc deux produits, chacun à son prix,
+  plutôt qu'un seul affiché au prix du plus petit.
+- **Une coloration, un produit.** Toutes les nuances d'une même coloration sont
+  au même prix : les éclater ferait des centaines de lignes pour rien. La fiche
+  dit combien de nuances existent et invite la cliente à préciser la sienne
+  dans la note de commande.
+- **Le stock est une supposition.** La source ne publie qu'un « disponible /
+  épuisé ». Chaque produit disponible part donc à 12, chaque produit épuisé à
+  0 : c'est un point de départ, à corriger dans `/admin/produits`.
+
+Deux détails de fidélité : les prix en millimes (67,375 DT) sont arrondis au
+centime par `numeric(10, 2)`, ce qui touche douze références ; et deux fiches
+de la source décrivaient un autre produit que le leur — elles sont laissées
+vides plutôt que fausses, comme les douze que la source ne décrit pas.
+
 ## Photos
 
 Un produit sans photo n'affiche pas un rectangle gris : il montre un carré doré
@@ -54,6 +78,11 @@ photographie ses flacons, et l'absence de photo ne ressemble pas à une panne.
 
 Les photos s'ajoutent depuis la fiche produit, dans le panneau ou en mode
 édition sur `/boutique`.
+
+Les photos du catalogue Keune ont été **rapatriées** dans le bucket `media` du
+projet, sous `produits/<slug>`, plutôt que pointées chez le distributeur : la
+boutique ne dépend d'aucun site tiers pour s'afficher, et une photo remplacée
+depuis le panneau prend simplement la place de celle d'origine.
 
 ## Ce qui n'existe pas encore
 
