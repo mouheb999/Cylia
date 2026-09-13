@@ -26,6 +26,8 @@ export type Prestation = {
   id: string;
   nom: string;
   categorie_id: string;
+  /** Groupe auquel elle appartient — voir la table `groupes`. */
+  groupe_id: string | null;
   duree_minutes: number;
   prix: number | null;
   description: string;
@@ -64,6 +66,17 @@ export type PhotoGalerie = {
   id: string;
   image_url: string;
   alt: string;
+  ordre: number;
+  actif: boolean;
+  cree_le: string;
+};
+
+export type Groupe = {
+  id: string;
+  categorie_id: string;
+  nom: string;
+  description: string;
+  image_url: string | null;
   ordre: number;
   actif: boolean;
   cree_le: string;
@@ -159,6 +172,7 @@ export type Database = {
       reservations: Ligne<Reservation, "reference" | "prestation_ids" | "date" | "heure_minutes" | "duree_minutes" | "nom" | "telephone">;
       contenus: Ligne<Contenu, "cle">;
       galerie: Ligne<PhotoGalerie, "image_url">;
+      groupes: Ligne<Groupe, "categorie_id" | "nom">;
       produits: Ligne<Produit, "slug" | "nom" | "prix">;
       commandes: Ligne<Commande, "reference" | "nom" | "telephone" | "adresse" | "ville" | "sous_total" | "total">;
       commande_articles: Ligne<ArticleCommande, "commande_id" | "nom" | "prix" | "quantite">;

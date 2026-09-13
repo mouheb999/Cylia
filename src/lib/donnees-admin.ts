@@ -8,6 +8,7 @@ import type {
   Categorie,
   Commande,
   Fermeture,
+  Groupe,
   Prestation,
   Produit,
   Reservation,
@@ -106,6 +107,17 @@ export async function prestationsAdmin(): Promise<Prestation[]> {
     .order("ordre");
   if (error) throw error;
   return data as Prestation[];
+}
+
+export async function groupesAdmin(): Promise<Groupe[]> {
+  const supabase = await clientPanneau();
+  const { data, error } = await supabase
+    .from("groupes")
+    .select("*")
+    .order("categorie_id")
+    .order("ordre");
+  if (error) throw error;
+  return data as Groupe[];
 }
 
 export async function categoriesAdmin(): Promise<Categorie[]> {

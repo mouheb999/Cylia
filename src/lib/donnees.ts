@@ -11,6 +11,7 @@ import {
 import type { ContenuMap } from "@/lib/contenu";
 import type {
   Categorie,
+  Groupe,
   PhotoGalerie,
   Prestation,
   Produit,
@@ -23,6 +24,7 @@ export type Fermeture = { debut: string; fin: string };
 export type DonneesPubliques = {
   reglages: Reglages;
   categories: Categorie[];
+  groupes: Groupe[];
   prestations: Prestation[];
   produits: Produit[];
   galerie: PhotoGalerie[];
@@ -36,6 +38,7 @@ export const TAG_SITE = "site";
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
   categories: CATEGORIES_DEFAUT,
+  groupes: [],
   prestations: PRESTATIONS_DEFAUT,
   produits: [],
   galerie: [],
@@ -71,6 +74,7 @@ const lireDonneesPubliques = unstable_cache(
       reglages: brut.reglages,
       // Une base vidée par erreur ne doit pas donner un site vide.
       categories: brut.categories?.length ? brut.categories : CATEGORIES_DEFAUT,
+      groupes: brut.groupes ?? [],
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
       galerie: brut.galerie ?? [],
@@ -138,6 +142,10 @@ export async function chargerPrestations(): Promise<Prestation[]> {
 
 export async function chargerGalerie(): Promise<PhotoGalerie[]> {
   return (await chargerDonnees()).galerie;
+}
+
+export async function chargerGroupes(): Promise<Groupe[]> {
+  return (await chargerDonnees()).groupes;
 }
 
 export async function chargerProduits(): Promise<Produit[]> {

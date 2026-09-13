@@ -7,6 +7,7 @@ import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import {
   chargerCategories,
   chargerContenus,
+  chargerGroupes,
   chargerPrestations,
   chargerReglages,
 } from "@/lib/donnees";
@@ -22,8 +23,9 @@ export const metadata: Metadata = {
 };
 
 export default async function PageReservation({ searchParams }: PageProps<"/reserver">) {
-  const [categories, prestations, reglages, contenus, parametres] = await Promise.all([
+  const [categories, groupes, prestations, reglages, contenus, parametres] = await Promise.all([
     chargerCategories(),
+    chargerGroupes(),
     chargerPrestations(),
     chargerReglages(),
     chargerContenus(),
@@ -64,6 +66,7 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
 
         <FluxReservation
           categories={categories}
+          groupes={groupes}
           prestations={prestations}
           joursCles={clesJours(reglages.jours_proposes)}
           devise={reglages.devise}

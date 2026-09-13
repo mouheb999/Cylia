@@ -40,6 +40,7 @@ function prestation(
     id,
     nom,
     categorie_id,
+    groupe_id: null,
     duree_minutes,
     prix: null,
     description: "",

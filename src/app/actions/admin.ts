@@ -94,10 +94,68 @@ export async function reinitialiserContenu(cle: string): Promise<Resultat> {
 
 // -------------------------------------------------------------- prestations
 
+// ------------------------------------------------------------------ groupes
+
+export type FormGroupe = {
+  id?: string;
+  categorie_id: string;
+  nom: string;
+  description: string;
+  image_url: string | null;
+  ordre: number;
+  actif: boolean;
+};
+
+export async function enregistrerGroupe(form: FormGroupe): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const nom = form.nom.trim();
+    if (nom.length < 2) throw new Error("NOM_COURT");
+
+    const ligne = {
+      categorie_id: form.categorie_id,
+      nom,
+      description: form.description.trim(),
+      image_url: form.image_url,
+      ordre: form.ordre,
+      actif: form.actif,
+    };
+
+    if (form.id) {
+      const { error } = await supabase.from("groupes").update(ligne).eq("id", form.id);
+      if (error) throw error;
+      return;
+    }
+
+    const base = versIdentifiant(nom) || "groupe";
+    const { data: pris } = await supabase.from("groupes").select("id").like("id", `${base}%`);
+    const existants = new Set((pris ?? []).map((g) => g.id));
+    let id = base;
+    for (let n = 2; existants.has(id); n += 1) id = `${base}-${n}`;
+
+    const { error } = await supabase.from("groupes").insert({ id, ...ligne });
+    if (error) throw error;
+  });
+}
+
+/**
+ * Un groupe retiré est masqué, pas effacé : ses prestations gardent leur
+ * `groupe_id` et reviennent avec lui si le salon le réaffiche. Elles restent
+ * visibles entre-temps, listées sous les vignettes de leur catégorie.
+ */
+export async function supprimerGroupe(id: string): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase.from("groupes").update({ actif: false }).eq("id", id);
+    if (error) throw error;
+  });
+}
+
 export type FormPrestation = {
   id?: string;
   nom: string;
   categorie_id: string;
+  groupe_id: string | null;
   duree_minutes: number;
   prix: number | null;
   description: string;
@@ -115,6 +173,7 @@ export async function enregistrerPrestation(form: FormPrestation): Promise<Resul
     const ligne = {
       nom,
       categorie_id: form.categorie_id,
+      groupe_id: form.groupe_id,
       duree_minutes: Math.max(5, Math.round(form.duree_minutes)),
       prix: form.prix,
       description: form.description.trim(),

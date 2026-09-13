@@ -29,10 +29,33 @@ l'avoir touché. Ils sont séparés : l'**agenda** mène au rendez-vous, le **sa
 à la boutique, chacun avec son propre compteur. Prendre rendez-vous et acheter
 un flacon ne sont pas le même geste.
 
+## Catégorie, groupe, prestation
+
+Trois étages, et chacun répond à une question différente :
+
+- la **catégorie** dit *quel univers* — Coiffure, Esthétique, Bien-être ;
+- le **groupe** dit *quel geste* — Massages, Head Spa, Épilation, Soins du
+  visage. C'est lui qui porte la photo ;
+- la **prestation** dit *quelle ligne de tarif* — « Sourcils au fil, 10 DT ».
+
+Le groupe existe parce que la liste ne tenait plus. « Esthétique » mélangeait
+quinze épilations, cinq soins du visage et quatre technologies dans une seule
+liste à faire défiler. Et c'est le groupe qui porte la photo, pas la
+prestation : une photo par geste, pas une par ligne de tarif, sinon le salon
+devrait photographier quinze fois la même cire.
+
+Un groupe vide ne s'affiche pas. Une prestation sans groupe — ou dont le
+groupe a été masqué — reste visible sous les vignettes de sa catégorie plutôt
+que de disparaître : mal rangée vaut mieux qu'introuvable. `/admin/prestations`
+les regroupe sous « Sans groupe », pour qu'on voie ce qu'il reste à ranger.
+
+Retirer un groupe le **masque**. Ses prestations gardent leur `groupe_id` et
+reviennent avec lui s'il est réaffiché.
+
 ## Les photos
 
-Chaque prestation peut porter une photo, déposée depuis sa fiche dans
-`/admin/prestations`. Sans photo, la vignette montre l'icône de sa catégorie
+Chaque groupe — et chaque prestation, si le salon le souhaite — peut porter
+une photo, déposée depuis sa fiche dans `/admin/prestations`. Sans photo, la vignette montre l'icône de sa catégorie
 sur un fond sombre — volontairement discret : une rangée d'icônes se lit comme
 un motif, là où une rangée de rectangles vides se lirait comme une panne. Le
 jour où le salon dépose ses photos, elles prennent la place sans que rien

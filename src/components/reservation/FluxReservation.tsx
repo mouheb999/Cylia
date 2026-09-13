@@ -12,7 +12,7 @@ import { IconArrow } from "@/components/Icons";
 import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
 import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
 import VisuelPrestation from "./VisuelPrestation";
-import type { Categorie, Prestation, Reservation } from "@/lib/supabase/types";
+import type { Categorie, Groupe, Prestation, Reservation } from "@/lib/supabase/types";
 import Confirmation from "./Confirmation";
 import EtapeCoordonnees from "./EtapeCoordonnees";
 import FeuillePrestation from "./FeuillePrestation";
@@ -21,6 +21,7 @@ const ETAPES = ["Prestations", "Date & heure", "Coordonnées"];
 
 type Props = {
   categories: Categorie[];
+  groupes: Groupe[];
   prestations: Prestation[];
   /** Dates proposées, calculées à l'heure du salon par le serveur. */
   joursCles: string[];
@@ -32,6 +33,7 @@ type Props = {
 
 export default function FluxReservation({
   categories,
+  groupes,
   prestations,
   joursCles,
   devise,
@@ -55,6 +57,8 @@ export default function FluxReservation({
   const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
   const [envoi, demarrerEnvoi] = useTransition();
   const [fiche, setFiche] = useState<Prestation | null | undefined>(undefined);
+  /** `null` : on voit les groupes de la catégorie. Sinon, on est entré dedans. */
+  const [groupeOuvert, setGroupeOuvert] = useState<string | null>(null);
 
   const parId = useMemo(
     () => new Map(prestations.map((p) => [p.id, p])),
@@ -150,6 +154,17 @@ export default function FluxReservation({
   }
 
   const dePrestation = prestations.filter((p) => p.categorie_id === categorie);
+  const groupesCategorie = groupes
+    .filter((g) => g.categorie_id === categorie)
+    .map((g) => ({ groupe: g, contenu: dePrestation.filter((p) => p.groupe_id === g.id) }))
+    .filter((g) => g.contenu.length > 0);
+  // Une prestation sans groupe — ou dont le groupe a été supprimé — reste
+  // visible sous les vignettes plutôt que de disparaître du catalogue.
+  const horsGroupe = dePrestation.filter(
+    (p) => !groupesCategorie.some((g) => g.groupe.id === p.groupe_id),
+  );
+  const ouvert = groupesCategorie.find((g) => g.groupe.id === groupeOuvert) ?? null;
+  const aMontrer = ouvert ? ouvert.contenu : horsGroupe;
 
   return (
     <div className="px-5 pb-16">
@@ -189,7 +204,10 @@ export default function FluxReservation({
                 type="button"
                 role="tab"
                 aria-selected={categorie === c.id}
-                onClick={() => setCategorie(c.id)}
+                onClick={() => {
+                  setCategorie(c.id);
+                  setGroupeOuvert(null);
+                }}
                 className={`flex-1 rounded-full border px-2 py-2.5 text-[0.78rem] transition-colors ${
                   categorie === c.id
                     ? "border-gold bg-gold/15 text-gold"
@@ -201,8 +219,69 @@ export default function FluxReservation({
             ))}
           </div>
 
+          {ouvert ? (
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setGroupeOuvert(null)}
+                className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/60"
+              >
+                ← Retour
+              </button>
+              <h3 className="min-w-0 flex-1 truncate font-serif text-lg text-gold">
+                {ouvert.groupe.nom}
+              </h3>
+            </div>
+          ) : (
+            groupesCategorie.length > 0 && (
+              <ul className="mt-5 grid grid-cols-2 gap-3">
+                {groupesCategorie.map(({ groupe, contenu }) => {
+                  const retenues = contenu.filter((p) => selection.includes(p.id)).length;
+                  return (
+                    <li key={groupe.id}>
+                      <button
+                        type="button"
+                        onClick={() => setGroupeOuvert(groupe.id)}
+                        className={`flex h-full w-full flex-col overflow-hidden rounded-2xl border text-left transition-colors ${
+                          retenues > 0 ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
+                        }`}
+                      >
+                        <span className="relative block aspect-[4/3] w-full">
+                          <VisuelPrestation
+                            nom={groupe.nom}
+                            categorieId={groupe.categorie_id}
+                            url={groupe.image_url}
+                            className="h-full w-full rounded-none"
+                          />
+                          {retenues > 0 && (
+                            <span className="gold-gradient absolute right-2 top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-medium text-noir">
+                              {retenues}
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex flex-1 flex-col px-3 pb-3 pt-2">
+                          <span className="font-serif text-[1rem] leading-snug text-cream">
+                            {groupe.nom}
+                          </span>
+                          {groupe.description && (
+                            <span className="mt-0.5 text-[0.7rem] font-light leading-snug text-white/40">
+                              {groupe.description}
+                            </span>
+                          )}
+                          <span className="mt-auto pt-1.5 text-[0.68rem] font-light text-gold/70">
+                            {contenu.length} soin{contenu.length > 1 ? "s" : ""}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          )}
+
           <ul className="mt-5 space-y-2.5">
-            {dePrestation.map((p) => {
+            {aMontrer.map((p) => {
               const retenue = selection.includes(p.id);
               return (
                 <li key={p.id}>
@@ -446,6 +525,7 @@ export default function FluxReservation({
         <FeuillePrestation
           prestation={fiche}
           categories={categories}
+          groupes={groupes}
           categorieParDefaut={categorie}
           onFermer={() => setFiche(undefined)}
         />

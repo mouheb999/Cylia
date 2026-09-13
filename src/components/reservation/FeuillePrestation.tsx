@@ -7,7 +7,7 @@ import { boutonOr, champSombre } from "@/components/ui/champs";
 import { televerserImage } from "@/components/edition/televerser";
 import VisuelPrestation from "./VisuelPrestation";
 import { enregistrerPrestation, supprimerPrestation } from "@/app/actions/admin";
-import type { Categorie, Prestation } from "@/lib/supabase/types";
+import type { Categorie, Groupe, Prestation } from "@/lib/supabase/types";
 
 function nombreOuNull(valeur: string): number | null {
   const propre = valeur.trim().replace(",", ".");
@@ -19,12 +19,14 @@ function nombreOuNull(valeur: string): number | null {
 export default function FeuillePrestation({
   prestation,
   categories,
+  groupes = [],
   categorieParDefaut,
   onFermer,
 }: {
   /** `null` pour créer une prestation. */
   prestation: Prestation | null;
   categories: Categorie[];
+  groupes?: Groupe[];
   categorieParDefaut: string;
   onFermer: () => void;
 }) {
@@ -38,6 +40,7 @@ export default function FeuillePrestation({
   const [description, setDescription] = useState(prestation?.description ?? "");
   const [actif, setActif] = useState(prestation?.actif ?? true);
   const [imageUrl, setImageUrl] = useState(prestation?.image_url ?? null);
+  const [groupeId, setGroupeId] = useState<string>(prestation?.groupe_id ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
   const [depot, setDepot] = useState(false);
   const [enCours, demarrer] = useTransition();
@@ -66,6 +69,7 @@ export default function FeuillePrestation({
         id: prestation?.id,
         nom,
         categorie_id: categorieId,
+        groupe_id: groupeId || null,
         duree_minutes: minutes,
         prix: nombreOuNull(prix),
         description,
@@ -148,6 +152,32 @@ export default function FeuillePrestation({
           ))}
         </select>
       </label>
+
+      {groupes.length > 0 && (
+        <label className="mt-4 block text-sm">
+          <span className="font-light text-white/60">Groupe</span>
+          <select
+            value={groupeId}
+            onChange={(e) => setGroupeId(e.target.value)}
+            className={champSombre}
+          >
+            <option value="" className="bg-noir-soft">
+              Sans groupe
+            </option>
+            {groupes
+              .filter((g) => g.categorie_id === categorieId)
+              .map((g) => (
+                <option key={g.id} value={g.id} className="bg-noir-soft">
+                  {g.nom}
+                </option>
+              ))}
+          </select>
+          <span className="mt-1.5 block text-xs font-light text-white/35">
+            Sans groupe, la prestation s&apos;affiche sous les vignettes de sa
+            catégorie plutôt que dans l&apos;une d&apos;elles.
+          </span>
+        </label>
+      )}
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <label className="block text-sm">
