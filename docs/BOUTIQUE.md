@@ -67,9 +67,10 @@ table :
   douze unités, à corriger dans `/admin/produits`, où la quantité se change
   dans la liste sans ouvrir la fiche.
 
-Trois références restent masquées : la source ne leur donne aucun prix, et les
-publier à 0 DT reviendrait à les donner. Elles s'afficheront dès qu'un prix
-leur sera mis dans le panneau.
+Trois références n'avaient aucun prix chez la source ; le salon a donné le
+sien, 88 DT, et elles sont en vente comme les autres. Elles étaient masquées
+en attendant : un produit à 0 DT reste commandable, et `creer_commande` relit
+le prix en base — le publier aurait suffi à le faire partir gratuitement.
 
 Deux détails de fidélité : les prix en millimes (67,375 DT) sont arrondis au
 centime par `numeric(10, 2)`, ce qui touche douze références ; et deux fiches
