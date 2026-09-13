@@ -77,6 +77,15 @@ centime par `numeric(10, 2)`, ce qui touche douze références ; et deux fiches
 de la source décrivaient un autre produit que le leur — elles sont laissées
 vides plutôt que fausses, comme les douze que la source ne décrit pas.
 
+## L'aperçu de l'accueil
+
+« Nos cosmétiques » montre douze produits dans une rangée qui défile sur le
+côté. Le choix n'est pas les douze premiers du catalogue : celui-ci est trié
+par gamme, et les douze premiers seraient donc douze flacons de la même ligne.
+`selectionAccueil` tourne d'une famille à l'autre — un shampooing, un
+après-shampooing, un masque, une huile — pour montrer l'étendue de la boutique
+plutôt que son rayon le plus fourni. Les produits épuisés n'y entrent pas.
+
 ## Trier deux cents flacons
 
 Une vitrine de deux cents produits ne se parcourt pas au doigt. Trois entrées,

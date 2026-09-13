@@ -78,6 +78,39 @@ export function trierProduits(produits: Produit[], tri: Tri): Produit[] {
   );
 }
 
+/**
+ * Choix de produits pour l'accueil.
+ *
+ * Prendre les `n` premiers donnerait douze flacons de la même gamme : l'ordre
+ * du catalogue trie par marque. On tourne donc d'une famille à l'autre —
+ * un shampooing, un masque, une huile, un coiffage — pour que la rangée
+ * montre l'étendue de la boutique plutôt que son rayon le plus fourni.
+ */
+export function selectionAccueil(produits: Produit[], nombre = 12): Produit[] {
+  const disponibles = produits.filter((p) => p.stock > 0);
+  const parFamille = new Map<string, Produit[]>();
+  for (const p of disponibles) {
+    const liste = parFamille.get(p.famille);
+    if (liste) liste.push(p);
+    else parFamille.set(p.famille, [p]);
+  }
+  // L'ordre des familles est celui de FAMILLES : celles qui existent d'abord.
+  const files = FAMILLES.map((f) => parFamille.get(f.id)).filter(
+    (l): l is Produit[] => l !== undefined,
+  );
+
+  const choix: Produit[] = [];
+  for (let tour = 0; choix.length < nombre; tour += 1) {
+    const avant = choix.length;
+    for (const file of files) {
+      if (choix.length >= nombre) break;
+      if (file[tour]) choix.push(file[tour]);
+    }
+    if (choix.length === avant) break; // toutes les familles épuisées
+  }
+  return choix;
+}
+
 /** Filtre commun à la vitrine et au panneau. `null` = « tout ». */
 export function filtrerProduits(
   produits: Produit[],

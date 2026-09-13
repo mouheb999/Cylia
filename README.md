@@ -112,7 +112,14 @@ générées à partir du logo ; les régénérer si le logo change.
 
 ## Notes
 
-- Aucune librairie d'animation, aucun carrousel, aucun effet au défilement.
+- Aucune librairie d'animation, aucun effet au défilement. La rangée « Nos
+  cosmétiques » de l'accueil défile bien sur le côté, mais c'est la zone de
+  défilement native du navigateur, avec un point d'accrochage par carte : pas
+  de script, pas de défilement automatique, rien à charger.
+- Les liens du menu qui pointent vers une section (`/#contact`) **effacent leur
+  ancre** une fois le saut fait. Sans cela, l'ancre restait dans l'adresse et
+  chaque rafraîchissement renvoyait au pied de page — voir
+  `src/components/NettoyerAncre.tsx`.
 - Toutes les pages sont rendues à la demande : elles lisent les cookies de
   session et le contenu à jour, il n'y a rien à revalider.
 - Le paiement de la boutique se fait **à la livraison**. Aucun moyen de

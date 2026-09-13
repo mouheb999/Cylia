@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Jost, Parisienne } from "next/font/google";
 import BarreEdition from "@/components/edition/BarreEdition";
+import NettoyerAncre from "@/components/NettoyerAncre";
 import { FournisseurEdition } from "@/components/edition/ContexteEdition";
 import { chargerContenus } from "@/lib/donnees";
 import { adminConnecte } from "@/lib/supabase/serveur";
@@ -73,6 +74,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cormorant.variable} ${jost.variable} ${parisienne.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-noir">
+        <NettoyerAncre />
         <FournisseurEdition estAdmin={admin !== null} contenus={contenus}>
           {children}
           <BarreEdition />
