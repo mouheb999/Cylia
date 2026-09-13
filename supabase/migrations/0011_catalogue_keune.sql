@@ -229,12 +229,11 @@ on conflict (slug) do update
       ordre       = excluded.ordre,
       actif       = excluded.actif;
 
--- Les six produits de démonstration semés en 0006 ne sont pas ceux du salon :
--- on les range après le vrai catalogue plutôt que de les effacer, le salon
--- décidera lui-même de les désactiver depuis /admin/produits.
-update produits
-   set ordre = 1000 + ordre
- where ordre < 100
-   and slug in ('serum-eclat-vitamine-c', 'creme-hydratante-jour',
+-- Les six produits semés en 0006 étaient un décor, le temps que le salon ait un
+-- vrai catalogue : il l'a maintenant, ils s'en vont. Les effacer ne touche à
+-- aucune commande — `commande_articles` fige le nom et le prix à l'achat, et sa
+-- clé vers `produits` passe à null (`on delete set null`).
+delete from produits
+ where slug in ('serum-eclat-vitamine-c', 'creme-hydratante-jour',
                 'huile-precieuse-cheveux', 'masque-reparateur',
                 'gommage-corps-argan', 'bougie-massage');

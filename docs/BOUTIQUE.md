@@ -51,8 +51,10 @@ Ces règles sont appliquées côté base, pas dans la page.
 Les 202 références Keune vendues au salon ont été relevées sur
 [maisonkeune.tn](https://www.maisonkeune.tn/), le distributeur Keune en Tunisie
 déjà cité en bas de la boutique, et semées par
-`supabase/migrations/0011_catalogue_keune.sql`. Trois choix méritent d'être
-connus, parce qu'ils viennent d'un écart entre la source et cette table :
+`supabase/migrations/0011_catalogue_keune.sql` — qui efface au passage les six
+produits de démonstration de 0006, devenus inutiles. Trois choix méritent
+d'être connus, parce qu'ils viennent d'un écart entre la source et cette
+table :
 
 - **Une taille, un produit.** `produits` n'a qu'un prix par ligne. Un soin
   vendu en 250 ml et en 1000 ml est donc deux produits, chacun à son prix,
