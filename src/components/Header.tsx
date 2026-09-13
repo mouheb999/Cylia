@@ -7,7 +7,7 @@ import logo from "@/images/logo.png";
 import { usePanier } from "@/lib/panier";
 import { totalArticles, usePanierBoutique } from "@/lib/panier-boutique";
 import { useEdition } from "@/components/edition/ContexteEdition";
-import { IconBag, IconClose, IconMenu } from "./Icons";
+import { IconAgenda, IconBag, IconClose, IconMenu } from "./Icons";
 
 const liens = [
   { label: "Accueil", href: "/" },
@@ -18,6 +18,33 @@ const liens = [
   { label: "Réserver", href: "/reserver" },
 ];
 
+/** Lien d'en-tête portant une pastille quand quelque chose attend. */
+function Lien({
+  href,
+  libelle,
+  compte,
+  children,
+}: {
+  href: string;
+  libelle: string;
+  compte: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link href={href} aria-label={libelle} className="relative p-2 text-gold">
+      {children}
+      {compte > 0 && (
+        <span
+          aria-hidden="true"
+          className="gold-gradient absolute right-0 top-0 flex h-[1.15rem] min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-medium text-noir"
+        >
+          {compte}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export default function Header() {
   const [ouvert, setOuvert] = useState(false);
   const prestations = usePanier();
@@ -27,10 +54,11 @@ export default function Header() {
   const nom = edition.valeur("site.nom", "CYLIA Maison de Beauté");
   const logoPersonnalise = edition.valeur("logo.image", "");
 
-  // Le sac mène là où il y a quelque chose : la boutique si un produit attend,
-  // le tunnel de réservation sinon.
-  const sacVersBoutique = articles > 0;
-  const total = sacVersBoutique ? articles : prestations.length;
+  // Deux gestes, deux boutons. Le sac ne servait à la fois de panier et
+  // d'entrée de réservation, et changeait de destination selon son contenu :
+  // impossible de savoir où il menait avant de l'avoir touché. Le sac est
+  // maintenant celui de la boutique, et rien d'autre ; l'agenda mène au
+  // rendez-vous.
 
   return (
     <header className="sticky top-0 z-50 bg-noir/95 backdrop-blur-sm">
@@ -54,27 +82,31 @@ export default function Header() {
           )}
         </Link>
 
-        <Link
-          href={sacVersBoutique ? "/boutique/panier" : "/reserver"}
-          aria-label={
-            total === 0
-              ? "Votre sélection est vide — prendre rendez-vous"
-              : sacVersBoutique
-                ? `Votre panier : ${total} article${total > 1 ? "s" : ""}`
-                : `Votre sélection : ${total} prestation${total > 1 ? "s" : ""}`
-          }
-          className="relative justify-self-end p-2 text-gold"
-        >
-          <IconBag className="h-6 w-6" />
-          {total > 0 && (
-            <span
-              aria-hidden="true"
-              className="gold-gradient absolute right-0 top-0 flex h-[1.15rem] min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-medium text-noir"
-            >
-              {total}
-            </span>
-          )}
-        </Link>
+        <div className="flex items-center justify-self-end">
+          <Lien
+            href="/reserver"
+            libelle={
+              prestations.length === 0
+                ? "Prendre rendez-vous"
+                : `Votre rendez-vous : ${prestations.length} prestation${prestations.length > 1 ? "s" : ""}`
+            }
+            compte={prestations.length}
+          >
+            <IconAgenda className="h-6 w-6" />
+          </Lien>
+
+          <Lien
+            href="/boutique/panier"
+            libelle={
+              articles === 0
+                ? "Votre panier est vide — voir la boutique"
+                : `Votre panier : ${articles} article${articles > 1 ? "s" : ""}`
+            }
+            compte={articles}
+          >
+            <IconBag className="h-6 w-6" />
+          </Lien>
+        </div>
       </div>
 
       <nav

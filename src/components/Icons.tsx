@@ -68,6 +68,16 @@ export function IconClose({ className }: IconProps) {
   );
 }
 
+export function IconAgenda({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className={className} aria-hidden="true">
+      <rect x="3.2" y="5" width="17.6" height="16" rx="2.4" />
+      <path d="M3.2 9.6h17.6M8 3v4M16 3v4" strokeLinecap="round" />
+      <circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function IconBag({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...base} strokeWidth={1.3}>

@@ -11,6 +11,7 @@ import { useEdition } from "@/components/edition/ContexteEdition";
 import { IconArrow } from "@/components/Icons";
 import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
 import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
+import VisuelPrestation from "./VisuelPrestation";
 import type { Categorie, Prestation, Reservation } from "@/lib/supabase/types";
 import Confirmation from "./Confirmation";
 import EtapeCoordonnees from "./EtapeCoordonnees";
@@ -209,11 +210,17 @@ export default function FluxReservation({
                     type="button"
                     onClick={() => basculerPrestation(p.id)}
                     aria-pressed={retenue}
-                    className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors ${
+                    className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition-colors ${
                       retenue ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
                     }`}
                   >
-                    <span>
+                    <VisuelPrestation
+                      nom={p.nom}
+                      categorieId={p.categorie_id}
+                      url={p.image_url}
+                      className="h-[4.5rem] w-[4.5rem]"
+                    />
+                    <span className="min-w-0 flex-1">
                       <span
                         className={`block font-serif text-[1.05rem] ${retenue ? "text-gold" : "text-cream"}`}
                       >

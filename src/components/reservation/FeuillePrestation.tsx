@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre } from "@/components/ui/champs";
+import { televerserImage } from "@/components/edition/televerser";
+import VisuelPrestation from "./VisuelPrestation";
 import { enregistrerPrestation, supprimerPrestation } from "@/app/actions/admin";
 import type { Categorie, Prestation } from "@/lib/supabase/types";
 
@@ -35,8 +37,23 @@ export default function FeuillePrestation({
   const [prix, setPrix] = useState(prestation?.prix != null ? String(prestation.prix) : "");
   const [description, setDescription] = useState(prestation?.description ?? "");
   const [actif, setActif] = useState(prestation?.actif ?? true);
+  const [imageUrl, setImageUrl] = useState(prestation?.image_url ?? null);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [depot, setDepot] = useState(false);
   const [enCours, demarrer] = useTransition();
+
+  async function deposer(fichier: File | undefined) {
+    if (!fichier) return;
+    setErreur(null);
+    setDepot(true);
+    try {
+      setImageUrl(await televerserImage(fichier, "prestations"));
+    } catch (probleme) {
+      setErreur(probleme instanceof Error ? probleme.message : "Dépôt impossible.");
+    } finally {
+      setDepot(false);
+    }
+  }
 
   function enregistrer() {
     const minutes = nombreOuNull(duree);
@@ -52,6 +69,7 @@ export default function FeuillePrestation({
         duree_minutes: minutes,
         prix: nombreOuNull(prix),
         description,
+        image_url: imageUrl,
         ordre: prestation?.ordre ?? 999,
         actif,
       });
@@ -78,7 +96,35 @@ export default function FeuillePrestation({
       sousTitre="La durée décide des créneaux proposés : une prestation de 2 h ne s'affiche que là où le salon a 2 h devant lui."
       onFermer={onFermer}
     >
-      <label className="block text-sm">
+      <div className="mx-auto w-fit text-center">
+        <VisuelPrestation
+          nom={nom || "Prestation"}
+          categorieId={categorieId}
+          url={imageUrl}
+          className="mx-auto h-28 w-28 rounded-2xl border border-white/10"
+        />
+        <label className="mt-2.5 inline-block cursor-pointer rounded-full border border-gold/35 px-4 py-2 text-xs text-gold">
+          {depot ? "Envoi…" : imageUrl ? "Changer la photo" : "Ajouter une photo"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            className="sr-only"
+            disabled={depot || enCours}
+            onChange={(e) => deposer(e.target.files?.[0])}
+          />
+        </label>
+        {imageUrl && (
+          <button
+            type="button"
+            onClick={() => setImageUrl(null)}
+            className="mt-2 block w-full text-[0.7rem] font-light text-white/35"
+          >
+            Retirer la photo
+          </button>
+        )}
+      </div>
+
+      <label className="mt-5 block text-sm">
         <span className="font-light text-white/60">Nom</span>
         <input
           value={nom}

@@ -4,9 +4,12 @@
 
 `/reserver`, en trois étapes :
 
-1. **Prestations** — catégories et prestations lues dans la base. Plusieurs
-   peuvent être retenues pour une même visite : elles s'ajoutent au panier,
-   leurs durées s'additionnent, le compteur du sac suit la sélection.
+1. **Prestations** — catégories et prestations lues dans la base, chacune avec
+   sa photo. Les catégories font le regroupement : « Bien-être » rassemble les
+   massages, « Esthétique » le maquillage, les ongles et l'épilation. Plusieurs
+   prestations peuvent être retenues pour une même visite : elles s'ajoutent au
+   panier, leurs durées s'additionnent, le compteur de l'agenda suit la
+   sélection.
 2. **Date & heure** — les prochains jours, puis la grille des créneaux
    réellement libres pour la durée totale demandée.
 3. **Coordonnées** — nom et téléphone, validés avant l'envoi.
@@ -16,6 +19,24 @@ Puis la confirmation, avec une référence (`CY-1209-3K7`) à conserver.
 La réservation part dans la base. Le salon la voit dans son panneau
 (`/admin/reservations`) et la fait passer de « à confirmer » à « confirmé »,
 « terminé » ou « annulé ».
+
+## Deux boutons, deux gestes
+
+L'en-tête portait un seul sac, qui menait au panier de la boutique s'il
+contenait un produit et au tunnel de réservation sinon. Sa destination
+dépendait donc de son contenu, et on ne pouvait pas la connaître avant de
+l'avoir touché. Ils sont séparés : l'**agenda** mène au rendez-vous, le **sac**
+à la boutique, chacun avec son propre compteur. Prendre rendez-vous et acheter
+un flacon ne sont pas le même geste.
+
+## Les photos
+
+Chaque prestation peut porter une photo, déposée depuis sa fiche dans
+`/admin/prestations`. Sans photo, la vignette montre l'icône de sa catégorie
+sur un fond sombre — volontairement discret : une rangée d'icônes se lit comme
+un motif, là où une rangée de rectangles vides se lirait comme une panne. Le
+jour où le salon dépose ses photos, elles prennent la place sans que rien
+d'autre ne bouge.
 
 ## Comment sont calculés les créneaux
 

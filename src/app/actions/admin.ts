@@ -101,6 +101,7 @@ export type FormPrestation = {
   duree_minutes: number;
   prix: number | null;
   description: string;
+  image_url: string | null;
   ordre: number;
   actif: boolean;
 };
@@ -117,6 +118,7 @@ export async function enregistrerPrestation(form: FormPrestation): Promise<Resul
       duree_minutes: Math.max(5, Math.round(form.duree_minutes)),
       prix: form.prix,
       description: form.description.trim(),
+      image_url: form.image_url,
       ordre: form.ordre,
       actif: form.actif,
     };

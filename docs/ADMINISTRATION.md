@@ -69,7 +69,7 @@ Format JPG, PNG ou WebP, 8 Mo au maximum.
 | **Tableau de bord** | rendez-vous du jour, demandes à confirmer, commandes à traiter, chiffre du mois, ruptures de stock |
 | **Réservations** | planning par jour, avec les vues « à venir », « aujourd'hui », « à confirmer », « passées ». Confirmer, terminer, annuler, rouvrir |
 | **Commandes** | commandes de cosmétiques, articles et coordonnées de livraison. À traiter → confirmée → expédiée → livrée |
-| **Prestations** | catalogue complet, y compris ce qui est masqué |
+| **Prestations** | catalogue complet, y compris ce qui est masqué. Une photo par prestation |
 | **Produits** | catalogue de la boutique, stock, prix barrés, photos. Recherche, filtres par famille et par gamme, tri |
 | **Contenu** | tous les textes du site en une page, pour une relecture d'ensemble |
 | **Réglages** | horaires, capacité, frais de livraison, ouverture des services, jours de fermeture |
