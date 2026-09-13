@@ -234,7 +234,7 @@ export default function FluxReservation({
             </div>
           ) : (
             groupesCategorie.length > 0 && (
-              <ul className="mt-5 grid grid-cols-2 gap-3">
+              <ul className="mt-5 space-y-3">
                 {groupesCategorie.map(({ groupe, contenu }) => {
                   const retenues = contenu.filter((p) => selection.includes(p.id)).length;
                   return (
@@ -242,34 +242,43 @@ export default function FluxReservation({
                       <button
                         type="button"
                         onClick={() => setGroupeOuvert(groupe.id)}
-                        className={`flex h-full w-full flex-col overflow-hidden rounded-2xl border text-left transition-colors ${
+                        className={`block w-full overflow-hidden rounded-2xl border text-left transition-colors ${
                           retenues > 0 ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
                         }`}
                       >
-                        <span className="relative block aspect-[4/3] w-full">
+                        <span className="relative block aspect-[21/9] w-full">
                           <VisuelPrestation
                             nom={groupe.nom}
                             categorieId={groupe.categorie_id}
                             url={groupe.image_url}
                             className="h-full w-full rounded-none"
+                            tailleIcone="h-12 w-12"
                           />
+                          {/* Le nom se lit sur la photo : un voile sombre part du
+                              bas pour qu'il tienne sur une image claire comme
+                              sur une image foncée. */}
+                          <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-noir/85 via-noir/45 to-transparent px-4 pb-3 pt-8">
+                            <span className="block font-serif text-xl leading-tight text-cream">
+                              {groupe.nom}
+                            </span>
+                            {groupe.description && (
+                              <span className="mt-0.5 block truncate text-[0.72rem] font-light text-white/55">
+                                {groupe.description}
+                              </span>
+                            )}
+                          </span>
                           {retenues > 0 && (
-                            <span className="gold-gradient absolute right-2 top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-medium text-noir">
+                            <span className="gold-gradient absolute right-3 top-3 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-[0.7rem] font-medium text-noir">
                               {retenues}
                             </span>
                           )}
                         </span>
-                        <span className="flex flex-1 flex-col px-3 pb-3 pt-2">
-                          <span className="font-serif text-[1rem] leading-snug text-cream">
-                            {groupe.nom}
-                          </span>
-                          {groupe.description && (
-                            <span className="mt-0.5 text-[0.7rem] font-light leading-snug text-white/40">
-                              {groupe.description}
-                            </span>
-                          )}
-                          <span className="mt-auto pt-1.5 text-[0.68rem] font-light text-gold/70">
+                        <span className="flex items-center justify-between gap-3 px-4 py-2.5">
+                          <span className="text-[0.72rem] font-light text-gold/75">
                             {contenu.length} soin{contenu.length > 1 ? "s" : ""}
+                          </span>
+                          <span className="text-[0.72rem] font-light text-white/40">
+                            Voir →
                           </span>
                         </span>
                       </button>

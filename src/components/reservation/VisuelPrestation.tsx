@@ -21,11 +21,14 @@ export default function VisuelPrestation({
   categorieId,
   url,
   className = "",
+  tailleIcone = "h-7 w-7",
 }: {
   nom: string;
   categorieId: string;
   url: string | null;
   className?: string;
+  /** L'icône de repli ne se voit plus sur un grand bandeau : à ajuster. */
+  tailleIcone?: string;
 }) {
   const Icone = ICONES[categorieId] ?? IconEsthetique;
 
@@ -37,7 +40,7 @@ export default function VisuelPrestation({
         <Image src={url} alt={nom} fill sizes="72px" className="object-cover" />
       ) : (
         <span className="flex h-full items-center justify-center" aria-hidden="true">
-          <Icone className="h-7 w-7 text-gold/45" />
+          <Icone className={`${tailleIcone} text-gold/45`} />
         </span>
       )}
     </span>
