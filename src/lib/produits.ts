@@ -88,13 +88,19 @@ export function trierProduits(produits: Produit[], tri: Tri): Produit[] {
  */
 export function selectionAccueil(produits: Produit[], nombre = 12): Produit[] {
   const disponibles = produits.filter((p) => p.stock > 0);
+  if (disponibles.length === 0) return [];
+
   const parFamille = new Map<string, Produit[]>();
   for (const p of disponibles) {
-    const liste = parFamille.get(p.famille);
+    // Une famille inconnue — ou absente, le temps qu'un cache d'avant la colonne
+    // `famille` expire — ne doit pas faire disparaître le produit. Elle est
+    // traitée comme une famille de plus, servie après les autres.
+    const cle = FAMILLES.some((f) => f.id === p.famille) ? p.famille : FAMILLE_DEFAUT;
+    const liste = parFamille.get(cle);
     if (liste) liste.push(p);
-    else parFamille.set(p.famille, [p]);
+    else parFamille.set(cle, [p]);
   }
-  // L'ordre des familles est celui de FAMILLES : celles qui existent d'abord.
+  // L'ordre des familles est celui de FAMILLES ; celles qui existent d'abord.
   const files = FAMILLES.map((f) => parFamille.get(f.id)).filter(
     (l): l is Produit[] => l !== undefined,
   );
@@ -108,7 +114,10 @@ export function selectionAccueil(produits: Produit[], nombre = 12): Produit[] {
     }
     if (choix.length === avant) break; // toutes les familles épuisées
   }
-  return choix;
+
+  // Garde-fou : quoi qu'il arrive au classement, une boutique qui a des
+  // produits en montre. Mieux vaut une rangée mal panachée qu'une rangée vide.
+  return choix.length > 0 ? choix : disponibles.slice(0, nombre);
 }
 
 /** Filtre commun à la vitrine et au panneau. `null` = « tout ». */
