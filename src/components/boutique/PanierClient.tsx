@@ -176,12 +176,14 @@ export default function PanierClient({
             key={produit.id}
             className="flex gap-3 rounded-2xl border border-sand bg-white p-3"
           >
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-noir">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl">
               <VisuelProduit
                 nom={produit.nom}
                 marque={produit.marque}
                 url={produit.image_url}
                 sizes="80px"
+                padding="p-1.5"
+                compact
               />
             </div>
 

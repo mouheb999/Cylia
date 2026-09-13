@@ -28,12 +28,13 @@ export default function CarteProduit({
 
   return (
     <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-sand bg-white shadow-[0_2px_12px_rgba(42,37,33,0.04)]">
-      <Link href={`/boutique/${produit.slug}`} className="relative block aspect-square bg-noir">
+      <Link href={`/boutique/${produit.slug}`} className="relative block aspect-square overflow-hidden">
         <VisuelProduit
           nom={produit.nom}
           marque={produit.marque}
           url={produit.image_url}
           sizes="(max-width: 640px) 50vw, 220px"
+          padding="p-5"
         />
         {produit.ancien_prix && produit.ancien_prix > produit.prix && (
           <span className="gold-gradient absolute left-2 top-2 rounded-full px-2 py-0.5 text-[0.6rem] font-medium text-noir">
@@ -70,7 +71,7 @@ export default function CarteProduit({
           type="button"
           onClick={ajouter}
           disabled={epuise}
-          className={`mt-3 rounded-full py-2.5 text-sm transition-colors ${
+          className={`mt-auto pt-0.5 rounded-full py-2.5 text-sm transition-colors ${
             epuise
               ? "cursor-not-allowed border border-sand text-muted"
               : ajoute

@@ -107,8 +107,16 @@ autres.
 
 ## Photos
 
-Un produit sans photo n'affiche pas un rectangle gris : il montre un carré doré
-portant son initiale. La vitrine reste présentable le temps que le salon
+Les photos du catalogue sont des packshots **détourés** : le flacon seul, sur
+du transparent. Posées sur le fond noir d'origine, elles donnaient un carré
+sombre par produit, et `object-cover` recadrait au passage des images qui ne
+sont pas carrées — un 750 × 554 perdait un quart de sa largeur, bouchon ou
+étiquette compris. D'où le fond clair et `object-contain` : le flacon tient
+entier dans sa vignette, comme sur un présentoir. Le dégradé descend vers le
+blanc de la carte, pour qu'aucune couture ne marque le bas de la vignette.
+
+Un produit sans photo n'affiche pas un rectangle gris : il montre son initiale
+en doré sur le même fond clair. La vitrine reste présentable le temps que le salon
 photographie ses flacons, et l'absence de photo ne ressemble pas à une panne.
 
 Les photos s'ajoutent depuis la fiche produit, dans le panneau ou en mode

@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre } from "@/components/ui/champs";
+import VisuelProduit from "@/components/boutique/VisuelProduit";
 import { televerserImage } from "@/components/edition/televerser";
 import { enregistrerProduit, supprimerProduit } from "@/app/actions/admin";
 import { FAMILLES, FAMILLE_DEFAUT } from "@/lib/produits";
@@ -111,14 +111,8 @@ export default function FeuilleProduit({
       sousTitre="Les prix sont en dinars. Le stock diminue à chaque commande."
       onFermer={onFermer}
     >
-      <div className="relative mx-auto aspect-square w-32 overflow-hidden rounded-2xl border border-white/10 bg-noir">
-        {imageUrl ? (
-          <Image src={imageUrl} alt="" fill sizes="128px" className="object-cover" />
-        ) : (
-          <span className="flex h-full items-center justify-center font-script text-4xl text-gold/60">
-            {nom.trim().charAt(0) || "?"}
-          </span>
-        )}
+      <div className="relative mx-auto aspect-square w-32 overflow-hidden rounded-2xl border border-white/10">
+        <VisuelProduit nom={nom || "?"} url={imageUrl} sizes="128px" padding="p-3" compact />
       </div>
 
       <label className="mx-auto mt-3 block w-fit cursor-pointer rounded-full border border-gold/35 px-4 py-2 text-xs text-gold">

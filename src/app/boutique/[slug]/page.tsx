@@ -39,12 +39,13 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
     <>
       <Header />
       <main className="flex-1 bg-cream">
-        <div className="relative aspect-square w-full bg-noir">
+        <div className="relative aspect-square w-full">
           <VisuelProduit
             nom={produit.nom}
             marque={produit.marque}
             url={produit.image_url}
             sizes="100vw"
+            padding="p-8"
           />
         </div>
 

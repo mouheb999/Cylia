@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo, useState } from "react";
 import ChampStock from "@/components/admin/ChampStock";
 import FeuilleProduit from "@/components/boutique/FeuilleProduit";
+import VisuelProduit from "@/components/boutique/VisuelProduit";
 import { formatPrix } from "@/lib/format";
 import {
   famillesPresentes,
@@ -163,14 +163,14 @@ export default function GestionProduits({
                   onClick={() => setFiche(produit)}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-noir">
-                    {produit.image_url ? (
-                      <Image src={produit.image_url} alt="" fill sizes="56px" className="object-cover" />
-                    ) : (
-                      <span className="flex h-full items-center justify-center font-script text-2xl text-gold/60">
-                        {produit.nom.charAt(0)}
-                      </span>
-                    )}
+                  <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                    <VisuelProduit
+                      nom={produit.nom}
+                      url={produit.image_url}
+                      sizes="56px"
+                      padding="p-1"
+                      compact
+                    />
                   </span>
 
                   <span className="min-w-0 flex-1">
