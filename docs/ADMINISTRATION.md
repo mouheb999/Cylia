@@ -70,12 +70,32 @@ Format JPG, PNG ou WebP, 8 Mo au maximum.
 | **Réservations** | planning par jour, avec les vues « à venir », « aujourd'hui », « à confirmer », « passées ». Confirmer, terminer, annuler, rouvrir |
 | **Commandes** | commandes de cosmétiques, articles et coordonnées de livraison. À traiter → confirmée → expédiée → livrée |
 | **Prestations** | catalogue complet, y compris ce qui est masqué |
-| **Produits** | catalogue de la boutique, stock, prix barrés, photos |
+| **Produits** | catalogue de la boutique, stock, prix barrés, photos. Recherche, filtres par famille et par gamme, tri |
 | **Contenu** | tous les textes du site en une page, pour une relecture d'ensemble |
 | **Réglages** | horaires, capacité, frais de livraison, ouverture des services, jours de fermeture |
 
 Les numéros de téléphone sont cliquables : depuis un téléphone, la liste des
 rendez-vous du jour sert directement à rappeler les clientes.
+
+## Recompter le stock
+
+La quantité se change **dans la liste des produits**, sans ouvrir la fiche :
+« − », « + », ou le nombre tapé directement. Un réapprovisionnement, c'est
+vingt produits à recompter ; vingt allers-retours dans une fiche auraient fait
+renoncer.
+
+L'envoi part une seconde après la dernière frappe : taper « 24 » n'enregistre
+pas d'abord 2, et maintenir « + » ne fait qu'un enregistrement. Le nombre
+affiché suit le doigt sans attendre la réponse — si le serveur refuse, il
+revient à sa valeur d'avant et dit pourquoi, sous le champ.
+
+Seule la quantité part : enregistrer la fiche entière pour un stock écraserait
+le prix ou la description tels que la page les avait en mémoire, et donc une
+correction faite entre-temps depuis un autre écran.
+
+Pour retrouver un produit dans deux cents, la liste a une recherche, un filtre
+par famille et par gamme, et un tri — dont « stock le plus bas », qui met la
+tournée de réassort en tête.
 
 ## Ce qui n'est jamais effacé
 

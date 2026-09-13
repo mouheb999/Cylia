@@ -11,8 +11,9 @@ export default async function PageProduits() {
     <div>
       <h1 className="font-serif text-2xl font-light text-cream">Produits</h1>
       <p className="mt-1 text-sm font-light leading-relaxed text-white/45">
-        Le stock diminue à chaque commande. À zéro, le produit reste affiché
-        mais ne peut plus être commandé.
+        La quantité se corrige ici même, sans ouvrir la fiche. Le stock diminue
+        à chaque commande ; à zéro, le produit reste affiché mais ne peut plus
+        être commandé.
       </p>
 
       <GestionProduits produits={produits} devise={reglages.devise} />

@@ -7,6 +7,7 @@ import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre } from "@/components/ui/champs";
 import { televerserImage } from "@/components/edition/televerser";
 import { enregistrerProduit, supprimerProduit } from "@/app/actions/admin";
+import { FAMILLES, FAMILLE_DEFAUT } from "@/lib/produits";
 import type { Produit } from "@/lib/supabase/types";
 
 export const CATEGORIES_PRODUIT = [
@@ -42,6 +43,7 @@ export default function FeuilleProduit({
     produit?.ancien_prix != null ? String(produit.ancien_prix) : "",
   );
   const [categorie, setCategorie] = useState(produit?.categorie ?? "visage");
+  const [famille, setFamille] = useState(produit?.famille ?? FAMILLE_DEFAUT);
   const [stock, setStock] = useState(produit ? String(produit.stock) : "10");
   const [actif, setActif] = useState(produit?.actif ?? true);
   const [imageUrl, setImageUrl] = useState(produit?.image_url ?? null);
@@ -79,6 +81,7 @@ export default function FeuilleProduit({
         ancien_prix: nombreOuNull(ancienPrix),
         image_url: imageUrl,
         categorie,
+        famille,
         stock: Number(nombreOuNull(stock) ?? 0),
         ordre: produit?.ordre ?? 999,
         actif,
@@ -197,6 +200,24 @@ export default function FeuilleProduit({
           </select>
         </label>
       </div>
+
+      <label className="mt-4 block text-sm">
+        <span className="font-light text-white/60">Famille</span>
+        <select
+          value={famille}
+          onChange={(e) => setFamille(e.target.value)}
+          className={champSombre}
+        >
+          {FAMILLES.map((f) => (
+            <option key={f.id} value={f.id} className="bg-noir-soft">
+              {f.nom}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1.5 block text-xs font-light text-white/35">
+          C&apos;est elle qui range le produit dans les filtres de la boutique.
+        </span>
+      </label>
 
       <label className="mt-4 flex items-center gap-3 text-sm text-white/70">
         <input

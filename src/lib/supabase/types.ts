@@ -79,6 +79,8 @@ export type Produit = {
   ancien_prix: number | null;
   image_url: string | null;
   categorie: string;
+  /** Ce que le produit est — shampooing, masque, coloration. Voir `@/lib/produits`. */
+  famille: string;
   stock: number;
   ordre: number;
   actif: boolean;

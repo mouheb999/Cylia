@@ -63,14 +63,46 @@ table :
   au même prix : les éclater ferait des centaines de lignes pour rien. La fiche
   dit combien de nuances existent et invite la cliente à préciser la sienne
   dans la note de commande.
-- **Le stock est une supposition.** La source ne publie qu'un « disponible /
-  épuisé ». Chaque produit disponible part donc à 12, chaque produit épuisé à
-  0 : c'est un point de départ, à corriger dans `/admin/produits`.
+- **Le stock est une supposition.** La source ne le publie pas : tout part à
+  douze unités, à corriger dans `/admin/produits`, où la quantité se change
+  dans la liste sans ouvrir la fiche.
+
+Trois références restent masquées : la source ne leur donne aucun prix, et les
+publier à 0 DT reviendrait à les donner. Elles s'afficheront dès qu'un prix
+leur sera mis dans le panneau.
 
 Deux détails de fidélité : les prix en millimes (67,375 DT) sont arrondis au
 centime par `numeric(10, 2)`, ce qui touche douze références ; et deux fiches
 de la source décrivaient un autre produit que le leur — elles sont laissées
 vides plutôt que fausses, comme les douze que la source ne décrit pas.
+
+## Trier deux cents flacons
+
+Une vitrine de deux cents produits ne se parcourt pas au doigt. Trois entrées,
+au-dessus de la grille :
+
+- les **familles**, en puces — shampooings, après-shampooings, masques,
+  sans rinçage, huiles & sérums, coiffage, coloration, barbe, accessoires ;
+- les **gammes**, en liste — Keune Care, Keune Style, Keune So Pure,
+  1922 by J.M. Keune ;
+- le **tri** — ordre du catalogue, prix croissant ou décroissant, nom.
+
+La famille est une colonne de la table, pas une devinette faite à l'affichage :
+`categorie` dit dans quel rayon d'institut un produit vit (visage, cheveux,
+corps), la famille dit ce qu'il **est**. Avec deux cents flacons tous
+« cheveux », seule la seconde range quelque chose.
+
+Elle est posée par une fonction en base, `famille_produit(nom, marque)`, et non
+par une liste de références : un produit ajouté plus tard se range aussi, et le
+classement se rejoue d'une seule instruction. L'ordre de ses règles compte — un
+« Color Brillianz Shampooing » soigne une couleur, il ne la pose pas : la règle
+« shampooing » passe donc avant « coloration ».
+
+Les compteurs des puces suivent la gamme choisie, et l'inverse : ils annoncent
+ce qu'on trouvera vraiment. Une famille vide ne s'affiche pas. Sous douze
+produits, les filtres disparaissent — ils encombreraient plus qu'ils
+n'aideraient. Quel que soit le tri, un produit épuisé passe derrière les
+autres.
 
 ## Photos
 

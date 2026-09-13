@@ -246,6 +246,7 @@ export type FormProduit = {
   ancien_prix: number | null;
   image_url: string | null;
   categorie: string;
+  famille: string;
   stock: number;
   ordre: number;
   actif: boolean;
@@ -265,6 +266,7 @@ export async function enregistrerProduit(form: FormProduit): Promise<Resultat> {
       ancien_prix: form.ancien_prix,
       image_url: form.image_url,
       categorie: form.categorie,
+      famille: form.famille,
       stock: Math.max(0, Math.round(form.stock)),
       ordre: form.ordre,
       actif: form.actif,
@@ -283,6 +285,26 @@ export async function enregistrerProduit(form: FormProduit): Promise<Resultat> {
     for (let n = 2; existants.has(slug); n += 1) slug = `${base}-${n}`;
 
     const { error } = await supabase.from("produits").insert({ slug, ...ligne });
+    if (error) throw error;
+  });
+}
+
+/**
+ * Stock d'un seul produit.
+ *
+ * `enregistrerProduit` réécrit toute la fiche : s'en servir pour changer une
+ * quantité renverrait le nom, la description et le prix tels que la page les a
+ * en mémoire, et écraserait une correction faite entre-temps ailleurs. Ici, une
+ * seule colonne part, et deux réapprovisionnements simultanés ne peuvent pas se
+ * marcher dessus.
+ */
+export async function definirStock(id: string, stock: number): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase
+      .from("produits")
+      .update({ stock: Math.max(0, Math.min(100000, Math.round(stock))) })
+      .eq("id", id);
     if (error) throw error;
   });
 }
