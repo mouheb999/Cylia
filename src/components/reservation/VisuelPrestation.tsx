@@ -20,12 +20,15 @@ export default function VisuelPrestation({
   nom,
   categorieId,
   url,
+  sizes = "72px",
   className = "",
   tailleIcone = "h-7 w-7",
 }: {
   nom: string;
   categorieId: string;
   url: string | null;
+  /** Largeur rendue, pour que Next serve la bonne taille de fichier. */
+  sizes?: string;
   className?: string;
   /** L'icône de repli ne se voit plus sur un grand bandeau : à ajuster. */
   tailleIcone?: string;
@@ -37,7 +40,7 @@ export default function VisuelPrestation({
       className={`relative block shrink-0 overflow-hidden rounded-xl bg-white/[0.06] ${className}`}
     >
       {url ? (
-        <Image src={url} alt={nom} fill sizes="72px" className="object-cover" />
+        <Image src={url} alt={nom} fill sizes={sizes} className="object-cover" />
       ) : (
         <span className="flex h-full items-center justify-center" aria-hidden="true">
           <Icone className={`${tailleIcone} text-gold/45`} />

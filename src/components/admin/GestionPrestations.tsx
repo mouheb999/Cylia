@@ -76,6 +76,7 @@ export default function GestionPrestations({
                         nom={groupe.nom}
                         categorieId={groupe.categorie_id}
                         url={groupe.image_url}
+                        sizes="48px"
                         className="h-9 w-12 rounded-lg"
                       />
                       <span className="min-w-0 flex-1">

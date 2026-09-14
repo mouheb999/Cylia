@@ -105,6 +105,7 @@ export default function FeuillePrestation({
           nom={nom || "Prestation"}
           categorieId={categorieId}
           url={imageUrl}
+          sizes="112px"
           className="mx-auto h-28 w-28 rounded-2xl border border-white/10"
         />
         <label className="mt-2.5 inline-block cursor-pointer rounded-full border border-gold/35 px-4 py-2 text-xs text-gold">

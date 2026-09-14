@@ -251,6 +251,7 @@ export default function FluxReservation({
                             nom={groupe.nom}
                             categorieId={groupe.categorie_id}
                             url={groupe.image_url}
+                            sizes="(max-width: 640px) 100vw, 640px"
                             className="h-full w-full rounded-none"
                             tailleIcone="h-12 w-12"
                           />

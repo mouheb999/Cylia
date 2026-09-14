@@ -87,6 +87,7 @@ export default function FeuilleGroupe({
           nom={nom || "Groupe"}
           categorieId={categorieId}
           url={imageUrl}
+          sizes="144px"
           className="mx-auto h-28 w-36 rounded-2xl border border-white/10"
         />
         <label className="mt-2.5 inline-block cursor-pointer rounded-full border border-gold/35 px-4 py-2 text-xs text-gold">
