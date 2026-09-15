@@ -57,12 +57,15 @@ export const PRESTATIONS_DEFAUT: Prestation[] = [
   prestation("coloration", "Coloration", "coiffure", 120, 2),
   prestation("balayage", "Balayage & mèches", "coiffure", 150, 3),
   prestation("soin-capillaire", "Soin capillaire Keune", "coiffure", 45, 4),
-  prestation("head-spa", "Head Spa", "coiffure", 60, 5),
   prestation("hydrafacial", "Soin visage Hydrafacial", "esthetique", 60, 1),
   prestation("hifu", "HIFU — lifting non chirurgical", "esthetique", 90, 2),
   prestation("epilation", "Épilation", "esthetique", 45, 3),
   prestation("ongles", "Manucure & pose d'ongles", "esthetique", 90, 4),
   prestation("make-up", "Make-up", "esthetique", 60, 5),
+  // Les trois formules du Head Spa : le déroulé tient dans la description.
+  prestation("head-spa-essentiel", "Pack Head Spa Essentiel", "bien-etre", 60, 19, "Nettoyage du cuir chevelu · Massage relaxant · Soin cheveux · Brushing"),
+  prestation("head-spa-detente", "Pack Head Spa Détente", "bien-etre", 90, 20, "Nettoyage en profondeur · Massage cuir chevelu, nuque et épaules · Soin capillaire adapté · Vapeur · Brushing"),
+  prestation("head-spa-signature", "Pack Head Spa Signature", "bien-etre", 120, 21, "Rituel Head Spa complet · Massage relaxant du cuir chevelu, nuque et épaules · Soin profond et vapeur · Soin capillaire premium · Brushing · Expérience bien-être complète"),
   // La carte des massages, dans l'ordre de l'affiche du salon.
   prestation("massage-relaxant", "Massage relaxant (californien)", "bien-etre", 60, 1, "Des pressions lentes et enveloppantes, pour relâcher."),
   prestation("massage-suedois", "Massage suédois", "bien-etre", 60, 2, "Plus appuyé, il dénoue les muscles fatigués."),
