@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Jost, Parisienne } from "next/font/google";
 import AgentService from "@/components/AgentService";
-import BarreEdition from "@/components/edition/BarreEdition";
 import NettoyerAncre from "@/components/NettoyerAncre";
 import { FournisseurEdition } from "@/components/edition/ContexteEdition";
 import { chargerContenus } from "@/lib/donnees";
@@ -73,8 +72,11 @@ export const viewport: Viewport = {
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  // Le contenu part dans le HTML de chaque page ; le fait d'être administratrice
-  // décide seulement de l'apparition de la barre d'édition.
+  // Le contenu part dans le HTML de chaque page : c'est lui qui alimente les
+  // blocs `Modifiable`, y compris pour une visiteuse. `estAdmin` ne commande
+  // plus rien d'affiché depuis le retrait de la barre flottante ; il reste
+  // passé au fournisseur, qui en est la seule porte d'entrée si le mode
+  // édition sur site revient un jour.
   const [contenus, admin] = await Promise.all([
     chargerContenus(),
     supabaseConfigure ? adminConnecte() : Promise.resolve(null),
@@ -90,7 +92,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <AgentService />
         <FournisseurEdition estAdmin={admin !== null} contenus={contenus}>
           {children}
-          <BarreEdition />
         </FournisseurEdition>
       </body>
     </html>

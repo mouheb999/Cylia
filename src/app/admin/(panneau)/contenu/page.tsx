@@ -10,9 +10,9 @@ export default async function PageContenu() {
     <div>
       <h1 className="font-serif text-2xl font-light text-cream">Textes du site</h1>
       <p className="mt-1 text-sm font-light leading-relaxed text-white/45">
-        Vous pouvez aussi modifier ces textes directement sur le site&nbsp;: ouvrez
-        une page et touchez « Modifier le site » en bas de l&apos;écran. Les photos
-        se changent de la même façon.
+        Tous les textes du site, rassemblés ici pour une relecture d&apos;ensemble.
+        Les photos des prestations et des produits se changent depuis leurs
+        fiches, dans « Prestations » et « Produits ».
       </p>
 
       <GestionContenu contenus={contenus} />

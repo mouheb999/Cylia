@@ -36,11 +36,19 @@ premières ne font qu'éviter d'afficher des pages inutiles.
 
 ## Le mode édition
 
-Connectée, une barre flotte en bas de chaque page du site : **Modifier le
-site**. Une fois allumée, tout ce qui est modifiable s'entoure d'un liseré
-doré. On touche, un panneau monte du bas de l'écran, on corrige, on enregistre.
+**La barre flottante « Modifier le site » a été retirée.** Elle suivait
+l'administratrice sur chaque page du site et masquait le bas de l'écran, là où
+tombe le pouce — pour un mode qu'on n'allume que rarement.
 
-Ce qui se modifie ainsi :
+Les textes et les photos se corrigent maintenant depuis le panneau :
+`/admin/contenu` les rassemble tous sur une page, `/admin/prestations` et
+`/admin/produits` portent les fiches et leurs photos.
+
+Le reste du mécanisme est intact — blocs `Modifiable`, feuille d'édition,
+valeurs d'origine. Seule son entrée sur le site public a disparu ; la remettre
+tient en une ligne dans `src/app/layout.tsx`.
+
+Ce qui se modifiait ainsi, et se modifie désormais depuis le panneau :
 
 | Sur la page | Quoi |
 | --- | --- |
@@ -49,8 +57,8 @@ Ce qui se modifie ainsi :
 | Réserver | titres, et chaque prestation — plus « Ajouter une prestation » |
 | Pied de page | adresse, horaires, numéro affiché |
 
-Le panneau monte du bas plutôt qu'au centre : le salon modifie son site au
-téléphone, et le bas de l'écran est là où tombe le pouce.
+La feuille d'édition monte du bas plutôt qu'au centre : le salon corrige son
+site au téléphone, et le bas de l'écran est là où tombe le pouce.
 
 Chaque bloc porte une **valeur d'origine**, écrite dans le code
 (`src/lib/contenu.ts`). Tant que personne n'y touche, c'est elle qui s'affiche.
