@@ -80,6 +80,8 @@ export type Groupe = {
   image_url: string | null;
   /** Album montré en haut du groupe ouvert, couverture en tête. */
   images: string[];
+  /** La carte des prestations du groupe affiche-t-elle leur durée ? */
+  duree_visible: boolean;
   ordre: number;
   actif: boolean;
   cree_le: string;

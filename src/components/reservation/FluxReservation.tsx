@@ -66,6 +66,9 @@ export default function FluxReservation({
     [prestations],
   );
 
+  // La durée n'est montrée que là où elle est sûre — voir `duree_visible`.
+  const groupeParId = useMemo(() => new Map(groupes.map((g) => [g.id, g])), [groupes]);
+
   // Le panier survit aux rechargements : une prestation retirée du catalogue
   // entre-temps ne doit pas bloquer le tunnel.
   const selection = useMemo(
@@ -297,6 +300,12 @@ export default function FluxReservation({
           <ul className="mt-5 space-y-2.5">
             {aMontrer.map((p) => {
               const retenue = selection.includes(p.id);
+              const details = [
+                p.groupe_id && groupeParId.get(p.groupe_id)?.duree_visible
+                  ? formatDuree(p.duree_minutes)
+                  : null,
+                p.prix != null ? formatPrix(p.prix, devise) : null,
+              ].filter((valeur): valeur is string => valeur !== null);
               return (
                 <li key={p.id}>
                   <button
@@ -313,10 +322,11 @@ export default function FluxReservation({
                       >
                         {p.nom}
                       </span>
-                      <span className="mt-0.5 block text-xs font-light text-white/45">
-                        {formatDuree(p.duree_minutes)}
-                        {p.prix != null && ` · ${formatPrix(p.prix, devise)}`}
-                      </span>
+                      {details.length > 0 && (
+                        <span className="mt-0.5 block text-xs font-light text-white/45">
+                          {details.join(" · ")}
+                        </span>
+                      )}
                       {p.description && (
                         <span className="mt-1 block text-xs font-light leading-snug text-white/35">
                           {p.description}

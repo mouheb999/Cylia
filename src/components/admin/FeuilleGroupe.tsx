@@ -28,6 +28,7 @@ export default function FeuilleGroupe({
   const [categorieId, setCategorieId] = useState(groupe?.categorie_id ?? categorieParDefaut);
   const [images, setImages] = useState<string[]>(groupe ? photosDuGroupe(groupe) : []);
   const [actif, setActif] = useState(groupe?.actif ?? true);
+  const [dureeVisible, setDureeVisible] = useState(groupe?.duree_visible ?? false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [depot, setDepot] = useState(false);
   const [enCours, demarrer] = useTransition();
@@ -74,6 +75,7 @@ export default function FeuilleGroupe({
         nom,
         description,
         images,
+        duree_visible: dureeVisible,
         ordre: groupe?.ordre ?? 999,
         actif,
       });
@@ -232,6 +234,23 @@ export default function FeuilleGroupe({
           className="h-4 w-4 accent-[color:var(--color-gold)]"
         />
         Visible sur le site
+      </label>
+
+      <label className="mt-4 flex items-start gap-3 text-sm text-white/70">
+        <input
+          type="checkbox"
+          checked={dureeVisible}
+          onChange={(e) => setDureeVisible(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--color-gold)]"
+        />
+        <span>
+          Afficher la durée sur les cartes
+          <span className="mt-0.5 block text-xs font-light text-white/35">
+            À cocher quand les durées de ce groupe sont sûres. Décochée, la
+            durée sert toujours à calculer les créneaux — elle ne s&apos;affiche
+            simplement pas.
+          </span>
+        </span>
       </label>
 
       {erreur && <p className="mt-4 text-sm text-red-300">{erreur}</p>}

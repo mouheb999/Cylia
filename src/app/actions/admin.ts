@@ -123,6 +123,7 @@ export type FormGroupe = {
   description: string;
   /** L'album du groupe. La première photo sert de couverture. */
   images: string[];
+  duree_visible: boolean;
   ordre: number;
   actif: boolean;
 };
@@ -142,6 +143,7 @@ export async function enregistrerGroupe(form: FormGroupe): Promise<Resultat> {
       description: form.description.trim(),
       images,
       image_url: images[0] ?? null,
+      duree_visible: form.duree_visible,
       ordre: form.ordre,
       actif: form.actif,
     };
