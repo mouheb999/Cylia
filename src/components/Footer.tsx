@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import logo from "@/images/logo.png";
+import LienSuivi from "@/components/LienSuivi";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import type { InfosSite } from "@/lib/site";
@@ -23,7 +24,8 @@ export default function Footer({ site }: { site: InfosSite }) {
       <div className="gold-rule mx-auto mt-6 h-px w-20" aria-hidden="true" />
 
       <address className="mt-6 not-italic">
-        <a
+        <LienSuivi
+          evenement="FindLocation"
           href={site.lienMaps}
           target="_blank"
           rel="noopener noreferrer"
@@ -43,7 +45,7 @@ export default function Footer({ site }: { site: InfosSite }) {
               defaut={CONTENUS_DEFAUT["contact.adresse2"]}
             />
           </span>
-        </a>
+        </LienSuivi>
 
         <p className="mt-4 flex items-center justify-center gap-2 text-[0.9rem] font-light text-white/75">
           <IconClock className="h-4 w-4 shrink-0 text-gold" />
@@ -55,7 +57,9 @@ export default function Footer({ site }: { site: InfosSite }) {
         </p>
 
         <p className="mt-4">
-          <a
+          <LienSuivi
+            evenement="Contact"
+            parametres={{ method: "phone" }}
             href={`tel:${site.telephoneLien}`}
             className="inline-flex items-center gap-2 font-serif text-xl tracking-wide text-gold lining-nums"
           >
@@ -65,12 +69,14 @@ export default function Footer({ site }: { site: InfosSite }) {
               titre="Numéro affiché"
               defaut={CONTENUS_DEFAUT["contact.telephone"]}
             />
-          </a>
+          </LienSuivi>
         </p>
 
         {site.fixe && (
           <p className="mt-2">
-            <a
+            <LienSuivi
+              evenement="Contact"
+              parametres={{ method: "phone" }}
               href={`tel:${site.fixeLien}`}
               className="inline-flex items-center gap-2 font-serif text-base tracking-wide text-white/70 lining-nums"
             >
@@ -80,7 +86,7 @@ export default function Footer({ site }: { site: InfosSite }) {
                 titre="Numéro de fixe"
                 defaut={CONTENUS_DEFAUT["contact.fixe"]}
               />
-            </a>
+            </LienSuivi>
           </p>
         )}
       </address>
@@ -96,7 +102,9 @@ export default function Footer({ site }: { site: InfosSite }) {
         />
       </Link>
 
-      <a
+      <LienSuivi
+        evenement="Contact"
+        parametres={{ method: "whatsapp" }}
         href={site.whatsapp}
         target="_blank"
         rel="noopener noreferrer"
@@ -109,7 +117,7 @@ export default function Footer({ site }: { site: InfosSite }) {
             {site.whatsappNumero}
           </span>
         )}
-      </a>
+      </LienSuivi>
 
       {/* Le fond sombre évite un rectangle clair si la carte tarde ou si le
           réseau de la visiteuse bloque Google. L'itinéraire juste en dessous
@@ -124,7 +132,8 @@ export default function Footer({ site }: { site: InfosSite }) {
         />
       </div>
 
-      <a
+      <LienSuivi
+        evenement="FindLocation"
         href={site.lienItineraire}
         target="_blank"
         rel="noopener noreferrer"
@@ -132,7 +141,7 @@ export default function Footer({ site }: { site: InfosSite }) {
       >
         <IconPin className="h-4 w-4 text-gold" />
         Itinéraire
-      </a>
+      </LienSuivi>
 
       <ul className="mt-8 flex items-center justify-center gap-3">
         {[

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Jost, Parisienne } from "next/font/google";
 import AgentService from "@/components/AgentService";
+import MetaPixel from "@/components/MetaPixel";
 import NettoyerAncre from "@/components/NettoyerAncre";
 import { FournisseurEdition } from "@/components/edition/ContexteEdition";
 import { chargerContenus } from "@/lib/donnees";
@@ -103,6 +104,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cormorant.variable} ${jost.variable} ${parisienne.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-noir">
+        <MetaPixel />
         <NettoyerAncre />
         <AgentService />
         <FournisseurEdition estAdmin={admin !== null} contenus={contenus}>

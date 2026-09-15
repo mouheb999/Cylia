@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatDateLongue, formatDuree, minutesVersHeure } from "@/lib/format";
+import { track } from "@/lib/fbq";
 import type { Reservation } from "@/lib/supabase/types";
 
 export default function Confirmation({
@@ -72,6 +73,7 @@ export default function Confirmation({
 
       <a
         href={`tel:${telephoneSalon}`}
+        onClick={() => track("Contact", { method: "phone" })}
         className="mt-4 inline-block text-sm font-light text-gold"
       >
         Une question&nbsp;? Appelez le salon

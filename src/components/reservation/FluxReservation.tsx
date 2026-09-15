@@ -11,6 +11,7 @@ import { useEdition } from "@/components/edition/ContexteEdition";
 import { IconArrow } from "@/components/Icons";
 import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
 import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
+import { track } from "@/lib/fbq";
 import VisuelPrestation from "./VisuelPrestation";
 import DiaporamaGroupe, { photosDuGroupe } from "./DiaporamaGroupe";
 import type { Categorie, Groupe, Prestation, Reservation } from "@/lib/supabase/types";
@@ -123,6 +124,9 @@ export default function FluxReservation({
         return;
       }
       viderPanier();
+      // Le rendez-vous est parti au salon : c'est là, et nulle part avant, que
+      // la publicité a produit quelque chose. Rien d'identifiant ne part avec.
+      track("Lead", { content_name: "reservation" });
       setConfirmee(reponse.reservation);
     });
   }
@@ -148,7 +152,11 @@ export default function FluxReservation({
           La réservation en ligne est momentanément suspendue.
           <br />
           Appelez le salon au{" "}
-          <a href={`tel:${telephoneSalon}`} className="text-gold">
+          <a
+            href={`tel:${telephoneSalon}`}
+            onClick={() => track("Contact", { method: "phone" })}
+            className="text-gold"
+          >
             {telephoneSalon}
           </a>
           .

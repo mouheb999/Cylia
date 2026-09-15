@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
+import LienSuivi from "@/components/LienSuivi";
 import { Texte } from "@/components/edition/Modifiable";
 import FluxReservation from "@/components/reservation/FluxReservation";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
@@ -79,9 +80,14 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
       <footer className="bg-noir px-6 pb-10 text-center">
         <p className="text-[0.75rem] font-light leading-relaxed text-white/40">
           Une question&nbsp;? Appelez le{" "}
-          <a href={`tel:${site.telephoneLien}`} className="text-gold">
+          <LienSuivi
+            evenement="Contact"
+            parametres={{ method: "phone" }}
+            href={`tel:${site.telephoneLien}`}
+            className="text-gold"
+          >
             {site.telephone}
-          </a>
+          </LienSuivi>
           <br />
           {site.horaires}
         </p>
