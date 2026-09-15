@@ -35,6 +35,14 @@ export type DonneesPubliques = {
 /** Étiquette de cache : toute écriture d'administration la périme. */
 export const TAG_SITE = "site";
 
+/**
+ * Millésime du cache du catalogue.
+ *
+ * À incrémenter en même temps qu'une modification du catalogue faite hors du
+ * panneau — voir la clé de `lireDonneesPubliques` plus bas.
+ */
+const MILLESIME = "2";
+
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
   categories: CATEGORIES_DEFAUT,
@@ -82,7 +90,13 @@ const lireDonneesPubliques = unstable_cache(
       fermetures: brut.fermetures ?? [],
     };
   },
-  ["donnees-publiques"],
+  // Le millésime fait partie de la clé du cache : l'incrémenter abandonne
+  // l'entrée précédente, et la première visite après le déploiement relit la
+  // base. C'est la sortie de secours quand le catalogue a été modifié
+  // ailleurs que dans le panneau — une migration jouée à la main, une
+  // correction depuis Supabase : là, personne n'a appelé `updateTag`, et le
+  // site resservirait l'ancien catalogue jusqu'à une heure durant.
+  ["donnees-publiques", MILLESIME],
   { tags: [TAG_SITE], revalidate: 3600 },
 );
 

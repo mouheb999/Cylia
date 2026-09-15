@@ -28,6 +28,13 @@ L'heure n'est qu'un filet de sécurité. Toute écriture du panneau appelle
 `updateTag("site")` : l'administratrice voit sa correction dès la page
 suivante, sans attendre l'expiration.
 
+Ce mécanisme suppose que le catalogue ne change **que** depuis le panneau. Une
+migration jouée à la main, une ligne corrigée depuis Supabase : personne
+n'appelle `updateTag`, et le site resservirait l'ancien catalogue jusqu'à une
+heure durant. La sortie de secours est le millésime de `src/lib/donnees.ts` —
+il fait partie de la clé du cache, l'incrémenter abandonne l'entrée précédente
+et la première visite après le déploiement relit la base.
+
 Un échec n'est jamais mis en cache — le `try` est à l'extérieur de la fonction
 cachée. Une coupure passagère de Supabase ne se retrouve donc pas figée en
 « site de repli » pour une heure.
