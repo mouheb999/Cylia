@@ -12,7 +12,7 @@ export default function Hero() {
           cle="hero.image"
           titre="Photo du bandeau"
           defaut={salon1}
-          alt="Les postes de coiffure de la Maison de Beauté CYLIA à Sousse"
+          alt="La réception de la Maison de Beauté CYLIA à Sousse"
           conteneur="absolute inset-0"
           className="object-cover object-center"
           sizes="100vw"
