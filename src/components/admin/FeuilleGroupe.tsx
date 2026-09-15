@@ -6,6 +6,7 @@ import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre } from "@/components/ui/champs";
 import { televerserImage } from "@/components/edition/televerser";
 import VisuelPrestation from "@/components/reservation/VisuelPrestation";
+import { photosDuGroupe } from "@/components/reservation/DiaporamaGroupe";
 import { enregistrerGroupe, supprimerGroupe } from "@/app/actions/admin";
 import type { Categorie, Groupe } from "@/lib/supabase/types";
 
@@ -25,23 +26,42 @@ export default function FeuilleGroupe({
   const [nom, setNom] = useState(groupe?.nom ?? "");
   const [description, setDescription] = useState(groupe?.description ?? "");
   const [categorieId, setCategorieId] = useState(groupe?.categorie_id ?? categorieParDefaut);
-  const [imageUrl, setImageUrl] = useState(groupe?.image_url ?? null);
+  const [images, setImages] = useState<string[]>(groupe ? photosDuGroupe(groupe) : []);
   const [actif, setActif] = useState(groupe?.actif ?? true);
   const [erreur, setErreur] = useState<string | null>(null);
   const [depot, setDepot] = useState(false);
   const [enCours, demarrer] = useTransition();
 
-  async function deposer(fichier: File | undefined) {
-    if (!fichier) return;
+  async function deposer(fichiers: FileList | null) {
+    const choisis = Array.from(fichiers ?? []);
+    if (choisis.length === 0) return;
     setErreur(null);
     setDepot(true);
     try {
-      setImageUrl(await televerserImage(fichier, "groupes"));
+      const deposees = await Promise.all(
+        choisis.map((fichier) => televerserImage(fichier, "groupes")),
+      );
+      setImages((precedentes) => [...precedentes, ...deposees]);
     } catch (probleme) {
       setErreur(probleme instanceof Error ? probleme.message : "Dépôt impossible.");
     } finally {
       setDepot(false);
     }
+  }
+
+  /** Une photo remonte d'un cran ; celle de tête est la couverture. */
+  function deplacer(index: number, sens: -1 | 1) {
+    setImages((precedentes) => {
+      const cible = index + sens;
+      if (cible < 0 || cible >= precedentes.length) return precedentes;
+      const copie = [...precedentes];
+      [copie[index], copie[cible]] = [copie[cible], copie[index]];
+      return copie;
+    });
+  }
+
+  function retirerPhoto(index: number) {
+    setImages((precedentes) => precedentes.filter((_, i) => i !== index));
   }
 
   function enregistrer() {
@@ -53,7 +73,7 @@ export default function FeuilleGroupe({
         categorie_id: categorieId,
         nom,
         description,
-        image_url: imageUrl,
+        images,
         ordre: groupe?.ordre ?? 999,
         actif,
       });
@@ -79,36 +99,94 @@ export default function FeuilleGroupe({
   return (
     <Feuille
       titre={groupe ? "Modifier le groupe" : "Nouveau groupe"}
-      sousTitre="Un groupe rassemble des prestations voisines — les massages, l'épilation — et c'est lui qui porte la photo."
+      sousTitre="Un groupe rassemble des prestations voisines — les massages, l'épilation — et c'est lui qui porte les photos."
       onFermer={onFermer}
     >
-      <div className="mx-auto w-fit text-center">
-        <VisuelPrestation
-          nom={nom || "Groupe"}
-          categorieId={categorieId}
-          url={imageUrl}
-          sizes="144px"
-          className="mx-auto h-28 w-36 rounded-2xl border border-white/10"
-        />
-        <label className="mt-2.5 inline-block cursor-pointer rounded-full border border-gold/35 px-4 py-2 text-xs text-gold">
-          {depot ? "Envoi…" : imageUrl ? "Changer la photo" : "Ajouter une photo"}
+      <div>
+        <p className="text-sm font-light text-white/60">
+          Photos{images.length > 1 && ` (${images.length})`}
+        </p>
+        <p className="mt-1 text-xs font-light text-white/35">
+          Elles défilent en haut du groupe, une fois ouvert. La première sert de
+          couverture sur la vignette.
+        </p>
+
+        {images.length === 0 ? (
+          <VisuelPrestation
+            nom={nom || "Groupe"}
+            categorieId={categorieId}
+            url={null}
+            sizes="144px"
+            className="mt-3 h-28 w-full rounded-2xl border border-dashed border-white/15"
+            tailleIcone="h-10 w-10"
+          />
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {images.map((url, index) => (
+              <li
+                key={url}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-2"
+              >
+                <VisuelPrestation
+                  nom={`${nom || "Groupe"} — photo ${index + 1}`}
+                  categorieId={categorieId}
+                  url={url}
+                  sizes="88px"
+                  className="h-16 w-[5.5rem] rounded-xl"
+                />
+                <span className="min-w-0 flex-1 text-xs font-light text-white/40">
+                  {index === 0 ? "Couverture" : `Photo ${index + 1}`}
+                </span>
+                <span className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => deplacer(index, -1)}
+                    disabled={occupe || index === 0}
+                    aria-label={`Monter la photo ${index + 1}`}
+                    className="h-8 w-8 rounded-full border border-white/15 text-white/60 disabled:opacity-25"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deplacer(index, 1)}
+                    disabled={occupe || index === images.length - 1}
+                    aria-label={`Descendre la photo ${index + 1}`}
+                    className="h-8 w-8 rounded-full border border-white/15 text-white/60 disabled:opacity-25"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => retirerPhoto(index)}
+                    disabled={occupe}
+                    aria-label={`Retirer la photo ${index + 1}`}
+                    className="h-8 w-8 rounded-full border border-red-400/30 text-red-300/80 disabled:opacity-25"
+                  >
+                    ✕
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <label className="mt-3 inline-block cursor-pointer rounded-full border border-gold/35 px-4 py-2 text-xs text-gold">
+          {depot ? "Envoi…" : images.length === 0 ? "Ajouter des photos" : "En ajouter d'autres"}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/avif"
+            multiple
             className="sr-only"
             disabled={occupe}
-            onChange={(e) => deposer(e.target.files?.[0])}
+            onChange={(e) => {
+              deposer(e.target.files);
+              // Sans cela, redéposer le même fichier ne déclencherait rien :
+              // la valeur du champ n'aurait pas changé.
+              e.target.value = "";
+            }}
           />
         </label>
-        {imageUrl && (
-          <button
-            type="button"
-            onClick={() => setImageUrl(null)}
-            className="mt-2 block w-full text-[0.7rem] font-light text-white/35"
-          >
-            Retirer la photo
-          </button>
-        )}
       </div>
 
       <label className="mt-5 block text-sm">

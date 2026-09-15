@@ -12,6 +12,7 @@ import { IconArrow } from "@/components/Icons";
 import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
 import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
 import VisuelPrestation from "./VisuelPrestation";
+import DiaporamaGroupe, { photosDuGroupe } from "./DiaporamaGroupe";
 import type { Categorie, Groupe, Prestation, Reservation } from "@/lib/supabase/types";
 import Confirmation from "./Confirmation";
 import EtapeCoordonnees from "./EtapeCoordonnees";
@@ -220,18 +221,21 @@ export default function FluxReservation({
           </div>
 
           {ouvert ? (
-            <div className="mt-5 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setGroupeOuvert(null)}
-                className="press shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/60"
-              >
-                ← Retour
-              </button>
-              <h3 className="min-w-0 flex-1 truncate font-serif text-lg text-gold">
-                {ouvert.groupe.nom}
-              </h3>
-            </div>
+            <>
+              <div className="mt-5 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setGroupeOuvert(null)}
+                  className="press shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/60"
+                >
+                  ← Retour
+                </button>
+                <h3 className="min-w-0 flex-1 truncate font-serif text-lg text-gold">
+                  {ouvert.groupe.nom}
+                </h3>
+              </div>
+              <DiaporamaGroupe groupe={ouvert.groupe} />
+            </>
           ) : (
             groupesCategorie.length > 0 && (
               <ul className="mt-5 space-y-3">
@@ -250,7 +254,7 @@ export default function FluxReservation({
                           <VisuelPrestation
                             nom={groupe.nom}
                             categorieId={groupe.categorie_id}
-                            url={groupe.image_url}
+                            url={photosDuGroupe(groupe)[0] ?? null}
                             sizes="(max-width: 640px) 100vw, 640px"
                             className="h-full w-full rounded-none"
                             tailleIcone="h-12 w-12"
@@ -299,16 +303,10 @@ export default function FluxReservation({
                     type="button"
                     onClick={() => basculerPrestation(p.id)}
                     aria-pressed={retenue}
-                    className={`press flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left ${
+                    className={`press flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left ${
                       retenue ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
                     }`}
                   >
-                    <VisuelPrestation
-                      nom={p.nom}
-                      categorieId={p.categorie_id}
-                      url={p.image_url}
-                      className="h-[4.5rem] w-[4.5rem]"
-                    />
                     <span className="min-w-0 flex-1">
                       <span
                         className={`block font-serif text-[1.05rem] ${retenue ? "text-gold" : "text-cream"}`}

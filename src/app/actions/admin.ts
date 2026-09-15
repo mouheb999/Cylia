@@ -121,7 +121,8 @@ export type FormGroupe = {
   categorie_id: string;
   nom: string;
   description: string;
-  image_url: string | null;
+  /** L'album du groupe. La première photo sert de couverture. */
+  images: string[];
   ordre: number;
   actif: boolean;
 };
@@ -132,11 +133,15 @@ export async function enregistrerGroupe(form: FormGroupe): Promise<Resultat> {
     const nom = form.nom.trim();
     if (nom.length < 2) throw new Error("NOM_COURT");
 
+    // La couverture n'est pas un second champ à tenir à jour : c'est la
+    // première photo de l'album, celle que la vignette du groupe montre.
+    const images = form.images.filter((url) => url.trim() !== "");
     const ligne = {
       categorie_id: form.categorie_id,
       nom,
       description: form.description.trim(),
-      image_url: form.image_url,
+      images,
+      image_url: images[0] ?? null,
       ordre: form.ordre,
       actif: form.actif,
     };

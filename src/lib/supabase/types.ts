@@ -76,7 +76,10 @@ export type Groupe = {
   categorie_id: string;
   nom: string;
   description: string;
+  /** Couverture : la vignette du groupe dans la liste. */
   image_url: string | null;
+  /** Album montré en haut du groupe ouvert, couverture en tête. */
+  images: string[];
   ordre: number;
   actif: boolean;
   cree_le: string;
