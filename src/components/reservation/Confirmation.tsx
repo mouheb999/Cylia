@@ -58,7 +58,7 @@ export default function Confirmation({
         </div>
         <div className="mt-2.5 flex justify-between gap-4 border-t border-white/8 pt-2.5">
           <dt className="font-light text-white/50">Référence</dt>
-          <dd className="text-right font-serif tracking-wider text-gold lining-nums">
+          <dd className="copiable text-right font-serif tracking-wider text-gold lining-nums">
             {reservation.reference}
           </dd>
         </div>

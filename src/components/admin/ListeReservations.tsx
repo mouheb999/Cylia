@@ -174,7 +174,7 @@ function CarteReservation({
             </span>
           </p>
           <p className="mt-1 text-sm text-cream">{r.nom}</p>
-          <p className="text-sm text-gold lining-nums">{r.telephone}</p>
+          <p className="copiable text-sm text-gold lining-nums">{r.telephone}</p>
         </div>
 
         <span
@@ -199,7 +199,7 @@ function CarteReservation({
         </p>
       )}
 
-      <p className="mt-2 text-[0.65rem] font-light text-white/30 lining-nums">
+      <p className="copiable mt-2 text-[0.65rem] font-light text-white/30 lining-nums">
         Réf. {r.reference}
         {maintenant !== null && ` · demandé ${formatDepuis(r.cree_le, maintenant)}`}
       </p>

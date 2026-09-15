@@ -76,7 +76,10 @@ export default function ListeCommandes({
                 <a href={`tel:${commande.telephone}`} className="text-sm text-gold lining-nums">
                   {commande.telephone}
                 </a>
-                <p className="mt-1 text-xs font-light leading-relaxed text-white/50">
+                {/* Une adresse de livraison se recopie — dans un SMS au
+                    livreur, dans une carte. C'est le contre-exemple qui
+                    justifie l'échappatoire `.copiable`. */}
+                <p className="copiable mt-1 text-xs font-light leading-relaxed text-white/50">
                   {commande.adresse}
                   <br />
                   {commande.ville}

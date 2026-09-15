@@ -18,16 +18,21 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
+  /*
+   * Défilement instantané, et c'est un choix.
+   *
+   * `scroll-behavior: smooth` ne s'applique pas qu'aux ancres : le navigateur
+   * l'utilise aussi pour **restaurer la position au retour**. On revenait donc
+   * d'une fiche produit et la page se remettait à défiler toute seule sous les
+   * yeux, sur plusieurs écrans. Une application native ne fait jamais cela —
+   * elle réaffiche la liste là où on l'avait laissée, d'un coup.
+   */
+  scroll-behavior: auto;
   /* L'en-tête est collant : sans cette marge, un champ amené à l'écran par le
      clavier se retrouve caché derrière. */
   scroll-padding-top: 6rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+  /* Ni rebond élastique en bout de course, ni tirer-pour-rafraîchir. */
+  overscroll-behavior: none;
 }
 
 body {
@@ -36,6 +41,52 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  overscroll-behavior: none;
+
+  /*
+   * Ce qui sépare un site d'une application, au doigt.
+   *
+   * `pan-x pan-y` autorise le défilement et rien d'autre : ni pincement pour
+   * zoomer, ni double tape pour zoomer — donc plus non plus les 300 ms que
+   * Safari gardait en réserve au cas où le doigt reviendrait.
+   *
+   * `user-select: none` et `-webkit-touch-callout: none` retirent la sélection
+   * bleue et le menu « Copier / Rechercher » qui surgit à l'appui long. Sur un
+   * téléphone, ce menu apparaît dès qu'on garde le doigt une seconde de trop
+   * sur un titre : c'est le geste qui trahit le plus qu'on est dans un
+   * navigateur.
+   */
+  touch-action: pan-x pan-y;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/*
+ * Ce qui reste sélectionnable, et pourquoi.
+ *
+ * Les champs de saisie d'abord : sans cela, on ne peut plus corriger son propre
+ * numéro de téléphone — la sélection est le seul moyen de reprendre une frappe.
+ * Puis tout ce que l'on peut légitimement avoir besoin de recopier, marqué
+ * `.copiable` : une référence de rendez-vous que le site demande justement de
+ * conserver ne peut pas être la seule chose impossible à garder.
+ */
+input,
+textarea,
+select,
+[contenteditable="true"],
+.copiable,
+.copiable * {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Une photo ne se décolle pas de la page à l'appui long. */
+img {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 }
 
 /* Dégradé doré utilisé pour les boutons et filets */
@@ -65,12 +116,10 @@ body {
  * au doigt se fait toucher deux fois. `.press` donne la seule réponse qui ne
  * demande aucun aller-retour : l'enfoncement, au moment même du contact.
  *
- * `touch-action: manipulation` retire par la même occasion les 300 ms que
- * Safari garde en réserve au cas où le doigt reviendrait pour un double tap.
+ * Le délai du double tap, lui, est déjà réglé plus haut : `touch-action` sur
+ * le corps vaut pour toute la page.
  */
 .press {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
   transition:
     transform 140ms cubic-bezier(0.2, 0, 0.2, 1),
     opacity 140ms ease,

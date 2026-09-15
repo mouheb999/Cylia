@@ -55,6 +55,21 @@ export const viewport: Viewport = {
   // Installée, l'application occupe l'écran entier : sans cela, le contenu
   // passe sous l'encoche et sous la barre d'accueil de l'iPhone.
   viewportFit: "cover",
+
+  /*
+   * Pas de zoom. Une application ne se pince pas.
+   *
+   * Safari sur iOS ignore `userScalable` depuis iOS 10, par souci
+   * d'accessibilité — mais une fois CYLIA installée sur l'écran d'accueil,
+   * le zoom n'y est de toute façon plus proposé, et `touch-action` dans
+   * `globals.css` ferme le pincement là où ces deux lignes ne suffisent pas.
+   *
+   * Le zoom automatique à la mise au point d'un champ, lui, est déjà évité
+   * autrement : les champs sont en 16 px (voir `ui/champs.ts`). Le régler par
+   * le viewport aurait bloqué le zoom de tout le monde pour un seul écran.
+   */
+  maximumScale: 1,
+  userScalable: false,
 };
 
 /**
