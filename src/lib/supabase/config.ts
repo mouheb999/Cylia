@@ -12,6 +12,19 @@ export const SUPABASE_CLE = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? 
 
 export const supabaseConfigure = Boolean(SUPABASE_URL && SUPABASE_CLE);
 
+/**
+ * Clé secrète du projet — **jamais** exposée au navigateur.
+ *
+ * Elle ne sert qu'à une chose : lire la liste des appareils du salon pour leur
+ * envoyer une notification, au moment où une cliente réserve. À cet instant il
+ * n'y a pas de session administratrice à porter — la cliente n'en a pas — donc
+ * ni RLS ni cookie ne peuvent servir de laissez-passer.
+ *
+ * Absente, la notification ne part pas et le reste du site fonctionne : c'est
+ * un ajout, pas une dépendance.
+ */
+export const SUPABASE_SECRET = process.env.SUPABASE_SECRET_KEY ?? "";
+
 export function exigerConfig(): void {
   if (!supabaseConfigure) {
     throw new Error(

@@ -148,12 +148,31 @@ changement de page ou un rechargement. Le panier est vidé après confirmation.
 Une prestation retirée du catalogue entre deux visites disparaît du panier au
 lieu de bloquer le tunnel.
 
+## Quand la demande arrive
+
+Le salon est prévenu : bandeau et son si le panneau est ouvert, notification sur
+le téléphone s'il est fermé. Voir [NOTIFICATIONS.md](NOTIFICATIONS.md).
+
+L'envoi de la notification passe par `after()` : la cliente voit sa confirmation
+sans attendre, et un service de push en panne ne peut pas transformer un
+rendez-vous enregistré en erreur affichée.
+
 ## Ce qui n'existe pas encore
 
-- **Aucune notification.** Le salon doit ouvrir son panneau pour voir les
-  nouvelles demandes ; ni e-mail, ni SMS, ni WhatsApp ne partent. C'est la
-  première chose à ajouter.
-- **Aucun rappel** à la cliente la veille du rendez-vous.
+- **Aucun rappel automatique** à la cliente la veille du rendez-vous. Le salon
+  peut l'envoyer d'un bouton depuis le panneau, mais rien ne part tout seul.
+- **La cliente ne peut pas annuler** elle-même. Sa référence (`CY-1209-3K7`) ne
+  lui donne accès à rien : pour se décommander, elle doit appeler — et si elle
+  n'appelle pas, le créneau reste bloqué. C'est le prochain manque à combler.
+- **Rien ne limite les demandes.** Le même numéro peut réserver dix créneaux
+  d'affilée ; aucun code n'est envoyé par SMS, aucun numéro n'est vérifié. Le
+  jour où un plaisantin remplit la journée, il n'y a que la suppression à la
+  main.
+- **Un rendez-vous ne peut pas être déplacé** : il faut annuler et refaire.
+- **Les prix ne sont pas tous renseignés.** Une prestation sans prix rend le
+  total de la réservation nul — le salon ne voit alors aucun montant sur la
+  fiche, seulement « prix à confirmer ».
 - **Pas de gestion par employée** : la capacité est un nombre de places, pas un
-  planning individuel.
-- **Pas d'acompte** ni de paiement en ligne.
+  planning individuel. Deux clientes peuvent réserver la même coiffeuse.
+- **Pas d'acompte** ni de paiement en ligne, donc rien ne décourage un
+  rendez-vous non honoré.

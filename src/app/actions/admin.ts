@@ -37,11 +37,25 @@ function rafraichir() {
   revalidatePath("/", "layout");
 }
 
-async function agir(travail: () => Promise<void>): Promise<Resultat> {
+/**
+ * Un changement de statut ne touche pas le site public.
+ *
+ * Confirmer un rendez-vous périmait tout le cache partagé : la visiteuse
+ * suivante attendait une relecture complète du catalogue pour rien. Seules les
+ * pages du panneau ont besoin d'être refaites.
+ */
+function rafraichirPanneau() {
+  revalidatePath("/admin", "layout");
+}
+
+async function agir(
+  travail: () => Promise<void>,
+  apres: () => void = rafraichir,
+): Promise<Resultat> {
   try {
     await exigerAdmin();
     await travail();
-    rafraichir();
+    apres();
     return { ok: true };
   } catch (erreur) {
     const brut = erreur instanceof Error ? erreur.message : String(erreur);
@@ -50,6 +64,12 @@ async function agir(travail: () => Promise<void>): Promise<Resultat> {
     }
     if (brut.includes("duplicate key")) {
       return { ok: false, message: "Cet identifiant est déjà utilisé." };
+    }
+    if (brut.includes("TRANSITION_INVALIDE")) {
+      return {
+        ok: false,
+        message: "Ce rendez-vous a changé entre-temps. Rafraîchissez la page.",
+      };
     }
     console.error("[cylia] administration :", erreur);
     return { ok: false, message: "L'enregistrement a échoué. Réessayez." };
@@ -389,7 +409,7 @@ export async function changerStatutReservation(
     const supabase = await clientServeur();
     const { error } = await supabase.from("reservations").update({ statut }).eq("id", id);
     if (error) throw error;
-  });
+  }, rafraichirPanneau);
 }
 
 export async function changerStatutCommande(
@@ -400,7 +420,7 @@ export async function changerStatutCommande(
     const supabase = await clientServeur();
     const { error } = await supabase.from("commandes").update({ statut }).eq("id", id);
     if (error) throw error;
-  });
+  }, rafraichirPanneau);
 }
 
 // ----------------------------------------------------- réglages & fermetures

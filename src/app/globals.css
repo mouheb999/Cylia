@@ -57,3 +57,110 @@ body {
     transparent 100%
   );
 }
+
+/* ------------------------------------------------- réponse au toucher
+ *
+ * Le site était juste : un clic partait, une page arrivait. Mais entre les
+ * deux, rien ne bougeait — et sur un téléphone, un bouton qui ne réagit pas
+ * au doigt se fait toucher deux fois. `.press` donne la seule réponse qui ne
+ * demande aucun aller-retour : l'enfoncement, au moment même du contact.
+ *
+ * `touch-action: manipulation` retire par la même occasion les 300 ms que
+ * Safari garde en réserve au cas où le doigt reviendrait pour un double tap.
+ */
+.press {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 140ms cubic-bezier(0.2, 0, 0.2, 1),
+    opacity 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.press:active {
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
+.press:disabled,
+.press[aria-disabled="true"] {
+  opacity: 0.4;
+  transform: none;
+}
+
+/* ---------------------------------------------- navigation en attente
+ *
+ * Un lien cliqué dont la page n'est pas encore là. Le trait apparaît après
+ * 120 ms : en dessous, la page est déjà arrivée et le clignotement se lirait
+ * comme une hésitation. L'élément est toujours présent et réserve sa place —
+ * sans quoi son apparition ferait sauter la barre d'onglets.
+ */
+.lien-attente {
+  display: block;
+  height: 2px;
+  border-radius: 9999px;
+  background-color: var(--color-gold);
+  opacity: 0;
+}
+
+.lien-attente[data-attente="oui"] {
+  animation: attente 900ms ease-in-out 120ms infinite;
+}
+
+@keyframes attente {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scaleX(0.35);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* Bandeau des nouvelles demandes : il monte du bas, là où tombe le pouce. */
+@keyframes monte {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Squelettes de chargement : une pulsation lente, jamais un tourniquet. */
+@keyframes respire {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.squelette {
+  border-radius: 0.75rem;
+  /* Assez clair pour se lire sur le noir du panneau, assez sourd pour qu'on
+     n'essaie pas de le lire. */
+  background-color: rgb(255 255 255 / 0.11);
+  animation: respire 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press,
+  .press:active {
+    transform: none;
+    transition: none;
+  }
+
+  .lien-attente[data-attente="oui"],
+  .squelette {
+    animation: none;
+    opacity: 0.5;
+  }
+}

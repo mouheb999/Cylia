@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import BoutonDeconnexion from "@/components/admin/BoutonDeconnexion";
 import NavAdmin from "@/components/admin/NavAdmin";
+import VeilleReservations from "@/components/admin/VeilleReservations";
 import { adminConnecte } from "@/lib/supabase/serveur";
 
 /**
@@ -40,6 +41,10 @@ export default async function LayoutPanneau({ children }: LayoutProps<"/admin">)
       <NavAdmin />
 
       <main className="flex-1 px-4 py-6">{children}</main>
+
+      {/* Monté par la mise en page, pas par un écran : le salon doit être
+          prévenu qu'il soit sur les commandes, les produits ou les réglages. */}
+      <VeilleReservations />
     </div>
   );
 }

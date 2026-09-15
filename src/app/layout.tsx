@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Jost, Parisienne } from "next/font/google";
+import AgentService from "@/components/AgentService";
 import BarreEdition from "@/components/edition/BarreEdition";
 import NettoyerAncre from "@/components/NettoyerAncre";
 import { FournisseurEdition } from "@/components/edition/ContexteEdition";
@@ -40,10 +41,21 @@ export const metadata: Metadata = {
     locale: "fr_TN",
     type: "website",
   },
+  // Le panneau s'installe sur l'écran d'accueil du salon : c'est la seule
+  // façon, sur iPhone, d'y recevoir les alertes de nouvelles demandes.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "CYLIA",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0b0a09",
+  // Installée, l'application occupe l'écran entier : sans cela, le contenu
+  // passe sous l'encoche et sous la barre d'accueil de l'iPhone.
+  viewportFit: "cover",
 };
 
 /**
@@ -75,6 +87,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col bg-noir">
         <NettoyerAncre />
+        <AgentService />
         <FournisseurEdition estAdmin={admin !== null} contenus={contenus}>
           {children}
           <BarreEdition />

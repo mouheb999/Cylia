@@ -1,3 +1,4 @@
+import AlertesPush from "@/components/admin/AlertesPush";
 import GestionReglages from "@/components/admin/GestionReglages";
 import { chargerReglages } from "@/lib/donnees";
 import { fermeturesAdmin } from "@/lib/donnees-admin";
@@ -13,6 +14,10 @@ export default async function PageReglages() {
       <p className="mt-1 text-sm font-light leading-relaxed text-white/45">
         Ces valeurs commandent les créneaux proposés et les frais de la boutique.
       </p>
+
+      <div className="mt-6">
+        <AlertesPush />
+      </div>
 
       <GestionReglages reglages={reglages} fermetures={fermetures} />
     </div>

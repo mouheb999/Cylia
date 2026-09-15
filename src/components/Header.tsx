@@ -7,6 +7,7 @@ import logo from "@/images/logo.png";
 import { usePanier } from "@/lib/panier";
 import { totalArticles, usePanierBoutique } from "@/lib/panier-boutique";
 import { useEdition } from "@/components/edition/ContexteEdition";
+import IndicateurLien from "@/components/ui/IndicateurLien";
 import { IconAgenda, IconBag, IconClose, IconMenu } from "./Icons";
 
 const liens = [
@@ -31,8 +32,9 @@ function Lien({
   children: React.ReactNode;
 }) {
   return (
-    <Link href={href} aria-label={libelle} className="relative p-2 text-gold">
+    <Link href={href} aria-label={libelle} className="press relative p-2 text-gold">
       {children}
+      <IndicateurLien className="absolute inset-x-1.5 bottom-0.5" />
       {compte > 0 && (
         <span
           aria-hidden="true"
@@ -69,7 +71,7 @@ export default function Header() {
           aria-expanded={ouvert}
           aria-controls="menu-principal"
           aria-label={ouvert ? "Fermer le menu" : "Ouvrir le menu"}
-          className="justify-self-start p-2 text-gold"
+          className="press justify-self-start p-2 text-gold"
         >
           {ouvert ? <IconClose className="h-6 w-6" /> : <IconMenu className="h-6 w-6" />}
         </button>
@@ -120,7 +122,7 @@ export default function Header() {
               <Link
                 href={lien.href}
                 onClick={() => setOuvert(false)}
-                className="block py-3.5 font-serif text-lg tracking-wide text-cream"
+                className="press block py-3.5 font-serif text-lg tracking-wide text-cream"
               >
                 {lien.label}
               </Link>
@@ -130,7 +132,7 @@ export default function Header() {
         <Link
           href="/reserver"
           onClick={() => setOuvert(false)}
-          className="gold-gradient mt-5 block rounded-full py-3 text-center text-sm font-medium uppercase tracking-[0.18em] text-noir"
+          className="press gold-gradient mt-5 block rounded-full py-3 text-center text-sm font-medium uppercase tracking-[0.18em] text-noir"
         >
           Réserver
         </Link>

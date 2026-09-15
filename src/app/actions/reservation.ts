@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { clientPublic } from "@/lib/supabase/public";
+import { notifierNouvelleReservation } from "@/lib/notifications/push";
 import { DELAI_ECRITURE, DELAI_LECTURE } from "@/lib/supabase/config";
 import { chargerDonnees } from "@/lib/donnees";
 import { amplitudeJournee, creneauxDuJour } from "@/lib/creneaux";
@@ -123,7 +125,22 @@ export async function confirmerReservation(demande: {
       // rendez-vous.
       .abortSignal(AbortSignal.timeout(DELAI_ECRITURE));
     if (error) throw error;
-    return { ok: true, reservation: data as Reservation };
+
+    const reservation = data as Reservation;
+
+    // `after` rend la main à la cliente tout de suite : elle voit sa confirmation
+    // pendant que la notification part. Un service de push lent — ou en panne —
+    // ne doit pas allonger d'une seconde le dernier écran du tunnel, ni faire
+    // échouer un rendez-vous qui est déjà écrit en base.
+    after(async () => {
+      try {
+        await notifierNouvelleReservation(reservation);
+      } catch (erreur) {
+        console.error("[cylia] notification du salon :", erreur);
+      }
+    });
+
+    return { ok: true, reservation };
   } catch (erreur) {
     return { ok: false, message: messageErreur(erreur) };
   }

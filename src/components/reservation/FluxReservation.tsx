@@ -208,7 +208,7 @@ export default function FluxReservation({
                   setCategorie(c.id);
                   setGroupeOuvert(null);
                 }}
-                className={`flex-1 rounded-full border px-2 py-2.5 text-[0.78rem] transition-colors ${
+                className={`press flex-1 rounded-full border px-2 py-2.5 text-[0.78rem] ${
                   categorie === c.id
                     ? "border-gold bg-gold/15 text-gold"
                     : "border-white/15 text-white/60"
@@ -224,7 +224,7 @@ export default function FluxReservation({
               <button
                 type="button"
                 onClick={() => setGroupeOuvert(null)}
-                className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/60"
+                className="press shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/60"
               >
                 ← Retour
               </button>
@@ -242,7 +242,7 @@ export default function FluxReservation({
                       <button
                         type="button"
                         onClick={() => setGroupeOuvert(groupe.id)}
-                        className={`block w-full overflow-hidden rounded-2xl border text-left transition-colors ${
+                        className={`press block w-full overflow-hidden rounded-2xl border text-left ${
                           retenues > 0 ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
                         }`}
                       >
@@ -299,7 +299,7 @@ export default function FluxReservation({
                     type="button"
                     onClick={() => basculerPrestation(p.id)}
                     aria-pressed={retenue}
-                    className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition-colors ${
+                    className={`press flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left ${
                       retenue ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
                     }`}
                   >
@@ -438,7 +438,7 @@ export default function FluxReservation({
                       setHeureMinutes(null);
                     }}
                     aria-pressed={actif}
-                    className={`w-[3.9rem] shrink-0 rounded-xl border py-2.5 text-center transition-colors ${
+                    className={`press w-[3.9rem] shrink-0 rounded-xl border py-2.5 text-center ${
                       actif ? "border-gold bg-gold/15" : "border-white/12 bg-white/[0.03]"
                     }`}
                   >
@@ -483,7 +483,7 @@ export default function FluxReservation({
                       disabled={!creneau.disponible}
                       onClick={() => setHeureMinutes(creneau.minutes)}
                       aria-pressed={heureMinutes === creneau.minutes}
-                      className={`w-full rounded-lg border py-2.5 text-sm transition-colors ${
+                      className={`press w-full rounded-lg border py-2.5 text-sm ${
                         heureMinutes === creneau.minutes
                           ? "border-gold bg-gold/20 text-gold"
                           : creneau.disponible

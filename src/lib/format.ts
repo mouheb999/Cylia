@@ -55,6 +55,24 @@ export function formatHorodatage(iso: string): string {
 }
 
 /**
+ * « il y a 12 min ». Ce qui compte pour une demande à confirmer, ce n'est pas
+ * l'heure à laquelle elle est arrivée, c'est depuis combien de temps la cliente
+ * attend une réponse.
+ *
+ * À n'appeler que côté navigateur, et après le montage : la valeur dépend de
+ * l'instant, donc le serveur et le navigateur ne peuvent pas tomber d'accord.
+ */
+export function formatDepuis(iso: string, maintenant: number = Date.now()): string {
+  const minutes = Math.floor((maintenant - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const heures = Math.floor(minutes / 60);
+  if (heures < 24) return `il y a ${heures} h`;
+  const jours = Math.floor(heures / 24);
+  return jours === 1 ? "hier" : `il y a ${jours} jours`;
+}
+
+/**
  * Prix affiché. Le dinar tunisien se note à trois décimales, mais un salon
  * affiche des prix ronds : on ne garde les décimales que si elles existent.
  */

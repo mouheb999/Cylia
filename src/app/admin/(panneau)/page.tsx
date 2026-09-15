@@ -69,6 +69,24 @@ export default async function PageTableauDeBord() {
         />
       </div>
 
+      {/* Une demande dont le créneau est déjà passé n'attend plus une
+          confirmation : elle attend des excuses. Elle mérite donc sa propre
+          ligne, en rouge, et pas une case de plus dans la grille. */}
+      {(chiffres.rdv_en_retard ?? 0) > 0 && (
+        <Link
+          href="/admin/reservations?vue=a-confirmer"
+          className="press mt-3 flex items-center justify-between gap-3 rounded-2xl border border-red-400/40 bg-red-500/[0.08] px-4 py-3.5"
+        >
+          <span className="text-sm font-light leading-snug text-red-200">
+            {chiffres.rdv_en_retard} demande
+            {(chiffres.rdv_en_retard ?? 0) > 1 ? "s" : ""} jamais traitée
+            {(chiffres.rdv_en_retard ?? 0) > 1 ? "s" : ""}, dont le créneau est
+            déjà passé.
+          </span>
+          <span className="shrink-0 text-xs text-red-300">Traiter →</span>
+        </Link>
+      )}
+
       <section className="mt-8">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-serif text-xl font-light text-cream">Aujourd&apos;hui</h2>

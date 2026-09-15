@@ -156,6 +156,18 @@ export type Fermeture = {
   cree_le: string;
 };
 
+/** Un appareil du salon abonné aux notifications. Voir `lib/notifications/push`. */
+export type AbonnementPush = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  agent: string | null;
+  cree_le: string;
+  vu_le: string;
+};
+
 export type Administrateur = {
   user_id: string;
   email: string | null;
@@ -167,6 +179,7 @@ export type Database = {
   public: {
     Tables: {
       administrateurs: Ligne<Administrateur, "user_id">;
+      abonnements_push: Ligne<AbonnementPush, "user_id" | "endpoint" | "p256dh" | "auth">;
       categories: Ligne<Categorie, "id" | "nom">;
       prestations: Ligne<Prestation, "id" | "nom" | "categorie_id" | "duree_minutes">;
       reservations: Ligne<Reservation, "reference" | "prestation_ids" | "date" | "heure_minutes" | "duree_minutes" | "nom" | "telephone">;

@@ -67,12 +67,62 @@ Format JPG, PNG ou WebP, 8 Mo au maximum.
 | Écran | Ce qu'on y fait |
 | --- | --- |
 | **Tableau de bord** | rendez-vous du jour, demandes à confirmer, commandes à traiter, chiffre du mois, ruptures de stock |
-| **Réservations** | planning par jour, avec les vues « à venir », « aujourd'hui », « à confirmer », « passées ». Confirmer, terminer, annuler, rouvrir |
+| **Réservations** | planning par jour, avec les vues « à venir », « aujourd'hui », « à confirmer », « passées ». Écrire sur WhatsApp, appeler, confirmer, refuser, terminer, rouvrir |
 | **Commandes** | commandes de cosmétiques, articles et coordonnées de livraison. À traiter → confirmée → expédiée → livrée |
 | **Prestations** | catalogue complet, y compris ce qui est masqué. Une photo par prestation |
 | **Produits** | catalogue de la boutique, stock, prix barrés, photos. Recherche, filtres par famille et par gamme, tri |
 | **Contenu** | tous les textes du site en une page, pour une relecture d'ensemble |
 | **Réglages** | horaires, capacité, frais de livraison, ouverture des services, jours de fermeture |
+
+## Répondre à une cliente
+
+Chaque rendez-vous porte quatre boutons, dans l'ordre du geste réel : on joint
+d'abord, on décide ensuite.
+
+| Bouton | Ce qu'il fait |
+| --- | --- |
+| **WhatsApp** | ouvre la conversation avec le message déjà écrit |
+| **Appeler** | compose le numéro |
+| **Confirmer** / **Refuser** | tranche la demande |
+
+Le message WhatsApp dépend de l'état du rendez-vous : on demande confirmation
+d'une demande en attente, on rappelle un rendez-vous confirmé, on annonce une
+annulation, on remercie après la visite. Il reste modifiable dans WhatsApp avant
+envoi — personne n'envoie un message qu'il n'a pas relu.
+
+Le numéro est remis au format international avant d'ouvrir WhatsApp :
+« 54 395 168 », « +216 54 395 168 » et « 0021654395168 » désignent la même
+personne, mais `wa.me` n'accepte que la dernière forme. Un numéro que le site ne
+sait pas lire n'affiche pas de bouton WhatsApp plutôt que d'ouvrir une
+conversation avec personne.
+
+**« Refuser », pas « Annuler ».** Une demande jamais confirmée se refuse ; un
+rendez-vous confirmé s'annule. Le libellé change avec l'état, parce que la
+nuance compte pour qui appuie.
+
+Le statut bascule à l'écran **avant** la réponse du serveur. Confirmer dix
+rendez-vous d'affilée en 4G, c'était dix attentes. Si le serveur refuse,
+l'ancien statut revient et le message dit pourquoi.
+
+## Une demande n'est jamais perdue
+
+Une demande dont le créneau est passé sans avoir été traitée sortait de la vue
+« à confirmer » et du compteur du tableau de bord. Elle disparaissait de l'écran
+du salon ; la cliente, elle, attendait toujours une réponse.
+
+Elle reste désormais dans « à confirmer » tant qu'elle est en attente, remonte
+en tête de liste, s'affiche en rouge avec la mention « passé sans jamais avoir
+été traité », et le tableau de bord porte une ligne dédiée. Ce n'est plus une
+confirmation qu'elle attend, c'est un appel d'excuse — d'où le rouge.
+
+## Être prévenu sans ouvrir le panneau
+
+Le salon est prévenu de trois façons : bandeau et son quand le panneau est
+ouvert, notification sur le téléphone quand il est fermé, sondage de rattrapage
+si la connexion a sauté. Tout est dans
+[NOTIFICATIONS.md](NOTIFICATIONS.md) — y compris pourquoi ce n'est pas WhatsApp
+qui prévient le salon, et pourquoi l'installation sur l'écran d'accueil est
+obligatoire sur iPhone.
 
 Les numéros de téléphone sont cliquables : depuis un téléphone, la liste des
 rendez-vous du jour sert directement à rappeler les clientes.

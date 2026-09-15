@@ -1,4 +1,5 @@
 import Link from "next/link";
+import IndicateurLien from "@/components/ui/IndicateurLien";
 import ListeReservations from "@/components/admin/ListeReservations";
 import { chargerReglages } from "@/lib/donnees";
 import { reservationsAdmin } from "@/lib/donnees-admin";
@@ -27,7 +28,11 @@ export default async function PageReservations({
       : vue === "passees"
         ? { jusqua: aujourdhui }
         : vue === "a-confirmer"
-          ? { depuis: aujourdhui, statut: "en_attente" as const }
+          // Sans borne de date, et c'est le correctif : une demande jamais
+          // traitée disparaissait de cette vue le jour où son créneau
+          // passait. La cliente, elle, attendait toujours une réponse. Les
+          // dates passées remontent en tête — l'ordre est croissant.
+          ? { statut: "en_attente" as const }
           : { depuis: aujourdhui };
 
   const [reservations, reglages] = await Promise.all([
@@ -49,19 +54,25 @@ export default async function PageReservations({
               key={v.id}
               href={`/admin/reservations?vue=${v.id}`}
               aria-current={v.id === vue ? "page" : undefined}
-              className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm ${
+              prefetch
+              className={`press relative whitespace-nowrap rounded-full border px-4 py-2 text-sm ${
                 v.id === vue
                   ? "border-gold bg-gold/15 text-gold"
                   : "border-white/15 text-white/55"
               }`}
             >
               {v.label}
+              <IndicateurLien className="absolute inset-x-3 bottom-1" />
             </Link>
           ))}
         </div>
       </div>
 
-      <ListeReservations reservations={ordonnees} devise={reglages.devise} />
+      <ListeReservations
+        reservations={ordonnees}
+        devise={reglages.devise}
+        aujourdhui={aujourdhui}
+      />
     </div>
   );
 }

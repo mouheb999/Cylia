@@ -9,7 +9,10 @@ Le site fait trois choses :
   planning côté salon ;
 - il **vend des cosmétiques**, panier et commande compris ;
 - il **se modifie tout seul** : textes, photos, prestations et produits se
-  changent depuis le site, sans toucher au code ni redéployer.
+  changent depuis le site, sans toucher au code ni redéployer ;
+- il **prévient le salon** : la demande apparaît sans rechargement quand le
+  panneau est ouvert, et arrive en notification sur le téléphone quand il est
+  fermé.
 
 Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Supabase ·
 déployable sur Vercel.
@@ -54,7 +57,10 @@ src/app/page.tsx                accueil
 src/app/reserver/               tunnel de réservation
 src/app/boutique/               vitrine, fiche produit, panier & commande
 src/app/admin/                  panneau du salon (connexion + 7 écrans)
-src/app/actions/                actions serveur (réservation, boutique, admin, auth)
+src/app/actions/                actions serveur (réservation, boutique, admin, auth, notifications, veille)
+src/app/manifest.ts             application installable (PWA)
+src/app/hors-ligne/             page servie quand le réseau tombe
+public/sw.js                    agent de service : notifications, hors ligne
 src/proxy.ts                    rafraîchit la session, barre l'entrée du panneau
 
 src/components/                 Header, Hero, Services, Feature, Galerie, Footer
@@ -72,6 +78,9 @@ src/lib/creneaux.ts             calcul des créneaux (fonction pure)
 src/lib/temps-salon.ts          « aujourd'hui » à l'heure de Tunis
 src/lib/panier.ts               prestations retenues
 src/lib/panier-boutique.ts      panier de la boutique
+src/lib/telephone.ts            numéros au format international (wa.me, tel:)
+src/lib/messages-reservation.ts messages WhatsApp pré-écrits
+src/lib/notifications/push.ts   envoi des notifications au salon
 
 supabase/migrations/            schéma, RLS, fonctions, données de départ
 ```
@@ -85,6 +94,7 @@ supabase/migrations/            schéma, RLS, fonctions, données de départ
 | Base de données : tables, RLS, fonctions | [docs/BASE.md](docs/BASE.md) |
 | Boutique : panier, commande, stock | [docs/BOUTIQUE.md](docs/BOUTIQUE.md) |
 | Vitesse : cache, allers-retours, région | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
+| Alertes : temps réel, notifications, PWA | [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md) |
 
 ## Images
 
@@ -124,3 +134,6 @@ générées à partir du logo ; les régénérer si le logo change.
   session et le contenu à jour, il n'y a rien à revalider.
 - Le paiement de la boutique se fait **à la livraison**. Aucun moyen de
   paiement en ligne n'est intégré.
+- Les notifications et le temps réel demandent la migration `0017` et trois
+  variables d'environnement. Sans elles, le site fonctionne exactement comme
+  avant — voir [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md).

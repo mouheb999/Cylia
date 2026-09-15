@@ -19,8 +19,8 @@ export const libelle = "font-light text-white/60";
 export const libelleClair = "font-light text-muted";
 
 export const boutonOr =
-  "gold-gradient rounded-full py-3.5 text-center font-serif text-base text-noir " +
+  "press gold-gradient rounded-full py-3.5 text-center font-serif text-base text-noir " +
   "disabled:opacity-50";
 
 export const boutonFantome =
-  "rounded-full border border-white/15 px-5 py-3 text-sm text-white/70";
+  "press rounded-full border border-white/15 px-5 py-3 text-sm text-white/70";

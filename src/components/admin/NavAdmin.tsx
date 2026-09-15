@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import IndicateurLien from "@/components/ui/IndicateurLien";
 
 const ONGLETS = [
   { href: "/admin", label: "Tableau de bord" },
@@ -27,11 +28,15 @@ export default function NavAdmin() {
               <Link
                 href={onglet.href}
                 aria-current={actif ? "page" : undefined}
-                className={`block whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors ${
+                // Le panneau se parcourt d'un onglet à l'autre toute la journée :
+                // les sept tiennent en mémoire, autant les avoir déjà sous la main.
+                prefetch
+                className={`press relative block whitespace-nowrap rounded-full px-4 py-2 text-sm ${
                   actif ? "bg-gold/15 text-gold" : "text-white/55"
                 }`}
               >
                 {onglet.label}
+                <IndicateurLien className="absolute inset-x-3 bottom-1" />
               </Link>
             </li>
           );
