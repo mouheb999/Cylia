@@ -25,6 +25,11 @@ export function photosDuGroupe(groupe: Groupe): string[] {
  * largeur du cadre donne la photo au centre, et on n'écrit l'état que
  * lorsqu'il change vraiment.
  *
+ * Le 16/9 n'est pas qu'une affaire de goût. Les photos du salon sont des
+ * paysages d'un bon millier de pixels de large ; un cadre en 4/3 obligeait
+ * `object-cover` à les agrandir pour couvrir la hauteur, et le grain se
+ * voyait. Un cadre plus bas demande moins que ce que le fichier contient.
+ *
  * Sans photo, le composant ne rend rien. Un grand rectangle vide en haut de
  * chaque groupe se lirait comme une panne, là où son absence ne se remarque
  * pas — le salon dépose ses photos quand il les a.
@@ -57,7 +62,10 @@ export default function DiaporamaGroupe({ groupe }: { groupe: Groupe }) {
         className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {photos.map((url, index) => (
-          <span key={url} className="relative block aspect-[4/3] w-full shrink-0 snap-center">
+          <span
+            key={url}
+            className="relative block aspect-[16/9] max-h-[38vh] w-full shrink-0 snap-center"
+          >
             <Image
               src={url}
               alt={
@@ -66,7 +74,10 @@ export default function DiaporamaGroupe({ groupe }: { groupe: Groupe }) {
                   : groupe.nom
               }
               fill
-              sizes="(max-width: 640px) 100vw, 640px"
+              // Le bandeau va d'un bord à l'autre, à toutes les largeurs : la
+              // page n'a pas de gouttière. Annoncer une largeur fixe ferait
+              // télécharger une vignette pour l'étirer sur tout l'écran.
+              sizes="100vw"
               className="object-cover"
               // La première photo est ce que la cliente voit en ouvrant le
               // groupe : elle ne doit pas attendre son tour de chargement.
