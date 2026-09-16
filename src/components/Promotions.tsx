@@ -5,7 +5,14 @@ import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import { depuisCleDate, formatPrix } from "@/lib/format";
 import { remisePourcent, type PrestationEnPromo } from "@/lib/promotions";
 import type { Groupe } from "@/lib/supabase/types";
-import { IconArrow } from "./Icons";
+import { IconArrow, IconBienEtre, IconCoiffure, IconEsthetique } from "./Icons";
+
+/** Sans photo, la vignette montre l'icône de la catégorie — comme au tunnel. */
+const ICONES: Record<string, typeof IconCoiffure> = {
+  coiffure: IconCoiffure,
+  esthetique: IconEsthetique,
+  "bien-etre": IconBienEtre,
+};
 
 /** « jusqu'au 30 sept. » — la fin d'une offre se dit comme une date, pas comme un compte à rebours. */
 function finLisible(date: string): string {
@@ -69,6 +76,7 @@ export default function Promotions({
         {offres.map((offre) => {
           const photo = offre.image_url ?? (offre.groupe_id ? couvertures.get(offre.groupe_id) : null);
           const remise = remisePourcent(offre);
+          const Icone = ICONES[offre.categorie_id] ?? IconEsthetique;
           return (
             <li key={offre.id}>
               <Link
@@ -79,11 +87,8 @@ export default function Promotions({
                   {photo ? (
                     <Image src={photo} alt={offre.nom} fill sizes="72px" className="object-cover" />
                   ) : (
-                    <span
-                      className="flex h-full items-center justify-center font-script text-2xl text-gold-deep/60"
-                      aria-hidden="true"
-                    >
-                      −{remise}%
+                    <span className="flex h-full items-center justify-center" aria-hidden="true">
+                      <Icone className="h-8 w-8 text-gold-deep/45" />
                     </span>
                   )}
                 </span>
