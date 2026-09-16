@@ -41,7 +41,8 @@ l'administratrice sur chaque page du site et masquait le bas de l'écran, là o�
 tombe le pouce — pour un mode qu'on n'allume que rarement.
 
 Les textes et les photos se corrigent maintenant depuis le panneau :
-`/admin/contenu` les rassemble tous sur une page, `/admin/prestations` et
+`/admin/contenu` rassemble tous les textes sur une page, `/admin/accueil`
+toutes les photos de la page d'accueil, et `/admin/prestations` comme
 `/admin/produits` portent les fiches et leurs photos.
 
 Le reste du mécanisme est intact — blocs `Modifiable`, feuille d'édition,
@@ -52,7 +53,7 @@ Ce qui se modifiait ainsi, et se modifie désormais depuis le panneau :
 
 | Sur la page | Quoi |
 | --- | --- |
-| Accueil | tous les titres et textes, la photo du bandeau, celle de l'encart, les photos de la galerie (ajout, retrait, ordre) |
+| Accueil | tous les titres et textes, les photos du bandeau, celle de l'encart, le logo, les photos de la galerie (ajout, retrait, ordre) |
 | Boutique | titres, textes, et chaque produit — plus « Ajouter un produit » |
 | Réserver | titres, et chaque prestation — plus « Ajouter une prestation » |
 | Pied de page | adresse, horaires, numéro affiché |
@@ -79,8 +80,52 @@ Format JPG, PNG ou WebP, 8 Mo au maximum.
 | **Commandes** | commandes de cosmétiques, articles et coordonnées de livraison. À traiter → confirmée → expédiée → livrée |
 | **Prestations** | catalogue complet, y compris ce qui est masqué. Une photo par prestation |
 | **Produits** | catalogue de la boutique, stock, prix barrés, photos. Recherche, filtres par famille et par gamme, tri |
+| **Promotions** | les remises posées sur les prestations : tarif promo, phrase d'annonce, date de fin |
+| **Photos** | toutes les images de l'accueil — bandeau, encart « Prenez soin de vous », logo, galerie |
 | **Contenu** | tous les textes du site en une page, pour une relecture d'ensemble |
 | **Réglages** | horaires, capacité, frais de livraison, ouverture des services, jours de fermeture |
+
+## Les photos de l'accueil
+
+`/admin/accueil` réunit les trois endroits où l'accueil montre des images.
+
+**Le bandeau du haut** accepte plusieurs photos. Elles se relaient toutes
+seules, en fondu, dans l'ordre de la liste — quatre font un bon tour. On ne
+peut pas les faire défiler à la main, et c'est voulu : le haut de la page est
+ce qu'on regarde, pas ce qu'on manipule, et un carrousel qu'on attrape happe
+surtout les doigts qui voulaient faire défiler la page. Tant qu'aucune photo
+n'est déposée, c'est celle livrée avec le site qui s'affiche.
+
+**L'encart « Prenez soin de vous » et le logo** n'ont qu'une image chacune :
+on la remplace, ou on remet celle d'origine.
+
+**La galerie** se range comme le bandeau — ajouter, monter, descendre,
+retirer. Chaque photo porte une description, celle que lisent Google et les
+lecteurs d'écran, et qui s'affiche si l'image ne charge pas.
+
+## Faire une promotion
+
+`/admin/promotions` pose un tarif réduit sur les prestations de votre choix.
+La prestation garde son prix ; l'offre se pose par-dessus, et le site affiche
+les deux — le nouveau tarif, l'ancien barré, et le pourcentage, qui est calculé
+et jamais saisi.
+
+Une remise demande un prix : une prestation sans tarif affiché ne peut pas être
+remisée, il faut d'abord lui en donner un dans « Prestations ».
+
+La date de fin est facultative. Ce jour-là l'offre vaut encore ; le lendemain,
+elle disparaît du site toute seule, sans que personne ait à y penser. Elle
+reste alors visible dans l'écran, sous « Écrites, mais invisibles » — pour la
+prolonger d'un geste, ou la retirer.
+
+Tant qu'aucune offre ne court, la section « Promotions » n'apparaît pas sur
+l'accueil, et le grand encart « Prenez soin de vous » renvoie à la réservation
+comme avant. Dès qu'il y en a une, il mène aux offres.
+
+Le rendez-vous est compté au tarif de l'offre : c'est la base qui recalcule le
+total, pas le navigateur, et elle connaît la remise (`creer_reservation`, dans
+la migration 0026). Le prix annoncé sur la carte est donc celui qui sera porté
+sur le rendez-vous.
 
 ## Répondre à une cliente
 

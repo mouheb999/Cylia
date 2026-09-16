@@ -71,6 +71,13 @@ export function basculerPrestation(id: string): void {
   definir(actuel.includes(id) ? actuel.filter((p) => p !== id) : [...actuel, id]);
 }
 
+/** Ajoute la prestation si elle est absente, et ne fait rien sinon. */
+export function ajouterPrestation(id: string): void {
+  const actuel = instantane();
+  if (actuel.includes(id)) return;
+  definir([...actuel, id]);
+}
+
 export function retirerPrestation(id: string): void {
   definir(instantane().filter((p) => p !== id));
 }

@@ -4,6 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { adminConnecte, clientServeur } from "@/lib/supabase/serveur";
 import { TAG_SITE } from "@/lib/donnees";
 import type {
+  EmplacementPhoto,
   Reglages,
   StatutCommande,
   StatutReservation,
@@ -64,6 +65,21 @@ async function agir(
     }
     if (brut.includes("duplicate key")) {
       return { ok: false, message: "Cet identifiant est déjà utilisé." };
+    }
+    if (brut.includes("PRIX_MANQUANT")) {
+      return {
+        ok: false,
+        message: "Donnez d'abord un prix à cette prestation, dans « Prestations ».",
+      };
+    }
+    if (brut.includes("PROMO_TROP_HAUTE")) {
+      return { ok: false, message: "Le tarif promo doit être inférieur au prix affiché." };
+    }
+    if (brut.includes("PROMO_INVALIDE")) {
+      return { ok: false, message: "Ce tarif promo n'est pas un montant valable." };
+    }
+    if (brut.includes("PRESTATION_INCONNUE")) {
+      return { ok: false, message: "Cette prestation n'existe plus. Rafraîchissez la page." };
     }
     if (brut.includes("TRANSITION_INVALIDE")) {
       return {
@@ -210,7 +226,25 @@ export async function enregistrerPrestation(form: FormPrestation): Promise<Resul
     };
 
     if (form.id) {
-      const { error } = await supabase.from("prestations").update(ligne).eq("id", form.id);
+      // Une remise ne survit pas à un prix qui passe sous elle. La base refuse
+      // déjà ce cas, mais son refus arriverait ici sous forme de « contrainte
+      // violée » — illisible pour qui vient simplement de corriger un tarif.
+      const { data: actuelle } = await supabase
+        .from("prestations")
+        .select("prix_promo")
+        .eq("id", form.id)
+        .maybeSingle();
+      const promo = actuelle?.prix_promo ?? null;
+      const promoDepassee = promo !== null && (form.prix === null || promo >= form.prix);
+
+      const { error } = await supabase
+        .from("prestations")
+        .update(
+          promoDepassee
+            ? { ...ligne, prix_promo: null, promo_libelle: "", promo_fin: null }
+            : ligne,
+        )
+        .eq("id", form.id);
       if (error) throw error;
       return;
     }
@@ -283,17 +317,30 @@ export async function enregistrerCategorie(form: {
 
 // ------------------------------------------------------------------ galerie
 
-export async function ajouterPhoto(image_url: string, alt: string): Promise<Resultat> {
+/**
+ * Une photo de plus, dans le bandeau de l'accueil ou dans la galerie.
+ *
+ * Les deux emplacements vivent dans la même table et chacun a sa propre suite
+ * de numéros : la troisième photo du bandeau ne se retrouve pas coincée
+ * derrière les douze de la galerie.
+ */
+export async function ajouterPhoto(
+  image_url: string,
+  alt: string,
+  emplacement: EmplacementPhoto = "galerie",
+): Promise<Resultat> {
   return agir(async () => {
     const supabase = await clientServeur();
     const { data } = await supabase
       .from("galerie")
       .select("ordre")
+      .eq("emplacement", emplacement)
       .order("ordre", { ascending: false })
       .limit(1);
     const { error } = await supabase.from("galerie").insert({
       image_url,
       alt: alt.trim(),
+      emplacement,
       ordre: (data?.[0]?.ordre ?? 0) + 1,
     });
     if (error) throw error;
@@ -308,10 +355,45 @@ export async function supprimerPhoto(id: string): Promise<Resultat> {
   });
 }
 
+/**
+ * La phrase lue à la place de la photo.
+ *
+ * Ce n'est pas un détail d'accessibilité rangé dans un coin : c'est aussi ce
+ * que Google lit, et ce qui s'affiche si la photo ne charge pas.
+ */
+export async function decrirePhoto(id: string, alt: string): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase
+      .from("galerie")
+      .update({ alt: alt.trim().slice(0, 200) })
+      .eq("id", id);
+    if (error) throw error;
+  });
+}
+
+/**
+ * Une photo change de rang avec sa voisine — dans son emplacement.
+ *
+ * L'échange se fait entre photos du même bandeau ou de la même galerie :
+ * sans ce filtre, la première photo de la galerie irait prendre le rang de la
+ * dernière du bandeau, et les deux listes se mélangeraient.
+ */
 export async function deplacerPhoto(id: string, sens: -1 | 1): Promise<Resultat> {
   return agir(async () => {
     const supabase = await clientServeur();
-    const { data } = await supabase.from("galerie").select("id, ordre").order("ordre");
+    const { data: cible } = await supabase
+      .from("galerie")
+      .select("emplacement")
+      .eq("id", id)
+      .maybeSingle();
+    if (!cible) return;
+
+    const { data } = await supabase
+      .from("galerie")
+      .select("id, ordre")
+      .eq("emplacement", cible.emplacement)
+      .order("ordre");
     const photos = data ?? [];
     const index = photos.findIndex((p) => p.id === id);
     const voisin = index + sens;
@@ -320,6 +402,64 @@ export async function deplacerPhoto(id: string, sens: -1 | 1): Promise<Resultat>
       supabase.from("galerie").update({ ordre: photos[voisin].ordre }).eq("id", photos[index].id),
       supabase.from("galerie").update({ ordre: photos[index].ordre }).eq("id", photos[voisin].id),
     ]);
+  });
+}
+
+// --------------------------------------------------------------- promotions
+
+export type FormPromotion = {
+  /** Tarif remisé, strictement sous le prix affiché. */
+  prix_promo: number;
+  /** Ce que l'offre annonce. Vide : la carte reprend la description. */
+  promo_libelle: string;
+  /** Dernier jour de l'offre, inclus. `null` : jusqu'au retrait. */
+  promo_fin: string | null;
+};
+
+/**
+ * Pose une remise sur une prestation.
+ *
+ * Les mêmes garde-fous qu'en base, mais dits en français : une contrainte
+ * violée renverrait « L'enregistrement a échoué », qui n'apprend rien à la
+ * personne devant l'écran.
+ */
+export async function definirPromotion(id: string, form: FormPromotion): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { data: prestation } = await supabase
+      .from("prestations")
+      .select("prix")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!prestation) throw new Error("PRESTATION_INCONNUE");
+    if (prestation.prix == null) throw new Error("PRIX_MANQUANT");
+
+    const promo = Math.round(form.prix_promo * 1000) / 1000;
+    if (!Number.isFinite(promo) || promo < 0) throw new Error("PROMO_INVALIDE");
+    if (promo >= prestation.prix) throw new Error("PROMO_TROP_HAUTE");
+
+    const { error } = await supabase
+      .from("prestations")
+      .update({
+        prix_promo: promo,
+        promo_libelle: form.promo_libelle.trim().slice(0, 80),
+        promo_fin: form.promo_fin || null,
+      })
+      .eq("id", id);
+    if (error) throw error;
+  });
+}
+
+/** L'offre s'arrête ; le prix d'origine reprend sa place. */
+export async function retirerPromotion(id: string): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase
+      .from("prestations")
+      .update({ prix_promo: null, promo_libelle: "", promo_fin: null })
+      .eq("id", id);
+    if (error) throw error;
   });
 }
 

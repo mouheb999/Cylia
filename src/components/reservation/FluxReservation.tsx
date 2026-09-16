@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   confirmerReservation,
   creneauxDisponibles,
@@ -9,8 +9,9 @@ import {
 import { boutonFantome, boutonOr } from "@/components/ui/champs";
 import { useEdition } from "@/components/edition/ContexteEdition";
 import { IconArrow } from "@/components/Icons";
-import { basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
+import { ajouterPrestation, basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
 import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
+import { enPromo, remisePourcent, tarifDuJour } from "@/lib/promotions";
 import { track } from "@/lib/fbq";
 import VisuelPrestation from "./VisuelPrestation";
 import DiaporamaGroupe, { photosDuGroupe } from "./DiaporamaGroupe";
@@ -31,6 +32,8 @@ type Props = {
   telephoneSalon: string;
   reservationActive: boolean;
   categorieInitiale?: string;
+  /** Prestation arrivée par l'adresse — une offre de l'accueil, par exemple. */
+  prestationInitiale?: string;
 };
 
 export default function FluxReservation({
@@ -42,16 +45,31 @@ export default function FluxReservation({
   telephoneSalon,
   reservationActive,
   categorieInitiale,
+  prestationInitiale,
 }: Props) {
   const edition = useEdition();
   const panier = usePanier();
 
+  /*
+   * Une offre touchée sur l'accueil arrive ici par l'adresse.
+   *
+   * Elle décide de trois choses d'un coup : la catégorie affichée, le groupe
+   * ouvert, et la prestation déjà retenue. Les deux premières sont l'état de
+   * départ du tunnel — pas une correction faite après coup, qui ferait
+   * clignoter l'écran ; la troisième va dans le panier, qui vit hors de React,
+   * d'où l'effet plus bas.
+   */
+  const demandee = prestationInitiale
+    ? prestations.find((p) => p.id === prestationInitiale)
+    : undefined;
+
   const [etape, setEtape] = useState(0);
-  const [categorie, setCategorie] = useState(
-    categorieInitiale && categories.some((c) => c.id === categorieInitiale)
-      ? categorieInitiale
-      : (categories[0]?.id ?? ""),
-  );
+  const [categorie, setCategorie] = useState(() => {
+    const voulue = demandee?.categorie_id ?? categorieInitiale;
+    return voulue && categories.some((c) => c.id === voulue)
+      ? voulue
+      : (categories[0]?.id ?? "");
+  });
   const [dateCle, setDateCle] = useState<string | null>(null);
   const [heureMinutes, setHeureMinutes] = useState<number | null>(null);
   const [calcul, setCalcul] = useState<{ cle: string; reponse: ReponseCreneaux } | null>(null);
@@ -60,7 +78,7 @@ export default function FluxReservation({
   const [envoi, demarrerEnvoi] = useTransition();
   const [fiche, setFiche] = useState<Prestation | null | undefined>(undefined);
   /** `null` : on voit les groupes de la catégorie. Sinon, on est entré dedans. */
-  const [groupeOuvert, setGroupeOuvert] = useState<string | null>(null);
+  const [groupeOuvert, setGroupeOuvert] = useState<string | null>(demandee?.groupe_id ?? null);
 
   const parId = useMemo(
     () => new Map(prestations.map((p) => [p.id, p])),
@@ -77,8 +95,39 @@ export default function FluxReservation({
     [panier, parId],
   );
   const duree = selection.reduce((total, id) => total + (parId.get(id)?.duree_minutes ?? 0), 0);
-  const prixConnu = selection.every((id) => parId.get(id)?.prix != null);
-  const prixTotal = selection.reduce((total, id) => total + (parId.get(id)?.prix ?? 0), 0);
+
+  /*
+   * « Aujourd'hui » vient du serveur, jamais de l'horloge du navigateur : c'est
+   * déjà le premier des jours proposés. Une offre qui s'arrête ce soir doit
+   * s'éteindre au même instant des deux côtés, sinon le site annoncerait un
+   * tarif que la base refuserait d'appliquer.
+   */
+  const aujourdhui = joursCles[0];
+
+  const prixConnu = selection.every((id) => {
+    const p = parId.get(id);
+    return p != null && tarifDuJour(p, aujourdhui) != null;
+  });
+  const prixTotal = selection.reduce((total, id) => {
+    const p = parId.get(id);
+    return total + (p ? (tarifDuJour(p, aujourdhui) ?? 0) : 0);
+  }, 0);
+  // Le total d'avant remise ne s'affiche que s'il diffère : sinon, c'est deux
+  // fois le même chiffre, dont un barré.
+  const prixPlein = selection.reduce((total, id) => total + (parId.get(id)?.prix ?? 0), 0);
+
+  /*
+   * La prestation demandée entre dans le panier — celui du navigateur, qui
+   * survit aux rechargements. Une seule fois : sans ce garde, la retirer la
+   * remettrait aussitôt, et le bouton paraîtrait cassé.
+   */
+  const deposee = useRef(false);
+  const idDemande = demandee?.id;
+  useEffect(() => {
+    if (deposee.current || !idDemande) return;
+    deposee.current = true;
+    ajouterPrestation(idDemande);
+  }, [idDemande]);
 
   const etapeCourante = selection.length === 0 ? 0 : etape;
   const cleCalcul = dateCle && selection.length > 0 ? `${selection.join(",")}|${dateCle}` : null;
@@ -308,12 +357,14 @@ export default function FluxReservation({
           <ul className="mt-5 space-y-2.5">
             {aMontrer.map((p) => {
               const retenue = selection.includes(p.id);
-              const details = [
+              const dureeVisible =
                 p.groupe_id && groupeParId.get(p.groupe_id)?.duree_visible
                   ? formatDuree(p.duree_minutes)
-                  : null,
-                p.prix != null ? formatPrix(p.prix, devise) : null,
-              ].filter((valeur): valeur is string => valeur !== null);
+                  : null;
+              // L'offre est prise de la prestation elle-même, pas d'une liste
+              // à part : la carte du tunnel dit donc toujours la même chose
+              // que celle de l'accueil.
+              const offre = enPromo(p, aujourdhui) ? p : null;
               return (
                 <li key={p.id}>
                   <button
@@ -330,9 +381,31 @@ export default function FluxReservation({
                       >
                         {p.nom}
                       </span>
-                      {details.length > 0 && (
-                        <span className="mt-0.5 block text-xs font-light text-white/45">
-                          {details.join(" · ")}
+                      {(dureeVisible || p.prix != null) && (
+                        <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xs font-light text-white/45">
+                          {dureeVisible && <span>{dureeVisible}</span>}
+                          {dureeVisible && p.prix != null && (
+                            <span aria-hidden="true" className="text-white/25">
+                              ·
+                            </span>
+                          )}
+                          {offre ? (
+                            <>
+                              <span className="text-gold lining-nums">
+                                {formatPrix(offre.prix_promo, devise)}
+                              </span>
+                              <span className="text-white/30 line-through lining-nums">
+                                {formatPrix(offre.prix, devise)}
+                              </span>
+                              <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.6rem] text-gold">
+                                −{remisePourcent(offre)}%
+                              </span>
+                            </>
+                          ) : (
+                            p.prix != null && (
+                              <span className="lining-nums">{formatPrix(p.prix, devise)}</span>
+                            )
+                          )}
                         </span>
                       )}
                       {p.description && (
@@ -414,6 +487,14 @@ export default function FluxReservation({
                   <>
                     {" · "}
                     <span className="text-gold lining-nums">{formatPrix(prixTotal, devise)}</span>
+                    {prixPlein > prixTotal && (
+                      <>
+                        {" "}
+                        <span className="text-white/30 line-through lining-nums">
+                          {formatPrix(prixPlein, devise)}
+                        </span>
+                      </>
+                    )}
                   </>
                 )}
               </p>

@@ -30,6 +30,12 @@ export type Prestation = {
   groupe_id: string | null;
   duree_minutes: number;
   prix: number | null;
+  /** Tarif remisé, sous `prix`. `null` : pas d'offre en cours. */
+  prix_promo: number | null;
+  /** Ce que l'offre annonce — « Offre de printemps ». Vide : rien d'écrit. */
+  promo_libelle: string;
+  /** Dernier jour de l'offre, inclus. `null` : jusqu'à ce qu'on la retire. */
+  promo_fin: string | null;
   description: string;
   image_url: string | null;
   ordre: number;
@@ -62,10 +68,14 @@ export type Contenu = {
   maj_le: string;
 };
 
+/** Où la photo est montrée : le bandeau de l'accueil, ou la galerie. */
+export type EmplacementPhoto = "galerie" | "accueil";
+
 export type PhotoGalerie = {
   id: string;
   image_url: string;
   alt: string;
+  emplacement: EmplacementPhoto;
   ordre: number;
   actif: boolean;
   cree_le: string;

@@ -7,8 +7,10 @@ import type {
   ArticleCommande,
   Categorie,
   Commande,
+  EmplacementPhoto,
   Fermeture,
   Groupe,
+  PhotoGalerie,
   Prestation,
   Produit,
   Reservation,
@@ -139,6 +141,25 @@ export async function fermeturesAdmin(): Promise<Fermeture[]> {
   const { data, error } = await supabase.from("fermetures").select("*").order("date_debut");
   if (error) throw error;
   return data as Fermeture[];
+}
+
+/**
+ * Les photos d'un emplacement, masquées comprises.
+ *
+ * `emplacement` peut manquer sur une base où la migration 0026 n'est pas
+ * encore passée : la requête tombe alors dans le vide plutôt que de renvoyer
+ * les photos de l'autre emplacement, ce qui est le bon sens de l'erreur — le
+ * salon voit un écran vide, pas un écran faux.
+ */
+export async function photosAdmin(emplacement: EmplacementPhoto): Promise<PhotoGalerie[]> {
+  const supabase = await clientPanneau();
+  const { data, error } = await supabase
+    .from("galerie")
+    .select("*")
+    .eq("emplacement", emplacement)
+    .order("ordre");
+  if (error) throw error;
+  return data as PhotoGalerie[];
 }
 
 export async function contenusAdmin(): Promise<Record<string, string>> {

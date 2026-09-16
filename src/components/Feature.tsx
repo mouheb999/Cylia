@@ -4,7 +4,21 @@ import { ImageModifiable, Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import { IconArrow } from "./Icons";
 
-export default function Feature() {
+/**
+ * L'encart « Prenez soin de vous ».
+ *
+ * Sa destination n'est pas écrite ici : l'accueil la choisit. Quand des offres
+ * courent, il mène aux offres — c'est la plus grande image cliquable de la
+ * page, autant qu'elle porte ce que le salon veut mettre en avant ; sinon il
+ * reprend son ancien chemin, la réservation.
+ */
+export default function Feature({
+  href = "/reserver",
+  libelleLien = "Prenez soin de vous — réserver un soin",
+}: {
+  href?: string;
+  libelleLien?: string;
+}) {
   return (
     <section className="bg-cream px-4 pb-8 pt-2">
       <div className="relative isolate h-[200px] overflow-hidden rounded-2xl">
@@ -23,8 +37,8 @@ export default function Feature() {
         />
 
         <Link
-          href="/reserver"
-          aria-label="Prenez soin de vous — réserver un soin"
+          href={href}
+          aria-label={libelleLien}
           className="relative z-10 flex h-full items-center justify-end px-6 py-5 text-right"
         >
           <p className="font-serif text-[1.75rem] font-light leading-tight text-white">

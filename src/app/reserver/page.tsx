@@ -35,6 +35,8 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
 
   const site = infosSite(contenus);
   const categorieDemandee = parametres.categorie;
+  // Une offre touchée sur l'accueil arrive avec sa prestation dans l'adresse.
+  const prestationDemandee = parametres.prestation;
 
   return (
     <>
@@ -74,6 +76,9 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
           telephoneSalon={site.telephoneLien}
           reservationActive={reglages.reservation_active}
           categorieInitiale={typeof categorieDemandee === "string" ? categorieDemandee : undefined}
+          prestationInitiale={
+            typeof prestationDemandee === "string" ? prestationDemandee : undefined
+          }
         />
       </main>
 

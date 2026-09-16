@@ -11,10 +11,10 @@ Projet Supabase, PostgreSQL. Le schéma complet est dans
 | `reglages` | ligne unique : horaires, capacité, frais de livraison, ouverture des services |
 | `fermetures` | congés et fériés, par période |
 | `categories` | les trois familles de prestations, qui sont aussi les cartes de l'accueil |
-| `prestations` | catalogue : nom, catégorie, durée, prix, description |
+| `prestations` | catalogue : nom, catégorie, durée, prix, description — et la remise en cours (`prix_promo`, `promo_libelle`, `promo_fin`) |
 | `reservations` | rendez-vous, avec les noms des prestations figés à la prise |
 | `contenus` | blocs de texte et photos modifiés depuis le site, par clé |
-| `galerie` | photos de la galerie d'accueil |
+| `galerie` | photos de l'accueil : celles du bandeau et celles de la galerie, séparées par `emplacement` |
 | `produits` | catalogue de la boutique, stock compris |
 | `commandes` / `commande_articles` | commandes et leurs lignes |
 
@@ -45,7 +45,7 @@ d'écrire une réservation dans une table où elle ne peut rien lire.
 | Fonction | Ce qu'elle donne | Ce qu'elle protège |
 | --- | --- | --- |
 | `occupation_du_jour(date)` | des intervalles occupés, rien d'autre | aucun nom, aucun numéro ne sort |
-| `creer_reservation(…)` | la réservation créée | relit durées et prix, revérifie la place au moment d'écrire |
+| `creer_reservation(…)` | la réservation créée | relit durées et prix — remise comprise —, revérifie la place au moment d'écrire |
 | `creer_commande(…)` | la commande créée | relit les prix, verrouille et décrémente le stock |
 
 Le reste — `est_admin`, `statistiques_admin`, `maintenant_salon`,

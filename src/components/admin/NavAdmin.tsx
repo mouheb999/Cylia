@@ -10,6 +10,8 @@ const ONGLETS = [
   { href: "/admin/commandes", label: "Commandes" },
   { href: "/admin/prestations", label: "Prestations" },
   { href: "/admin/produits", label: "Produits" },
+  { href: "/admin/promotions", label: "Promotions" },
+  { href: "/admin/accueil", label: "Photos" },
   { href: "/admin/contenu", label: "Contenu" },
   { href: "/admin/reglages", label: "Réglages" },
 ];
@@ -29,7 +31,7 @@ export default function NavAdmin() {
                 href={onglet.href}
                 aria-current={actif ? "page" : undefined}
                 // Le panneau se parcourt d'un onglet à l'autre toute la journée :
-                // les sept tiennent en mémoire, autant les avoir déjà sous la main.
+                // ils tiennent tous en mémoire, autant les avoir sous la main.
                 prefetch
                 className={`press relative block whitespace-nowrap rounded-full px-4 py-2 text-sm ${
                   actif ? "bg-gold/15 text-gold" : "text-white/55"

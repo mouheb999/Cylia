@@ -11,6 +11,7 @@ import {
 import type { ContenuMap } from "@/lib/contenu";
 import type {
   Categorie,
+  EmplacementPhoto,
   Groupe,
   PhotoGalerie,
   Prestation,
@@ -41,7 +42,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "8";
+const MILLESIME = "9";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -154,8 +155,28 @@ export async function chargerPrestations(): Promise<Prestation[]> {
   return (await chargerDonnees()).prestations;
 }
 
+/**
+ * Les photos d'un emplacement, dans l'ordre choisi par le salon.
+ *
+ * La table `galerie` porte les deux : les photos du bandeau d'accueil et
+ * celles de la galerie. Le `??` n'est pas une coquetterie — une base où la
+ * migration 0026 n'est pas encore passée renvoie des lignes sans
+ * `emplacement`, et elles doivent rester dans la galerie, là où elles étaient.
+ */
+export async function chargerPhotos(
+  emplacement: EmplacementPhoto = "galerie",
+): Promise<PhotoGalerie[]> {
+  const { galerie } = await chargerDonnees();
+  return galerie.filter((photo) => (photo.emplacement ?? "galerie") === emplacement);
+}
+
 export async function chargerGalerie(): Promise<PhotoGalerie[]> {
-  return (await chargerDonnees()).galerie;
+  return chargerPhotos("galerie");
+}
+
+/** Les photos qui se relaient dans le bandeau de l'accueil. */
+export async function chargerPhotosAccueil(): Promise<PhotoGalerie[]> {
+  return chargerPhotos("accueil");
 }
 
 export async function chargerGroupes(): Promise<Groupe[]> {

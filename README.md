@@ -56,7 +56,7 @@ src/app/layout.tsx              polices, métadonnées, contexte d'édition
 src/app/page.tsx                accueil
 src/app/reserver/               tunnel de réservation
 src/app/boutique/               vitrine, fiche produit, panier & commande
-src/app/admin/                  panneau du salon (connexion + 7 écrans)
+src/app/admin/                  panneau du salon (connexion + 9 écrans)
 src/app/actions/                actions serveur (réservation, boutique, admin, auth, notifications, veille)
 src/app/manifest.ts             application installable (PWA)
 src/app/hors-ligne/             page servie quand le réseau tombe
@@ -107,15 +107,15 @@ l'empreinte, donc l'adresse, et **aucun cache ne peut resservir l'ancienne**.
 | Fichier | Usage | Format conseillé |
 | --- | --- | --- |
 | `src/images/logo.png` | logo dans l'en-tête et le pied de page | carré, fond transparent |
-| `src/images/salon-1.jpg` | photo du hero | portrait, ~4:5, ≥ 1200 px de large |
+| `src/images/salon-1.jpg` | photo du bandeau, tant que le salon n'a pas déposé les siennes | portrait, ~4:5, ≥ 1200 px de large |
 | `src/images/salon-2.jpg` | bandeau « Prenez soin de vous » | paysage, ~16:9, ≥ 1200 px de large |
 | `src/images/galerie-1…4.jpg` | grille de la galerie | portrait 4:5, ≥ 800 px de large |
 
-Les photos déposées **depuis le mode édition** ne passent pas par là : elles
-vont dans le stockage Supabase (bucket `media`), sous un nom unique tiré au
-hasard. Même effet, même garantie de fraîcheur. Elles priment sur les photos
-d'origine ; « Remettre la version d'origine » les efface et rend la main au
-fichier livré.
+Les photos déposées **depuis le panneau** (`/admin/accueil`, les fiches de
+prestations et de produits) ne passent pas par là : elles vont dans le stockage
+Supabase (bucket `media`), sous un nom unique tiré au hasard. Même effet, même
+garantie de fraîcheur. Elles priment sur les photos d'origine ; « Photo
+d'origine » les efface et rend la main au fichier livré.
 
 Les icônes d'onglet (`src/app/icon.png`, `src/app/apple-icon.png`) sont
 générées à partir du logo ; les régénérer si le logo change.
@@ -125,7 +125,11 @@ générées à partir du logo ; les régénérer si le logo change.
 - Aucune librairie d'animation, aucun effet au défilement. La rangée « Nos
   cosmétiques » de l'accueil défile bien sur le côté, mais c'est la zone de
   défilement native du navigateur, avec un point d'accrochage par carte : pas
-  de script, pas de défilement automatique, rien à charger.
+  de script, rien à charger.
+- Une seule chose bouge toute seule : les photos du bandeau, qui se relaient en
+  fondu (`src/components/DiaporamaAccueil.tsx`). Rien ne se déplace — seule
+  l'opacité change —, on ne peut pas les faire glisser, la relève s'arrête dans
+  un onglet caché, et « animations réduites » la coupe tout à fait.
 - Les liens du menu qui pointent vers une section (`/#contact`) **effacent leur
   ancre** une fois le saut fait. Sans cela, l'ancre restait dans l'adresse et
   chaque rafraîchissement renvoyait au pied de page — voir

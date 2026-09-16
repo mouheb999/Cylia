@@ -9,6 +9,7 @@ import { CONTENUS_DEFAUT, GROUPES_CONTENU, type CleContenu } from "@/lib/contenu
 /** Les clés qui tiennent sur plusieurs lignes méritent un bloc de saisie. */
 const LONGUES = new Set<string>([
   "hero.texte",
+  "promos.texte",
   "boutique.accueil_texte",
   "boutique.texte",
   "maps.requete",

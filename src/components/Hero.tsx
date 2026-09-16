@@ -1,23 +1,37 @@
 import Link from "next/link";
 import salon1 from "@/images/salon-1.jpg";
+import DiaporamaAccueil from "@/components/DiaporamaAccueil";
 import { ImageModifiable, Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
+import type { PhotoGalerie } from "@/lib/supabase/types";
 import { IconArrow } from "./Icons";
 
-export default function Hero() {
+/**
+ * Le bandeau de l'accueil.
+ *
+ * Tant que le salon n'a déposé aucune photo de bandeau dans le panneau, on
+ * garde exactement ce qu'il y avait : une image, celle du code ou celle de la
+ * clé `hero.image`. Dès qu'il en dépose, elles prennent la place et se
+ * relaient — une photo suffit, quatre valent mieux.
+ */
+export default function Hero({ photos = [] }: { photos?: PhotoGalerie[] }) {
   return (
     <section id="haut" className="bg-noir">
       <div className="relative aspect-[4/5] w-full">
-        <ImageModifiable
-          cle="hero.image"
-          titre="Photo du bandeau"
-          defaut={salon1}
-          alt="La réception de la Maison de Beauté CYLIA à Sousse"
-          conteneur="absolute inset-0"
-          className="object-cover object-center"
-          sizes="100vw"
-          priority
-        />
+        {photos.length > 0 ? (
+          <DiaporamaAccueil photos={photos} className="object-cover object-center" />
+        ) : (
+          <ImageModifiable
+            cle="hero.image"
+            titre="Photo du bandeau"
+            defaut={salon1}
+            alt="La réception de la Maison de Beauté CYLIA à Sousse"
+            conteneur="absolute inset-0"
+            className="object-cover object-center"
+            sizes="100vw"
+            priority
+          />
+        )}
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-b from-noir/20 via-noir/45 to-noir"
           aria-hidden="true"
