@@ -103,21 +103,28 @@ on la remplace, ou on remet celle d'origine.
 retirer. Chaque photo porte une description, celle que lisent Google et les
 lecteurs d'écran, et qui s'affiche si l'image ne charge pas.
 
-## Annoncer un prix « à partir de »
+## Annoncer un prix « بداية من »
 
 Toutes les prestations n'ont pas de tarif ferme : une coloration se paie à la
 longueur des cheveux, une épilation à la zone. Sous le prix, dans la fiche
-d'une prestation, deux choix : **Prix exact** ou **À partir de**. Chacun montre
-ce que la cliente lira — « 40 DT » ou « À partir de 40 DT ».
+d'une prestation, deux choix : **ثمن ثابت** (prix ferme) ou **بداية من**
+(à partir de). Chacun montre ce que la cliente lira — « 40 DT » ou
+« بداية من 40 DT ».
+
+La mention est en arabe tunisien, et elle seule : le reste du site parle
+français. C'est le mot collé au chiffre, celui qu'on lit sans lire — il gagne
+à être dans la langue où l'on compte. Les trois formes vivent au même endroit,
+dans `src/lib/format.ts` : `MENTION_DEPART`, sa forme courte `من` et
+`MENTION_TOTAL`.
 
 Le prix saisi ne change pas ; seule son annonce change. La mention suit la
-prestation partout : sur sa carte dans la réservation, dans le récapitulatif
-« Votre visite » (« dès 40 DT », faute de place), et sur l'accueil si une offre
-court dessus. Dès qu'une prestation choisie est au tarif de départ, le total
-de la visite s'annonce lui aussi « Total à partir de » : il ne promet pas un
-chiffre que le salon ne peut pas tenir.
+prestation partout : au-dessus du prix sur sa carte dans la réservation, dans
+le récapitulatif « Votre visite » (« من 40 DT », faute de place), et sur
+l'accueil si une offre court dessus. Dès qu'une prestation choisie est au
+tarif de départ, le total de la visite s'annonce « المجموع بداية من » : il
+ne promet pas un chiffre que le salon ne peut pas tenir.
 
-Le choix n'apparaît qu'une fois un prix écrit — « à partir de » sans montant
+Le choix n'apparaît qu'une fois un prix écrit — « بداية من » sans montant
 n'annonce rien. Effacer le prix retire la mention avec lui.
 
 ## Faire une promotion

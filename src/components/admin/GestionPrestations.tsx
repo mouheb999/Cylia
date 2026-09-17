@@ -120,8 +120,16 @@ export default function GestionPrestations({
                         </span>
                         <span className="mt-0.5 block text-xs font-light text-white/45">
                           {formatDuree(p.duree_minutes)}
-                          {p.prix != null &&
-                            ` · ${formatPrixAnnonce(p.prix, devise, p.prix_a_partir_de)}`}
+                          {p.prix != null && (
+                            <>
+                              {" · "}
+                              {/* Tajawal porte aussi les chiffres : la mention et son
+                                  montant restent d'une seule écriture. */}
+                              <span className={p.prix_a_partir_de ? "font-arabe" : undefined}>
+                                {formatPrixAnnonce(p.prix, devise, p.prix_a_partir_de)}
+                              </span>
+                            </>
+                          )}
                           {!p.actif && " · masquée"}
                         </span>
                       </span>

@@ -10,7 +10,16 @@ import { boutonFantome, boutonOr } from "@/components/ui/champs";
 import { useEdition } from "@/components/edition/ContexteEdition";
 import { IconArrow } from "@/components/Icons";
 import { ajouterPrestation, basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
-import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
+import {
+  depuisCleDate,
+  formatDuree,
+  formatJourCourt,
+  formatPrix,
+  MENTION_DEPART,
+  MENTION_DEPART_COURTE,
+  MENTION_TOTAL,
+  MENTION_TOTAL_DEPART,
+} from "@/lib/format";
 import { enPromo, remisePourcent, tarifDuJour } from "@/lib/promotions";
 import { track } from "@/lib/fbq";
 import VisuelPrestation from "./VisuelPrestation";
@@ -402,8 +411,8 @@ export default function FluxReservation({
                       {p.prix != null && (
                         <span className="flex flex-col items-end">
                           {p.prix_a_partir_de && (
-                            <span className="mb-0.5 text-[0.62rem] font-light uppercase tracking-[0.1em] text-white/40">
-                              À partir de
+                            <span className="mb-0.5 font-arabe text-[0.72rem] font-light text-white/45">
+                              {MENTION_DEPART}
                             </span>
                           )}
                           <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
@@ -477,12 +486,20 @@ export default function FluxReservation({
                         <span className="text-xs font-light text-white/45">
                           {formatDuree(p.duree_minutes)}
                         </span>
+                        {/* « من 40 DT » : la mention à droite, comme on la lit —
+                            mais le montant reste à l'endroit, sans quoi la devise
+                            passerait devant le chiffre. */}
                         {tarif != null && (
-                          <span className="flex items-baseline gap-1">
+                          <span dir="rtl" className="flex items-baseline gap-1.5">
                             {p.prix_a_partir_de && (
-                              <span className="text-[0.7rem] font-light text-white/40">dès</span>
+                              <span className="font-arabe text-[0.72rem] font-light text-white/40">
+                                {MENTION_DEPART_COURTE}
+                              </span>
                             )}
-                            <span className="font-serif text-base font-semibold text-gold lining-nums">
+                            <span
+                              dir="ltr"
+                              className="font-serif text-base font-semibold text-gold lining-nums"
+                            >
                               {formatPrix(tarif, devise)}
                             </span>
                           </span>
@@ -505,8 +522,8 @@ export default function FluxReservation({
               </p>
               {prixConnu && prixTotal > 0 && (
                 <p className="mt-2 flex items-center justify-between gap-3">
-                  <span className="text-sm text-white/70">
-                    Total{totalDepart ? " à partir de" : ""}
+                  <span className="font-arabe text-sm text-white/70">
+                    {totalDepart ? MENTION_TOTAL_DEPART : MENTION_TOTAL}
                   </span>
                   <span className="flex items-baseline gap-2">
                     {prixPlein > prixTotal && (

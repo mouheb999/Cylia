@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
-import { depuisCleDate, formatPrix } from "@/lib/format";
+import { depuisCleDate, formatPrix, MENTION_DEPART } from "@/lib/format";
 import { remisePourcent, type PrestationEnPromo } from "@/lib/promotions";
 import type { Groupe } from "@/lib/supabase/types";
 import { IconArrow, IconBienEtre, IconCoiffure, IconEsthetique } from "./Icons";
@@ -113,12 +113,16 @@ export default function Promotions({
                     {offre.promo_libelle || offre.description}
                   </span>
 
-                  <span className="mt-1 flex items-baseline gap-2 lining-nums">
-                    {offre.prix_a_partir_de && (
-                      <span className="text-[0.68rem] font-light text-muted">
-                        À partir de
-                      </span>
-                    )}
+                  {/* La mention passe au-dessus du prix plutôt qu'à côté : écrite
+                      avant lui sur la même ligne, elle se lirait après — l'arabe
+                      se lit de droite à gauche, le prix barré est à droite. */}
+                  {offre.prix_a_partir_de && (
+                    <span className="mt-1 block font-arabe text-[0.7rem] font-light text-muted">
+                      {MENTION_DEPART}
+                    </span>
+                  )}
+
+                  <span className="mt-0.5 flex items-baseline gap-2 lining-nums">
                     <span className="font-serif text-[1.45rem] font-semibold leading-none text-gold-deep">
                       {formatPrix(offre.prix_promo, devise)}
                     </span>

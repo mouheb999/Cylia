@@ -85,7 +85,20 @@ export function formatPrix(montant: number, devise = "DT"): string {
 }
 
 /**
- * « À partir de 40 DT ».
+ * Ce qu'annonce un prix, en arabe tunisien.
+ *
+ * Le reste du site parle français, mais ces trois mots-là sont ceux qu'une
+ * cliente lit d'un œil, à côté du chiffre : « بداية من » pour un tarif de
+ * départ, « من » là où la ligne est trop étroite pour l'écrire en entier,
+ * « المجموع » pour le total d'une visite.
+ */
+export const MENTION_DEPART = "بداية من";
+export const MENTION_DEPART_COURTE = "من";
+export const MENTION_TOTAL = "المجموع";
+export const MENTION_TOTAL_DEPART = `${MENTION_TOTAL} ${MENTION_DEPART}`;
+
+/**
+ * « بداية من 40 DT ».
  *
  * Certaines prestations n'ont pas de tarif ferme — une coloration se paie à
  * la longueur des cheveux. Le salon marque celles-là depuis le panneau, et le
@@ -97,7 +110,7 @@ export function formatPrixAnnonce(
   aPartirDe = false,
 ): string {
   const prix = formatPrix(montant, devise);
-  return aPartirDe ? `À partir de ${prix}` : prix;
+  return aPartirDe ? `${MENTION_DEPART} ${prix}` : prix;
 }
 
 /** Les `nombre` prochains jours, à partir d'aujourd'hui. */

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Jost, Parisienne } from "next/font/google";
+import { Cormorant_Garamond, Jost, Parisienne, Tajawal } from "next/font/google";
 import AgentService from "@/components/AgentService";
 import MetaPixel from "@/components/MetaPixel";
 import NettoyerAncre from "@/components/NettoyerAncre";
@@ -19,6 +19,16 @@ const cormorant = Cormorant_Garamond({
 const jost = Jost({
   variable: "--font-jost",
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  display: "swap",
+});
+
+// L'arabe du site. Jost, Cormorant et Parisienne n'ont pas une seule lettre
+// arabe : sans elle, « بداية من » tomberait sur la police du téléphone, qui
+// n'est la même sur aucun.
+const tajawal = Tajawal({
+  variable: "--font-tajawal",
+  subsets: ["arabic"],
   weight: ["300", "400", "500"],
   display: "swap",
 });
@@ -101,7 +111,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${cormorant.variable} ${jost.variable} ${parisienne.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${jost.variable} ${parisienne.variable} ${tajawal.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-noir">
         <MetaPixel />
