@@ -381,31 +381,9 @@ export default function FluxReservation({
                       >
                         {p.nom}
                       </span>
-                      {(dureeVisible || p.prix != null) && (
-                        <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xs font-light text-white/45">
-                          {dureeVisible && <span>{dureeVisible}</span>}
-                          {dureeVisible && p.prix != null && (
-                            <span aria-hidden="true" className="text-white/25">
-                              ·
-                            </span>
-                          )}
-                          {offre ? (
-                            <>
-                              <span className="text-gold lining-nums">
-                                {formatPrix(offre.prix_promo, devise)}
-                              </span>
-                              <span className="text-white/30 line-through lining-nums">
-                                {formatPrix(offre.prix, devise)}
-                              </span>
-                              <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.6rem] text-gold">
-                                −{remisePourcent(offre)}%
-                              </span>
-                            </>
-                          ) : (
-                            p.prix != null && (
-                              <span className="lining-nums">{formatPrix(p.prix, devise)}</span>
-                            )
-                          )}
+                      {dureeVisible && (
+                        <span className="mt-0.5 block text-xs font-light text-white/45">
+                          {dureeVisible}
                         </span>
                       )}
                       {p.description && (
@@ -414,13 +392,38 @@ export default function FluxReservation({
                         </span>
                       )}
                     </span>
-                    <span
-                      aria-hidden="true"
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm ${
-                        retenue ? "border-gold bg-gold text-noir" : "border-white/25 text-white/40"
-                      }`}
-                    >
-                      {retenue ? "✓" : "+"}
+                    {/* Le prix est ce que l'on cherche du regard avant de
+                        toucher le « + » : il se lit donc à côté de lui, en or
+                        et dans un corps qui ne se confond plus avec la durée. */}
+                    <span className="flex shrink-0 items-center gap-3">
+                      {p.prix != null &&
+                        (offre ? (
+                          <span className="flex flex-col items-end">
+                            <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
+                              {formatPrix(offre.prix_promo, devise)}
+                            </span>
+                            <span className="mt-1 flex items-center gap-1.5">
+                              <span className="text-[0.7rem] font-light text-white/35 line-through lining-nums">
+                                {formatPrix(offre.prix, devise)}
+                              </span>
+                              <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.6rem] text-gold">
+                                −{remisePourcent(offre)}%
+                              </span>
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
+                            {formatPrix(p.prix, devise)}
+                          </span>
+                        ))}
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm ${
+                          retenue ? "border-gold bg-gold text-noir" : "border-white/25 text-white/40"
+                        }`}
+                      >
+                        {retenue ? "✓" : "+"}
+                      </span>
                     </span>
                   </button>
 
@@ -461,6 +464,7 @@ export default function FluxReservation({
                 {selection.map((id) => {
                   const p = parId.get(id);
                   if (!p) return null;
+                  const tarif = tarifDuJour(p, aujourdhui);
                   return (
                     <li key={id} className="flex items-center justify-between gap-3 text-sm">
                       <span className="text-cream">{p.nom}</span>
@@ -468,6 +472,11 @@ export default function FluxReservation({
                         <span className="text-xs font-light text-white/45">
                           {formatDuree(p.duree_minutes)}
                         </span>
+                        {tarif != null && (
+                          <span className="font-serif text-base font-semibold text-gold lining-nums">
+                            {formatPrix(tarif, devise)}
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => basculerPrestation(id)}
@@ -483,21 +492,22 @@ export default function FluxReservation({
               </ul>
               <p className="mt-3 border-t border-white/10 pt-3 text-sm text-white/70">
                 Durée totale&nbsp;: <span className="text-gold">{formatDuree(duree)}</span>
-                {prixConnu && prixTotal > 0 && (
-                  <>
-                    {" · "}
-                    <span className="text-gold lining-nums">{formatPrix(prixTotal, devise)}</span>
-                    {prixPlein > prixTotal && (
-                      <>
-                        {" "}
-                        <span className="text-white/30 line-through lining-nums">
-                          {formatPrix(prixPlein, devise)}
-                        </span>
-                      </>
-                    )}
-                  </>
-                )}
               </p>
+              {prixConnu && prixTotal > 0 && (
+                <p className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-sm text-white/70">Total</span>
+                  <span className="flex items-baseline gap-2">
+                    {prixPlein > prixTotal && (
+                      <span className="text-xs font-light text-white/30 line-through lining-nums">
+                        {formatPrix(prixPlein, devise)}
+                      </span>
+                    )}
+                    <span className="font-serif text-2xl font-semibold leading-none text-gold lining-nums">
+                      {formatPrix(prixTotal, devise)}
+                    </span>
+                  </span>
+                </p>
+              )}
 
               <button
                 type="button"

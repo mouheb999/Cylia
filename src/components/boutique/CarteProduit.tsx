@@ -57,7 +57,7 @@ export default function CarteProduit({
         </h3>
 
         <p className="mt-1.5 flex items-baseline gap-2">
-          <span className="font-serif text-base text-gold-deep lining-nums">
+          <span className="font-serif text-xl font-semibold text-gold-deep lining-nums">
             {formatPrix(produit.prix, devise)}
           </span>
           {produit.ancien_prix && produit.ancien_prix > produit.prix && (

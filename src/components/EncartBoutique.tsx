@@ -86,7 +86,7 @@ export default function EncartBoutique({
               <p className="mt-0.5 line-clamp-2 text-[0.72rem] font-light leading-snug text-ink">
                 {produit.nom}
               </p>
-              <p className="mt-0.5 text-[0.72rem] text-gold-deep lining-nums">
+              <p className="mt-1 font-serif text-[1rem] font-semibold leading-none text-gold-deep lining-nums">
                 {formatPrix(produit.prix, devise)}
               </p>
             </Link>

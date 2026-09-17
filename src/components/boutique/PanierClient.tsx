@@ -88,7 +88,7 @@ export default function PanierClient({
           </div>
           <div className="mt-2 flex justify-between gap-4 border-t border-sand pt-2">
             <dt className="text-ink">Total</dt>
-            <dd className="text-right font-serif text-lg text-gold-deep lining-nums">
+            <dd className="text-right font-serif text-2xl font-semibold leading-none text-gold-deep lining-nums">
               {formatPrix(commande.total, reglages.devise)}
             </dd>
           </div>
@@ -189,7 +189,7 @@ export default function PanierClient({
 
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="font-serif text-[0.95rem] leading-snug text-ink">{produit.nom}</p>
-              <p className="mt-0.5 text-sm text-gold-deep lining-nums">
+              <p className="mt-0.5 font-serif text-lg font-semibold leading-none text-gold-deep lining-nums">
                 {formatPrix(produit.prix, reglages.devise)}
               </p>
 
@@ -243,7 +243,7 @@ export default function PanierClient({
         </div>
         <div className="mt-3 flex justify-between gap-4 border-t border-sand pt-3">
           <dt className="text-ink">Total</dt>
-          <dd className="font-serif text-lg text-gold-deep lining-nums">
+          <dd className="font-serif text-2xl font-semibold leading-none text-gold-deep lining-nums">
             {formatPrix(sousTotal + livraison, reglages.devise)}
           </dd>
         </div>

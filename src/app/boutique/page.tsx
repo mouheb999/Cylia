@@ -75,13 +75,18 @@ export default async function PageBoutique() {
               <GrilleProduits produits={produits} devise={reglages.devise} />
 
               <p className="mt-6 rounded-2xl border border-sand bg-white px-4 py-4 text-center text-xs font-light leading-relaxed text-muted">
-                Livraison {formatPrix(reglages.frais_livraison, reglages.devise)} partout en
-                Tunisie
+                Livraison{" "}
+                <span className="font-medium text-gold-deep lining-nums">
+                  {formatPrix(reglages.frais_livraison, reglages.devise)}
+                </span>{" "}
+                partout en Tunisie
                 {reglages.livraison_gratuite_des != null && (
                   <>
                     {" "}
                     — offerte dès{" "}
-                    {formatPrix(reglages.livraison_gratuite_des, reglages.devise)}
+                    <span className="font-medium text-gold-deep lining-nums">
+                      {formatPrix(reglages.livraison_gratuite_des, reglages.devise)}
+                    </span>
                   </>
                 )}
                 .

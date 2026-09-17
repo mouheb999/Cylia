@@ -60,7 +60,7 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
           </h1>
 
           <p className="mt-3 flex items-baseline gap-3">
-            <span className="font-serif text-2xl text-gold-deep lining-nums">
+            <span className="font-serif text-[2rem] font-semibold leading-none text-gold-deep lining-nums">
               {formatPrix(produit.prix, reglages.devise)}
             </span>
             {enPromo && produit.ancien_prix != null && (
