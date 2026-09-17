@@ -84,6 +84,22 @@ export function formatPrix(montant: number, devise = "DT"): string {
   return `${texte} ${devise}`;
 }
 
+/**
+ * « À partir de 40 DT ».
+ *
+ * Certaines prestations n'ont pas de tarif ferme — une coloration se paie à
+ * la longueur des cheveux. Le salon marque celles-là depuis le panneau, et le
+ * site annonce alors le prix pour ce qu'il est : un point de départ.
+ */
+export function formatPrixAnnonce(
+  montant: number,
+  devise = "DT",
+  aPartirDe = false,
+): string {
+  const prix = formatPrix(montant, devise);
+  return aPartirDe ? `À partir de ${prix}` : prix;
+}
+
 /** Les `nombre` prochains jours, à partir d'aujourd'hui. */
 export function joursProposes(nombre: number, aujourdhui: Date = new Date()): Date[] {
   const debut = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate());

@@ -11,7 +11,7 @@ Projet Supabase, PostgreSQL. Le schéma complet est dans
 | `reglages` | ligne unique : horaires, capacité, frais de livraison, ouverture des services |
 | `fermetures` | congés et fériés, par période |
 | `categories` | les trois familles de prestations, qui sont aussi les cartes de l'accueil |
-| `prestations` | catalogue : nom, catégorie, durée, prix, description — et la remise en cours (`prix_promo`, `promo_libelle`, `promo_fin`) |
+| `prestations` | catalogue : nom, catégorie, durée, prix — ferme ou « à partir de » (`prix_a_partir_de`) —, description, et la remise en cours (`prix_promo`, `promo_libelle`, `promo_fin`) |
 | `reservations` | rendez-vous, avec les noms des prestations figés à la prise |
 | `contenus` | blocs de texte et photos modifiés depuis le site, par clé |
 | `galerie` | photos de l'accueil : celles du bandeau et celles de la galerie, séparées par `emplacement` |

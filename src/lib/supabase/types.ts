@@ -30,6 +30,12 @@ export type Prestation = {
   groupe_id: string | null;
   duree_minutes: number;
   prix: number | null;
+  /**
+   * Le prix est un point de départ, pas un tarif ferme : le site annonce
+   * alors « À partir de 40 DT ». Sans prix, la mention n'a pas de sens — la
+   * base le refuse (migration 0027).
+   */
+  prix_a_partir_de: boolean;
   /** Tarif remisé, sous `prix`. `null` : pas d'offre en cours. */
   prix_promo: number | null;
   /** Ce que l'offre annonce — « Offre de printemps ». Vide : rien d'écrit. */

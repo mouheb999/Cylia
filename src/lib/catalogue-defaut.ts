@@ -44,6 +44,7 @@ function prestation(
     groupe_id: null,
     duree_minutes,
     prix: null,
+    prix_a_partir_de: false,
     prix_promo: null,
     promo_libelle: "",
     promo_fin: null,

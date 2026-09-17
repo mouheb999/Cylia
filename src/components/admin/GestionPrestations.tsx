@@ -4,7 +4,7 @@ import { useState } from "react";
 import FeuillePrestation from "@/components/reservation/FeuillePrestation";
 import FeuilleGroupe from "@/components/admin/FeuilleGroupe";
 import VisuelPrestation from "@/components/reservation/VisuelPrestation";
-import { formatDuree, formatPrix } from "@/lib/format";
+import { formatDuree, formatPrixAnnonce } from "@/lib/format";
 import type { Categorie, Groupe, Prestation } from "@/lib/supabase/types";
 
 export default function GestionPrestations({
@@ -120,7 +120,8 @@ export default function GestionPrestations({
                         </span>
                         <span className="mt-0.5 block text-xs font-light text-white/45">
                           {formatDuree(p.duree_minutes)}
-                          {p.prix != null && ` · ${formatPrix(p.prix, devise)}`}
+                          {p.prix != null &&
+                            ` · ${formatPrixAnnonce(p.prix, devise, p.prix_a_partir_de)}`}
                           {!p.actif && " · masquée"}
                         </span>
                       </span>
@@ -154,6 +155,7 @@ export default function GestionPrestations({
           categories={categories}
           groupes={groupes}
           categorieParDefaut={categories[0]?.id ?? ""}
+          devise={devise}
           onFermer={() => setFiche(undefined)}
         />
       )}

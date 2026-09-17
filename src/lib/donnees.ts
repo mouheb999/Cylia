@@ -42,7 +42,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "9";
+const MILLESIME = "10";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,

@@ -114,6 +114,11 @@ export default function Promotions({
                   </span>
 
                   <span className="mt-1 flex items-baseline gap-2 lining-nums">
+                    {offre.prix_a_partir_de && (
+                      <span className="text-[0.68rem] font-light text-muted">
+                        À partir de
+                      </span>
+                    )}
                     <span className="font-serif text-[1.45rem] font-semibold leading-none text-gold-deep">
                       {formatPrix(offre.prix_promo, devise)}
                     </span>

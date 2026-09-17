@@ -201,6 +201,7 @@ export type FormPrestation = {
   groupe_id: string | null;
   duree_minutes: number;
   prix: number | null;
+  prix_a_partir_de: boolean;
   description: string;
   image_url: string | null;
   ordre: number;
@@ -219,6 +220,10 @@ export async function enregistrerPrestation(form: FormPrestation): Promise<Resul
       groupe_id: form.groupe_id,
       duree_minutes: Math.max(5, Math.round(form.duree_minutes)),
       prix: form.prix,
+      // « À partir de » sans prix n'annonce rien : la mention tombe avec le
+      // tarif qu'elle qualifiait, plutôt que de faire échouer l'enregistrement
+      // sur une contrainte de la base.
+      prix_a_partir_de: form.prix === null ? false : form.prix_a_partir_de,
       description: form.description.trim(),
       image_url: form.image_url,
       ordre: form.ordre,

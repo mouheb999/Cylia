@@ -115,6 +115,9 @@ export default function FluxReservation({
   // Le total d'avant remise ne s'affiche que s'il diffère : sinon, c'est deux
   // fois le même chiffre, dont un barré.
   const prixPlein = selection.reduce((total, id) => total + (parId.get(id)?.prix ?? 0), 0);
+  // Une seule prestation au tarif de départ suffit à rendre le total
+  // approximatif : il s'annonce alors lui aussi « à partir de ».
+  const totalDepart = selection.some((id) => parId.get(id)?.prix_a_partir_de);
 
   /*
    * La prestation demandée entre dans le panier — celui du navigateur, qui
@@ -396,12 +399,17 @@ export default function FluxReservation({
                         toucher le « + » : il se lit donc à côté de lui, en or
                         et dans un corps qui ne se confond plus avec la durée. */}
                     <span className="flex shrink-0 items-center gap-3">
-                      {p.prix != null &&
-                        (offre ? (
-                          <span className="flex flex-col items-end">
-                            <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
-                              {formatPrix(offre.prix_promo, devise)}
+                      {p.prix != null && (
+                        <span className="flex flex-col items-end">
+                          {p.prix_a_partir_de && (
+                            <span className="mb-0.5 text-[0.62rem] font-light uppercase tracking-[0.1em] text-white/40">
+                              À partir de
                             </span>
+                          )}
+                          <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
+                            {formatPrix(offre ? offre.prix_promo : p.prix, devise)}
+                          </span>
+                          {offre && (
                             <span className="mt-1 flex items-center gap-1.5">
                               <span className="text-[0.7rem] font-light text-white/35 line-through lining-nums">
                                 {formatPrix(offre.prix, devise)}
@@ -410,12 +418,9 @@ export default function FluxReservation({
                                 −{remisePourcent(offre)}%
                               </span>
                             </span>
-                          </span>
-                        ) : (
-                          <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
-                            {formatPrix(p.prix, devise)}
-                          </span>
-                        ))}
+                          )}
+                        </span>
+                      )}
                       <span
                         aria-hidden="true"
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm ${
@@ -473,8 +478,13 @@ export default function FluxReservation({
                           {formatDuree(p.duree_minutes)}
                         </span>
                         {tarif != null && (
-                          <span className="font-serif text-base font-semibold text-gold lining-nums">
-                            {formatPrix(tarif, devise)}
+                          <span className="flex items-baseline gap-1">
+                            {p.prix_a_partir_de && (
+                              <span className="text-[0.7rem] font-light text-white/40">dès</span>
+                            )}
+                            <span className="font-serif text-base font-semibold text-gold lining-nums">
+                              {formatPrix(tarif, devise)}
+                            </span>
                           </span>
                         )}
                         <button
@@ -495,7 +505,9 @@ export default function FluxReservation({
               </p>
               {prixConnu && prixTotal > 0 && (
                 <p className="mt-2 flex items-center justify-between gap-3">
-                  <span className="text-sm text-white/70">Total</span>
+                  <span className="text-sm text-white/70">
+                    Total{totalDepart ? " à partir de" : ""}
+                  </span>
                   <span className="flex items-baseline gap-2">
                     {prixPlein > prixTotal && (
                       <span className="text-xs font-light text-white/30 line-through lining-nums">
@@ -644,6 +656,7 @@ export default function FluxReservation({
           categories={categories}
           groupes={groupes}
           categorieParDefaut={categorie}
+          devise={devise}
           onFermer={() => setFiche(undefined)}
         />
       )}

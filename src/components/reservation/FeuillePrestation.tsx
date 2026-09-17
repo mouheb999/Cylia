@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre } from "@/components/ui/champs";
 import { televerserImage } from "@/components/edition/televerser";
+import { formatPrix } from "@/lib/format";
 import VisuelPrestation from "./VisuelPrestation";
 import { enregistrerPrestation, supprimerPrestation } from "@/app/actions/admin";
 import type { Categorie, Groupe, Prestation } from "@/lib/supabase/types";
@@ -21,6 +22,7 @@ export default function FeuillePrestation({
   categories,
   groupes = [],
   categorieParDefaut,
+  devise = "DT",
   onFermer,
 }: {
   /** `null` pour créer une prestation. */
@@ -28,6 +30,8 @@ export default function FeuillePrestation({
   categories: Categorie[];
   groupes?: Groupe[];
   categorieParDefaut: string;
+  /** Pour l'aperçu du prix — la même que celle du site. */
+  devise?: string;
   onFermer: () => void;
 }) {
   const router = useRouter();
@@ -37,10 +41,13 @@ export default function FeuillePrestation({
   );
   const [duree, setDuree] = useState(String(prestation?.duree_minutes ?? 60));
   const [prix, setPrix] = useState(prestation?.prix != null ? String(prestation.prix) : "");
+  const [aPartirDe, setAPartirDe] = useState(prestation?.prix_a_partir_de ?? false);
   const [description, setDescription] = useState(prestation?.description ?? "");
   const [actif, setActif] = useState(prestation?.actif ?? true);
   const [imageUrl, setImageUrl] = useState(prestation?.image_url ?? null);
   const [groupeId, setGroupeId] = useState<string>(prestation?.groupe_id ?? "");
+  const montantSaisi = nombreOuNull(prix);
+  const apercuPrix = formatPrix(montantSaisi ?? 0, devise);
   const [erreur, setErreur] = useState<string | null>(null);
   const [depot, setDepot] = useState(false);
   const [enCours, demarrer] = useTransition();
@@ -72,6 +79,7 @@ export default function FeuillePrestation({
         groupe_id: groupeId || null,
         duree_minutes: minutes,
         prix: nombreOuNull(prix),
+        prix_a_partir_de: aPartirDe,
         description,
         image_url: imageUrl,
         ordre: prestation?.ordre ?? 999,
@@ -201,6 +209,50 @@ export default function FeuillePrestation({
           />
         </label>
       </div>
+
+      {/* Un tarif ferme et un tarif de départ s'écrivent pareil : ce qui les
+          distingue, c'est ce que le site en dit. Le choix est donc ici, sous le
+          prix, et non dans une seconde case à remplir. */}
+      {montantSaisi !== null && (
+        <fieldset className="mt-3">
+          <legend className="text-xs font-light text-white/45">
+            Comment annoncer ce prix&nbsp;?
+          </legend>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {[
+              { valeur: false, titre: "Prix exact", exemple: apercuPrix },
+              { valeur: true, titre: "À partir de", exemple: `À partir de ${apercuPrix}` },
+            ].map((choix) => (
+              <button
+                key={String(choix.valeur)}
+                type="button"
+                aria-pressed={aPartirDe === choix.valeur}
+                onClick={() => setAPartirDe(choix.valeur)}
+                className={`press rounded-xl border px-3 py-2.5 text-left ${
+                  aPartirDe === choix.valeur
+                    ? "border-gold/60 bg-gold/10"
+                    : "border-white/10 bg-white/[0.03]"
+                }`}
+              >
+                <span
+                  className={`block text-sm ${
+                    aPartirDe === choix.valeur ? "text-gold" : "text-white/70"
+                  }`}
+                >
+                  {choix.titre}
+                </span>
+                <span className="mt-0.5 block text-xs font-light text-white/40 lining-nums">
+                  {choix.exemple}
+                </span>
+              </button>
+            ))}
+          </div>
+          <span className="mt-1.5 block text-xs font-light text-white/35">
+            « À partir de » pour une prestation dont le tarif dépend de la
+            cliente — la longueur des cheveux, la zone à traiter.
+          </span>
+        </fieldset>
+      )}
 
       <label className="mt-4 block text-sm">
         <span className="font-light text-white/60">Description (facultatif)</span>
