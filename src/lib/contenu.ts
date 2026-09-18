@@ -18,9 +18,10 @@ export const CONTENUS_DEFAUT = {
   "hero.bouton": "Réserver",
   "hero.image": "",
 
-  "feature.titre": "Prenez soin",
-  "feature.titre_script": "de vous",
-  "feature.image": "",
+  "packs.surtitre": "Nos formules",
+  "packs.titre": "Nos packs",
+  "packs.texte":
+    "Plusieurs soins réunis en une seule formule, à un tarif pensé pour l'ensemble.",
 
   "galerie.surtitre": "Galerie",
   "galerie.titre": "Nos réalisations",
@@ -35,7 +36,7 @@ export const CONTENUS_DEFAUT = {
   "boutique.accueil_titre": "Nos cosmétiques",
   "boutique.accueil_texte":
     "Les soins que nous utilisons en cabine, à emporter chez vous. Livraison partout en Tunisie.",
-  "boutique.accueil_bouton": "Découvrir la boutique",
+  "boutique.accueil_bouton": "Découvrir les produits Keune",
   "boutique.surtitre": "Cosmétiques",
   "boutique.titre": "Notre",
   "boutique.titre_script": "boutique",
@@ -85,7 +86,7 @@ export const GROUPES_CONTENU: { titre: string; cles: CleContenu[] }[] = [
     titre: "Accueil — bandeau",
     cles: ["hero.surtitre", "hero.titre", "hero.titre_script", "hero.texte", "hero.bouton"],
   },
-  { titre: "Accueil — « Prenez soin de vous »", cles: ["feature.titre", "feature.titre_script"] },
+  { titre: "Accueil — « Nos packs »", cles: ["packs.surtitre", "packs.titre", "packs.texte"] },
   {
     titre: "Accueil — promotions",
     cles: ["promos.surtitre", "promos.titre", "promos.texte", "promos.bouton"],

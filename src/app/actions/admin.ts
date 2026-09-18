@@ -522,6 +522,80 @@ export async function enregistrerProduit(form: FormProduit): Promise<Resultat> {
   });
 }
 
+// -------------------------------------------------------------------- packs
+
+export type FormPack = {
+  id?: string;
+  nom: string;
+  description: string;
+  /** `null` pour un pack sur devis : la carte n'affiche alors aucun chiffre. */
+  prix: number | null;
+  image_url: string | null;
+  ordre: number;
+  actif: boolean;
+};
+
+export async function enregistrerPack(form: FormPack): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const nom = form.nom.trim();
+    if (nom.length < 2) throw new Error("NOM_COURT");
+
+    const ligne = {
+      nom,
+      description: form.description.trim(),
+      prix: form.prix === null ? null : Math.max(0, form.prix),
+      image_url: form.image_url,
+      ordre: form.ordre,
+      actif: form.actif,
+    };
+
+    if (form.id) {
+      const { error } = await supabase.from("packs").update(ligne).eq("id", form.id);
+      if (error) throw error;
+      return;
+    }
+
+    // Un pack ajouté se range à la suite : sans rang explicite, tous les
+    // nouveaux arriveraient à zéro et la liste se mélangerait à chaque ajout.
+    const { data } = await supabase
+      .from("packs")
+      .select("ordre")
+      .order("ordre", { ascending: false })
+      .limit(1);
+    const { error } = await supabase
+      .from("packs")
+      .insert({ ...ligne, ordre: (data?.[0]?.ordre ?? 0) + 1 });
+    if (error) throw error;
+  });
+}
+
+export async function supprimerPack(id: string): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase.from("packs").delete().eq("id", id);
+    if (error) throw error;
+  });
+}
+
+/** Un pack échange son rang avec son voisin — c'est l'ordre de l'accueil. */
+export async function deplacerPack(id: string, sens: -1 | 1): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { data } = await supabase.from("packs").select("id, ordre").order("ordre");
+    const liste = data ?? [];
+    const index = liste.findIndex((p) => p.id === id);
+    const voisin = liste[index + sens];
+    if (index < 0 || !voisin) return;
+
+    const courant = liste[index];
+    await Promise.all([
+      supabase.from("packs").update({ ordre: voisin.ordre }).eq("id", courant.id),
+      supabase.from("packs").update({ ordre: courant.ordre }).eq("id", voisin.id),
+    ]);
+  });
+}
+
 /**
  * Stock d'un seul produit.
  *

@@ -11,6 +11,7 @@ const ONGLETS = [
   { href: "/admin/prestations", label: "Prestations" },
   { href: "/admin/produits", label: "Produits" },
   { href: "/admin/promotions", label: "Promotions" },
+  { href: "/admin/packs", label: "Packs" },
   { href: "/admin/accueil", label: "Photos" },
   { href: "/admin/contenu", label: "Contenu" },
   { href: "/admin/reglages", label: "Réglages" },

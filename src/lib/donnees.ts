@@ -13,6 +13,7 @@ import type {
   Categorie,
   EmplacementPhoto,
   Groupe,
+  Pack,
   PhotoGalerie,
   Prestation,
   Produit,
@@ -28,6 +29,7 @@ export type DonneesPubliques = {
   groupes: Groupe[];
   prestations: Prestation[];
   produits: Produit[];
+  packs: Pack[];
   galerie: PhotoGalerie[];
   contenus: ContenuMap;
   fermetures: Fermeture[];
@@ -42,7 +44,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "10";
+const MILLESIME = "11";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -50,6 +52,7 @@ const REPLI: DonneesPubliques = {
   groupes: [],
   prestations: PRESTATIONS_DEFAUT,
   produits: [],
+  packs: [],
   galerie: [],
   contenus: {},
   fermetures: [],
@@ -86,6 +89,7 @@ const lireDonneesPubliques = unstable_cache(
       groupes: brut.groupes ?? [],
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
+      packs: brut.packs ?? [],
       galerie: brut.galerie ?? [],
       contenus: brut.contenus ?? {},
       fermetures: brut.fermetures ?? [],
@@ -181,6 +185,11 @@ export async function chargerPhotosAccueil(): Promise<PhotoGalerie[]> {
 
 export async function chargerGroupes(): Promise<Groupe[]> {
   return (await chargerDonnees()).groupes;
+}
+
+/** Les packs de l'accueil, dans l'ordre choisi par le salon. */
+export async function chargerPacks(): Promise<Pack[]> {
+  return (await chargerDonnees()).packs;
 }
 
 export async function chargerProduits(): Promise<Produit[]> {

@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import logoKeune from "@/images/keune.png";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import { formatPrix } from "@/lib/format";
@@ -50,6 +52,18 @@ export default function EncartBoutique({
           defaut={CONTENUS_DEFAUT["boutique.accueil_texte"]}
           balise="p"
           className="mx-auto mt-2 max-w-[24rem] whitespace-pre-line text-[0.8rem] font-light leading-relaxed text-muted"
+        />
+
+        {/*
+          La marque dont le salon distribue les soins. Le fichier est le
+          lettrage seul, en encre sur transparent : il se pose sur le crème sans
+          rapporter le carré noir de l'original.
+        */}
+        <Image
+          src={logoKeune}
+          alt="Keune Haircosmetics"
+          sizes="128px"
+          className="mx-auto mt-4 h-auto w-32 opacity-75"
         />
       </div>
 

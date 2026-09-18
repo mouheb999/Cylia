@@ -43,13 +43,6 @@ export default async function PagePhotosAccueil() {
         <h2 className="font-serif text-lg font-light text-gold">Au fil de la page</h2>
         <div className="mt-3 space-y-3">
           <PhotoUnique
-            cle="feature.image"
-            titre="Photo « Prenez soin de vous »"
-            description="Le grand encart entre les services et les offres. Une photo large, plutôt sombre sur la droite, où le titre vient se poser."
-            valeur={contenus["feature.image"] ?? ""}
-            apercu="h-24 w-full"
-          />
-          <PhotoUnique
             cle="logo.image"
             titre="Logo de l'en-tête"
             description="Il s'affiche sur toutes les pages, en haut au centre. Un fichier carré, fond transparent de préférence."

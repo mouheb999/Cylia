@@ -1,9 +1,9 @@
 import EncartBoutique from "@/components/EncartBoutique";
-import Feature from "@/components/Feature";
 import Footer from "@/components/Footer";
 import Galerie from "@/components/Galerie";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
+import Packs from "@/components/Packs";
 import Promotions from "@/components/Promotions";
 import Services from "@/components/Services";
 import {
@@ -11,6 +11,7 @@ import {
   chargerContenus,
   chargerGalerie,
   chargerGroupes,
+  chargerPacks,
   chargerPhotosAccueil,
   chargerPrestations,
   chargerProduits,
@@ -35,6 +36,7 @@ export default async function Page() {
     categories,
     groupes,
     prestations,
+    packs,
     photosAccueil,
     photos,
     produits,
@@ -44,6 +46,7 @@ export default async function Page() {
     chargerCategories(),
     chargerGroupes(),
     chargerPrestations(),
+    chargerPacks(),
     chargerPhotosAccueil(),
     chargerGalerie(),
     chargerProduits(),
@@ -51,8 +54,8 @@ export default async function Page() {
     chargerReglages(),
   ]);
 
-  // Toutes ces lectures viennent du même appel mis en cache : les huit lignes
-  // ci-dessus ne font pas huit allers-retours. Voir `chargerDonnees()`.
+  // Toutes ces lectures viennent du même appel mis en cache : les neuf lignes
+  // ci-dessus ne font pas neuf allers-retours. Voir `chargerDonnees()`.
   const offres = promotionsEnCours(prestations);
 
   return (
@@ -61,16 +64,7 @@ export default async function Page() {
       <main className="flex-1">
         <Hero photos={photosAccueil} />
         <Services categories={categories} />
-        <Feature
-          // L'encart mène aux offres quand il y en a — c'est ce qu'il met en
-          // avant ; sinon, il reprend le chemin de la réservation.
-          href={offres.length > 0 ? "/#promotions" : "/reserver"}
-          libelleLien={
-            offres.length > 0
-              ? "Prenez soin de vous — voir nos promotions"
-              : "Prenez soin de vous — réserver un soin"
-          }
-        />
+        <Packs packs={packs} devise={reglages.devise} />
         <Promotions offres={offres} groupes={groupes} devise={reglages.devise} />
         {reglages.boutique_active && (
           <EncartBoutique produits={produits} devise={reglages.devise} />

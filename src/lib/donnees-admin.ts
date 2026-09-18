@@ -10,6 +10,7 @@ import type {
   EmplacementPhoto,
   Fermeture,
   Groupe,
+  Pack,
   PhotoGalerie,
   Prestation,
   Produit,
@@ -134,6 +135,13 @@ export async function produitsAdmin(): Promise<Produit[]> {
   const { data, error } = await supabase.from("produits").select("*").order("ordre");
   if (error) throw error;
   return data as Produit[];
+}
+
+export async function packsAdmin(): Promise<Pack[]> {
+  const supabase = await clientPanneau();
+  const { data, error } = await supabase.from("packs").select("*").order("ordre");
+  if (error) throw error;
+  return data as Pack[];
 }
 
 export async function fermeturesAdmin(): Promise<Fermeture[]> {

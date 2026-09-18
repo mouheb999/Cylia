@@ -121,6 +121,23 @@ export type Produit = {
   cree_le: string;
 };
 
+/**
+ * Un pack : une formule que le salon compose et annonce sur l'accueil.
+ *
+ * `prix` est facultatif — un pack « sur devis » s'annonce sans chiffre, et la
+ * carte n'affiche alors rien à cet endroit.
+ */
+export type Pack = {
+  id: string;
+  nom: string;
+  description: string;
+  prix: number | null;
+  image_url: string | null;
+  ordre: number;
+  actif: boolean;
+  cree_le: string;
+};
+
 export type StatutCommande =
   | "en_attente"
   | "confirmee"
@@ -208,6 +225,7 @@ export type Database = {
       galerie: Ligne<PhotoGalerie, "image_url">;
       groupes: Ligne<Groupe, "categorie_id" | "nom">;
       produits: Ligne<Produit, "slug" | "nom" | "prix">;
+      packs: Ligne<Pack, "nom">;
       commandes: Ligne<Commande, "reference" | "nom" | "telephone" | "adresse" | "ville" | "sous_total" | "total">;
       commande_articles: Ligne<ArticleCommande, "commande_id" | "nom" | "prix" | "quantite">;
       reglages: Ligne<Reglages>;

@@ -116,8 +116,8 @@ export default function GestionPromotions({
         {enCours.length === 0 ? (
           <p className="mt-2 text-sm font-light leading-relaxed text-white/40">
             Aucune offre en cours — la section « Promotions » n&apos;apparaît pas
-            sur l&apos;accueil, et l&apos;encart « Prenez soin de vous » renvoie
-            à la réservation.
+            du tout sur l&apos;accueil. Elle réapparaît dès qu&apos;une remise
+            est posée ici.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
