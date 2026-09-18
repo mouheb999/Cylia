@@ -13,11 +13,17 @@ import { IconArrow } from "./Icons";
  * garde exactement ce qu'il y avait : une image, celle du code ou celle de la
  * clé `hero.image`. Dès qu'il en dépose, elles prennent la place et se
  * relaient — une photo suffit, quatre valent mieux.
+ *
+ * Le titre est posé **au milieu** de la photo, pas dessous. Les deux blocs
+ * occupent la même case d'une grille d'une seule cellule : ils se superposent
+ * sans que le texte ait à être détaché de la page. La case prend la hauteur du
+ * plus grand des deux — le salon peut donc rallonger son accroche depuis le
+ * panneau sans que le texte déborde de la photo.
  */
 export default function Hero({ photos = [] }: { photos?: PhotoGalerie[] }) {
   return (
-    <section id="haut" className="bg-noir">
-      <div className="relative aspect-[4/5] w-full">
+    <section id="haut" className="grid bg-noir">
+      <div className="relative col-start-1 row-start-1 aspect-[4/5] w-full">
         {photos.length > 0 ? (
           <DiaporamaAccueil photos={photos} className="object-cover object-center" />
         ) : (
@@ -32,13 +38,20 @@ export default function Hero({ photos = [] }: { photos?: PhotoGalerie[] }) {
             priority
           />
         )}
+        {/*
+          Le voile suivait le texte : clair en haut, opaque en bas, là où les
+          mots étaient posés. Le texte étant remonté au centre, c'est le centre
+          qu'il faut assombrir — sans quoi le titre blanc passerait sur le
+          comptoir clair de la réception. Le haut reste le plus transparent :
+          c'est là qu'on voit encore le salon.
+        */}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-noir/20 via-noir/45 to-noir"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-noir/25 via-noir/65 to-noir"
           aria-hidden="true"
         />
       </div>
 
-      <div className="relative z-10 -mt-12 px-6 pb-14 text-center">
+      <div className="z-10 col-start-1 row-start-1 flex flex-col justify-center px-6 py-12 text-center">
         <Texte
           cle="hero.surtitre"
           titre="Sur-titre du bandeau"
