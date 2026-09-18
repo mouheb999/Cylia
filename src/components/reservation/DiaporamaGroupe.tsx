@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
+import PhotoDistante from "@/components/PhotoDistante";
 import type { Groupe } from "@/lib/supabase/types";
 
 /**
@@ -66,7 +66,7 @@ export default function DiaporamaGroupe({ groupe }: { groupe: Groupe }) {
             key={url}
             className="relative block aspect-[16/9] max-h-[38vh] w-full shrink-0 snap-center"
           >
-            <Image
+            <PhotoDistante
               src={url}
               alt={
                 photos.length > 1

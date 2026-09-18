@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import PhotoDistante from "@/components/PhotoDistante";
 import type { PhotoGalerie } from "@/lib/supabase/types";
 
 /** Temps qu'une photo reste seule à l'écran, avant le fondu suivant. */
@@ -58,7 +58,7 @@ export default function DiaporamaAccueil({
   return (
     <>
       {photos.map((photo, index) => (
-        <Image
+        <PhotoDistante
           key={photo.id}
           src={photo.image_url}
           alt={photo.alt}

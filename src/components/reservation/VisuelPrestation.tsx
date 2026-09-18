@@ -1,4 +1,4 @@
-import Image from "next/image";
+import PhotoDistante from "@/components/PhotoDistante";
 import { IconBienEtre, IconCoiffure, IconEsthetique } from "@/components/Icons";
 
 const ICONES: Record<string, typeof IconCoiffure> = {
@@ -15,6 +15,9 @@ const ICONES: Record<string, typeof IconCoiffure> = {
  * rangée d'icônes se lit comme un motif, là où une rangée de rectangles vides
  * se lirait comme une panne. Le jour où le salon dépose ses photos, elles
  * prennent la place sans que rien d'autre ne bouge.
+ *
+ * L'icône sert aussi de dernier recours quand une photo existe mais refuse de
+ * s'afficher : mieux vaut le motif que la vignette cassée du navigateur.
  */
 export default function VisuelPrestation({
   nom,
@@ -34,17 +37,27 @@ export default function VisuelPrestation({
   tailleIcone?: string;
 }) {
   const Icone = ICONES[categorieId] ?? IconEsthetique;
+  const repli = (
+    <span className="flex h-full items-center justify-center" aria-hidden="true">
+      <Icone className={`${tailleIcone} text-gold/45`} />
+    </span>
+  );
 
   return (
     <span
       className={`relative block shrink-0 overflow-hidden rounded-xl bg-white/[0.06] ${className}`}
     >
       {url ? (
-        <Image src={url} alt={nom} fill sizes={sizes} className="object-cover" />
+        <PhotoDistante
+          src={url}
+          alt={nom}
+          fill
+          sizes={sizes}
+          className="object-cover"
+          repli={repli}
+        />
       ) : (
-        <span className="flex h-full items-center justify-center" aria-hidden="true">
-          <Icone className={`${tailleIcone} text-gold/45`} />
-        </span>
+        repli
       )}
     </span>
   );

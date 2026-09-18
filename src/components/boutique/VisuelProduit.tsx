@@ -1,4 +1,4 @@
-import Image from "next/image";
+import PhotoDistante from "@/components/PhotoDistante";
 
 /**
  * Visuel d'un produit.
@@ -14,6 +14,10 @@ import Image from "next/image";
  * dessine l'initiale du produit en doré. La vitrine reste présentable le temps
  * que le salon photographie ses flacons, et l'absence de photo ne ressemble pas
  * à une panne.
+ *
+ * Ce même dessin sert de dernier recours à `PhotoDistante` : une photo qui
+ * existe mais que l'optimiseur refuse de servir donne l'initiale, jamais la
+ * vignette cassée du navigateur.
  */
 export default function VisuelProduit({
   nom,
@@ -34,26 +38,32 @@ export default function VisuelProduit({
   compact?: boolean;
   className?: string;
 }) {
+  const repli = (
+    <div aria-hidden="true" className="flex h-full flex-col items-center justify-center">
+      <span className={`font-script text-gold-deep/70 ${compact ? "text-2xl" : "text-5xl"}`}>
+        {nom.trim().charAt(0) || "C"}
+      </span>
+      {marque && !compact && (
+        <span className="mt-1 text-[0.55rem] uppercase tracking-[0.25em] text-muted/70">
+          {marque}
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <div className={`absolute inset-0 bg-gradient-to-b from-cream to-white ${className}`}>
       {url ? (
-        <Image src={url} alt={nom} fill sizes={sizes} className={`object-contain ${padding}`} />
+        <PhotoDistante
+          src={url}
+          alt={nom}
+          fill
+          sizes={sizes}
+          className={`object-contain ${padding}`}
+          repli={repli}
+        />
       ) : (
-        <div
-          aria-hidden="true"
-          className="flex h-full flex-col items-center justify-center"
-        >
-          <span
-            className={`font-script text-gold-deep/70 ${compact ? "text-2xl" : "text-5xl"}`}
-          >
-            {nom.trim().charAt(0) || "C"}
-          </span>
-          {marque && !compact && (
-            <span className="mt-1 text-[0.55rem] uppercase tracking-[0.25em] text-muted/70">
-              {marque}
-            </span>
-          )}
-        </div>
+        repli
       )}
     </div>
   );

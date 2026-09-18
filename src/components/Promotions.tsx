@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import PhotoDistante from "@/components/PhotoDistante";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import { depuisCleDate, formatPrix } from "@/lib/format";
@@ -7,7 +7,7 @@ import { remisePourcent, type PrestationEnPromo } from "@/lib/promotions";
 import type { Groupe } from "@/lib/supabase/types";
 import { IconArrow, IconBienEtre, IconCoiffure, IconEsthetique } from "./Icons";
 
-/** Sans photo, la vignette montre l'icône de la catégorie — comme au tunnel. */
+/** Sans photo — ou si la photo refuse de s'afficher — la vignette montre l'icône de la catégorie, comme au tunnel. */
 const ICONES: Record<string, typeof IconCoiffure> = {
   coiffure: IconCoiffure,
   esthetique: IconEsthetique,
@@ -77,6 +77,11 @@ export default function Promotions({
           const photo = offre.image_url ?? (offre.groupe_id ? couvertures.get(offre.groupe_id) : null);
           const remise = remisePourcent(offre);
           const Icone = ICONES[offre.categorie_id] ?? IconEsthetique;
+          const icone = (
+            <span className="flex h-full items-center justify-center" aria-hidden="true">
+              <Icone className="h-8 w-8 text-gold-deep/45" />
+            </span>
+          );
           return (
             <li key={offre.id}>
               <Link
@@ -85,11 +90,16 @@ export default function Promotions({
               >
                 <span className="relative block h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-sand">
                   {photo ? (
-                    <Image src={photo} alt={offre.nom} fill sizes="72px" className="object-cover" />
+                    <PhotoDistante
+                      src={photo}
+                      alt={offre.nom}
+                      fill
+                      sizes="72px"
+                      className="object-cover"
+                      repli={icone}
+                    />
                   ) : (
-                    <span className="flex h-full items-center justify-center" aria-hidden="true">
-                      <Icone className="h-8 w-8 text-gold-deep/45" />
-                    </span>
+                    icone
                   )}
                 </span>
 
