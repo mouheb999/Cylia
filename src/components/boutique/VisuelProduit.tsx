@@ -32,7 +32,15 @@ export default function VisuelProduit({
   marque?: string;
   url: string | null;
   sizes?: string;
-  /** Marge autour du flacon : à ajuster à la taille de la vignette. */
+  /**
+   * Marge autour du flacon : à ajuster à la taille de la vignette.
+   *
+   * À garder serrée sur les grands formats. Les packshots portent déjà leur
+   * propre blanc tournant — parfois un bandeau de prix ou un macaron de
+   * concours en haut — et l'ajouter à une marge large laissait le flacon
+   * flotter au milieu d'un carré vide. Quelques pixels suffisent à le décoller
+   * du bord.
+   */
   padding?: string;
   /** Vignette de quelques dizaines de pixels : initiale plus petite, sans marque. */
   compact?: boolean;

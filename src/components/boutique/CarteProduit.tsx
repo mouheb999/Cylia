@@ -34,7 +34,7 @@ export default function CarteProduit({
           marque={produit.marque}
           url={produit.image_url}
           sizes="(max-width: 640px) 50vw, 220px"
-          padding="p-5"
+          padding="p-2"
         />
         {produit.ancien_prix && produit.ancien_prix > produit.prix && (
           <span className="gold-gradient absolute left-2 top-2 rounded-full px-2 py-0.5 text-[0.6rem] font-medium text-noir">

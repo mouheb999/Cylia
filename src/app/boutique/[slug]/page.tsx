@@ -45,7 +45,7 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
             marque={produit.marque}
             url={produit.image_url}
             sizes="100vw"
-            padding="p-8"
+            padding="p-3"
           />
         </div>
 
