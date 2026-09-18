@@ -62,7 +62,10 @@ export default function EncartBoutique({
         <Image
           src={logoKeune}
           alt="Keune Haircosmetics"
-          sizes="128px"
+          // Servi tel quel : voir `Services.tsx`. L'optimiseur de l'hébergeur
+          // refuse les transformations neuves quand son quota est épuisé, et
+          // ce lettrage ne pèse que quelques dizaines de kilo-octets.
+          unoptimized
           className="mx-auto mt-4 h-auto w-32 opacity-75"
         />
       </div>

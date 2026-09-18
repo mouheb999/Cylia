@@ -54,7 +54,14 @@ export default function Services({ categories }: { categories: Categorie[] }) {
                     // Le nom de la catégorie est juste en dessous : le logo ne
                     // répète rien, il décore.
                     aria-hidden="true"
-                    sizes="40px"
+                    // Servi tel quel, sans passer par l'optimiseur.
+                    // Celui de l'hébergeur refuse les transformations neuves
+                    // quand son quota est épuisé, et rend alors une vignette
+                    // cassée — c'est ce qui est arrivé à ce logo le jour de sa
+                    // mise en ligne. Le fichier est taillé à la dimension
+                    // d'affichage, quelques dizaines de kilo-octets : il n'y a
+                    // rien à optimiser, et plus rien qui puisse échouer.
+                    unoptimized
                     className="h-10 w-10 object-contain"
                   />
                 ) : (
