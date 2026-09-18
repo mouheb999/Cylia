@@ -1,6 +1,4 @@
-import Image from "next/image";
 import Link from "next/link";
-import logoKeune from "@/images/keune.png";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import { formatPrix } from "@/lib/format";
@@ -59,13 +57,13 @@ export default function EncartBoutique({
           lettrage seul, en encre sur transparent : il se pose sur le crème sans
           rapporter le carré noir de l'original.
         */}
-        <Image
-          src={logoKeune}
+        {/* eslint-disable-next-line @next/next/no-img-element -- adresse fixe,
+            sans optimiseur ni nom haché : voir `Services.tsx`. */}
+        <img
+          src="/keune.png"
           alt="Keune Haircosmetics"
-          // Servi tel quel : voir `Services.tsx`. L'optimiseur de l'hébergeur
-          // refuse les transformations neuves quand son quota est épuisé, et
-          // ce lettrage ne pèse que quelques dizaines de kilo-octets.
-          unoptimized
+          width={400}
+          height={184}
           className="mx-auto mt-4 h-auto w-32 opacity-75"
         />
       </div>

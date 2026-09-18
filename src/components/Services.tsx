@@ -1,6 +1,4 @@
-import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
-import logoCoiffure from "@/images/coiffure.png";
 import type { Categorie } from "@/lib/supabase/types";
 import { IconArrow, IconBienEtre, IconCoiffure, IconEsthetique } from "./Icons";
 
@@ -23,9 +21,17 @@ const ICONES: Record<string, typeof IconCoiffure> = {
  * blanc — le fond du fichier l'est aussi. Le tunnel de réservation et les
  * cartes d'offres gardent l'icône : leurs vignettes sont sombres, un logo sur
  * fond blanc y ferait une tache.
+ *
+ * Le fichier vit dans `public/` et s'affiche par une balise `img` ordinaire,
+ * pas par `next/image`. Mis en ligne, ce logo restait cassé alors que tout le
+ * reste tenait : fichier valide, présent dans le commit, servi sans erreur en
+ * local, et l'optimiseur de l'hébergeur en pleine forme. Faute de pouvoir
+ * observer la panne, on a retiré du chemin tout ce qui pouvait s'y trouver —
+ * l'optimiseur, le `srcset`, le nom haché par le bundler. Reste une adresse
+ * fixe, `/coiffure.png`, qu'on peut ouvrir à la main pour savoir.
  */
-const LOGOS: Record<string, StaticImageData> = {
-  coiffure: logoCoiffure,
+const LOGOS: Record<string, string> = {
+  coiffure: "/coiffure.png",
 };
 
 export default function Services({ categories }: { categories: Categorie[] }) {
@@ -48,20 +54,18 @@ export default function Services({ categories }: { categories: Categorie[] }) {
                 className="flex h-full flex-col items-center rounded-2xl border border-sand bg-white px-2.5 py-5 text-center shadow-[0_2px_12px_rgba(42,37,33,0.04)]"
               >
                 {logo ? (
-                  <Image
+                  // Fichier fixe de 160 px : `next/image` n'a rien à y gagner,
+                  // et son absence retire une pièce de plus du chemin — voir le
+                  // commentaire de `LOGOS`.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={logo}
                     alt=""
                     // Le nom de la catégorie est juste en dessous : le logo ne
                     // répète rien, il décore.
                     aria-hidden="true"
-                    // Servi tel quel, sans passer par l'optimiseur.
-                    // Celui de l'hébergeur refuse les transformations neuves
-                    // quand son quota est épuisé, et rend alors une vignette
-                    // cassée — c'est ce qui est arrivé à ce logo le jour de sa
-                    // mise en ligne. Le fichier est taillé à la dimension
-                    // d'affichage, quelques dizaines de kilo-octets : il n'y a
-                    // rien à optimiser, et plus rien qui puisse échouer.
-                    unoptimized
+                    width={160}
+                    height={174}
                     className="h-10 w-10 object-contain"
                   />
                 ) : (
