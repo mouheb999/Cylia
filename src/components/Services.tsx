@@ -22,16 +22,20 @@ const ICONES: Record<string, typeof IconCoiffure> = {
  * cartes d'offres gardent l'icône : leurs vignettes sont sombres, un logo sur
  * fond blanc y ferait une tache.
  *
- * Le fichier vit dans `public/` et s'affiche par une balise `img` ordinaire,
- * pas par `next/image`. Mis en ligne, ce logo restait cassé alors que tout le
- * reste tenait : fichier valide, présent dans le commit, servi sans erreur en
- * local, et l'optimiseur de l'hébergeur en pleine forme. Faute de pouvoir
- * observer la panne, on a retiré du chemin tout ce qui pouvait s'y trouver —
- * l'optimiseur, le `srcset`, le nom haché par le bundler. Reste une adresse
- * fixe, `/coiffure.png`, qu'on peut ouvrir à la main pour savoir.
+ * Les fichiers vivent dans `public/` et s'affichent par une balise `img`
+ * ordinaire, pas par `next/image`. Mis en ligne, ce logo restait cassé alors
+ * que tout le reste tenait : fichier valide, présent dans le commit, servi
+ * sans erreur en local, et l'optimiseur de l'hébergeur en pleine forme. Faute
+ * de pouvoir observer la panne, on a retiré du chemin tout ce qui pouvait s'y
+ * trouver — l'optimiseur, le `srcset`, le nom haché par le bundler. Reste une
+ * adresse fixe, `/coiffure.png`, qu'on peut ouvrir à la main pour savoir.
+ *
+ * Les dimensions accompagnent le fichier : les deux logos sont cadrés au plus
+ * près de leur dessin et ne tombent donc pas sur la même hauteur.
  */
-const LOGOS: Record<string, string> = {
-  coiffure: "/coiffure.png",
+const LOGOS: Record<string, { src: string; largeur: number; hauteur: number }> = {
+  coiffure: { src: "/coiffure.png", largeur: 160, hauteur: 174 },
+  esthetique: { src: "/esthetique.png", largeur: 160, hauteur: 173 },
 };
 
 export default function Services({ categories }: { categories: Categorie[] }) {
@@ -54,18 +58,18 @@ export default function Services({ categories }: { categories: Categorie[] }) {
                 className="flex h-full flex-col items-center rounded-2xl border border-sand bg-white px-2.5 py-5 text-center shadow-[0_2px_12px_rgba(42,37,33,0.04)]"
               >
                 {logo ? (
-                  // Fichier fixe de 160 px : `next/image` n'a rien à y gagner,
+                  // Fichier fixe de 160 px de large : `next/image` n'a rien à y gagner,
                   // et son absence retire une pièce de plus du chemin — voir le
                   // commentaire de `LOGOS`.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={logo}
+                    src={logo.src}
                     alt=""
                     // Le nom de la catégorie est juste en dessous : le logo ne
                     // répète rien, il décore.
                     aria-hidden="true"
-                    width={160}
-                    height={174}
+                    width={logo.largeur}
+                    height={logo.hauteur}
                     className="h-10 w-10 object-contain"
                   />
                 ) : (

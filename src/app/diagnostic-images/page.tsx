@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
  */
 const CIBLES = [
   { url: "/coiffure.png", quoi: "Logo coiffure (nouveau, public/)" },
+  { url: "/esthetique.png", quoi: "Logo esthétique (nouveau, public/)" },
   { url: "/keune.png", quoi: "Logo Keune (nouveau, public/)" },
   { url: "/icone-192.png", quoi: "Icône de l'app (ancienne, public/)" },
   { url: "/badge.png", quoi: "Badge des alertes (ancien, public/)" },
