@@ -118,16 +118,21 @@ update packs
 
 -- Les descriptions du salon sont déjà des listes — « Hammam . Gommage .
 -- Enveloppement à l'argile verte » — écrites d'un trait faute d'un endroit où
--- les ranger. La fiche leur donne cet endroit. Le séparateur exige une espace
--- avant le point : un point de fin de phrase ne coupe donc rien, et une
--- description qui n'est qu'une phrase reste une phrase.
+-- les ranger. La fiche leur donne cet endroit.
+--
+-- Le séparateur est le point suivi d'une espace, que le salon ait ou non mis
+-- une espace devant : il écrit « Gommage . Savon noir » mais aussi
+-- « l'argile verte. Enveloppement à la Nila bleu », et les deux sont la même
+-- coupure. Un point final, lui, n'est suivi de rien — une description qui
+-- n'est qu'une phrase reste donc une phrase, et c'est la condition des deux
+-- parties, plus bas, qui écarte le reste.
 update packs
    set inclusions = liste.parties
   from (
     select p.id,
            array(
              select btrim(part)
-               from unnest(regexp_split_to_array(p.description, '\s+[·.]\s+')) as part
+               from unnest(regexp_split_to_array(p.description, '\s*[·.]\s+')) as part
               where btrim(part) <> ''
            ) as parties
       from packs p
@@ -138,14 +143,40 @@ update packs
 
 -- ------------------------------------------------------------ la réservation
 
--- Les quatre packs hammam de l'accueil portent le nom de la prestation qui
--- les réserve. Les relier ici évite au salon de refaire à la main un
--- rapprochement que la base sait faire.
+-- Premier rapprochement : le nom, à l'accent et à la casse près.
 update packs p
    set prestation_id = pr.id
   from prestations pr
  where p.prestation_id is null
-   and lower(btrim(pr.nom)) = lower(btrim(p.nom));
+   and texte_en_slug(btrim(pr.nom)) = texte_en_slug(btrim(p.nom));
+
+-- Second rapprochement : le tarif.
+--
+-- Les quatre packs hammam de l'accueil ne portent pas tout à fait le nom de
+-- la prestation qui les réserve — « Pack Hammam découverte » d'un côté,
+-- « Pack découverte » de l'autre, « Pack hammam Royal Prestige » contre
+-- « Pack royal ». Leur prix, lui, est le même des deux côtés, et c'est un
+-- prix que rien d'autre au catalogue ne porte. On ne relie donc que là où le
+-- doute est impossible : une seule prestation active, dont le nom commence
+-- par « Pack », au tarif exact du pack. Tout le reste attend que le salon
+-- choisisse lui-même, dans le panneau.
+update packs p
+   set prestation_id = (
+         select pr.id
+           from prestations pr
+          where pr.actif
+            and pr.prix = p.prix
+            and lower(btrim(pr.nom)) like 'pack%'
+       )
+ where p.prestation_id is null
+   and p.prix is not null
+   and (
+     select count(*)
+       from prestations pr
+      where pr.actif
+        and pr.prix = p.prix
+        and lower(btrim(pr.nom)) like 'pack%'
+   ) = 1;
 
 -- La durée annoncée sur la fiche part de celle qui décide des créneaux : deux
 -- chiffres différents pour le même rituel se liraient comme une erreur.

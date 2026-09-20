@@ -52,13 +52,14 @@ export function couverturePack(pack: Pack): string | null {
  * Le salon écrivait ses formules d'un trait — « Hammam . Gommage .
  * Enveloppement à l'argile verte » — faute d'un endroit où les ranger. La
  * fiche leur donne cet endroit ; les anciennes descriptions se relisent ici
- * telles qu'elles ont été écrites. Le séparateur exige une espace avant le
- * point, sans quoi une phrase se retrouverait coupée à son point final.
+ * telles qu'elles ont été écrites, le point suivi d'une espace pour
+ * séparateur — le salon en met une devant, ou pas. Un point final n'étant
+ * suivi de rien, une description d'une seule phrase reste une phrase.
  */
 export function inclusionsDuPack(pack: Pack): string[] {
   if (pack.inclusions?.length) return pack.inclusions;
   const parties = pack.description
-    .split(/\s+[·.]\s+/)
+    .split(/\s*[·.]\s+/)
     .map((part) => part.trim())
     .filter(Boolean);
   return parties.length >= 2 ? parties : [];
