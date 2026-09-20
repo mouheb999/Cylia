@@ -122,17 +122,32 @@ export type Produit = {
 };
 
 /**
- * Un pack : une formule que le salon compose et annonce sur l'accueil.
+ * Un pack : une formule que le salon compose, annonce sur l'accueil, et
+ * détaille sur sa fiche — `/packs/<slug>`.
  *
  * `prix` est facultatif — un pack « sur devis » s'annonce sans chiffre, et la
  * carte n'affiche alors rien à cet endroit.
  */
 export type Pack = {
   id: string;
+  /** L'adresse de la fiche. Posée à la création, elle ne bouge plus. */
+  slug: string;
   nom: string;
   description: string;
+  /** Ce que le pack comprend, ligne à ligne. Vide : seule la description parle. */
+  inclusions: string[];
   prix: number | null;
+  /** Durée annoncée sur la fiche. `null` : le salon préfère ne rien promettre. */
+  duree_minutes: number | null;
+  /** Couverture : la vignette du pack sur l'accueil et dans la liste. */
   image_url: string | null;
+  /** Album de la fiche, couverture en tête — comme les groupes. */
+  images: string[];
+  /**
+   * La prestation que « Réserver ce pack » dépose dans le panier. `null` : le
+   * bouton mène au tunnel sans rien y retenir.
+   */
+  prestation_id: string | null;
   ordre: number;
   actif: boolean;
   cree_le: string;

@@ -528,9 +528,16 @@ export type FormPack = {
   id?: string;
   nom: string;
   description: string;
+  /** Ce que le pack comprend, ligne à ligne. Affiché sur la fiche. */
+  inclusions: string[];
   /** `null` pour un pack sur devis : la carte n'affiche alors aucun chiffre. */
   prix: number | null;
-  image_url: string | null;
+  /** Durée annoncée sur la fiche. `null` : rien n'est promis. */
+  duree_minutes: number | null;
+  /** L'album de la fiche, couverture en tête. */
+  images: string[];
+  /** La prestation que « Réserver ce pack » dépose dans le panier. */
+  prestation_id: string | null;
   ordre: number;
   actif: boolean;
 };
@@ -541,11 +548,23 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
     const nom = form.nom.trim();
     if (nom.length < 2) throw new Error("NOM_COURT");
 
+    // La couverture n'est pas une photo à part : c'est la première de
+    // l'album. Deux champs à tenir d'accord seraient deux occasions de les
+    // voir diverger — la vignette montrant une cabine que la fiche n'ouvre
+    // plus. `image_url` reste renseignée pour tout ce qui lit encore la
+    // colonne seule, mais c'est l'album qui décide.
+    const images = form.images.map((url) => url.trim()).filter(Boolean);
+
     const ligne = {
       nom,
       description: form.description.trim(),
+      inclusions: form.inclusions.map((entree) => entree.trim()).filter(Boolean),
       prix: form.prix === null ? null : Math.max(0, form.prix),
-      image_url: form.image_url,
+      duree_minutes:
+        form.duree_minutes === null ? null : Math.max(5, Math.round(form.duree_minutes)),
+      image_url: images[0] ?? null,
+      images,
+      prestation_id: form.prestation_id || null,
       ordre: form.ordre,
       actif: form.actif,
     };

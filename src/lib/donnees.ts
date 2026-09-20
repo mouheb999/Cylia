@@ -9,6 +9,7 @@ import {
   REGLAGES_DEFAUT,
 } from "@/lib/catalogue-defaut";
 import type { ContenuMap } from "@/lib/contenu";
+import { slugDuPack } from "@/lib/packs";
 import type {
   Categorie,
   EmplacementPhoto,
@@ -44,7 +45,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "11";
+const MILLESIME = "12";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -190,6 +191,19 @@ export async function chargerGroupes(): Promise<Groupe[]> {
 /** Les packs de l'accueil, dans l'ordre choisi par le salon. */
 export async function chargerPacks(): Promise<Pack[]> {
   return (await chargerDonnees()).packs;
+}
+
+/**
+ * Un pack par son adresse.
+ *
+ * `slugDuPack` plutôt que `pack.slug` : une base où la migration 0029 n'est
+ * pas encore passée renvoie des lignes sans slug, et la fiche doit quand même
+ * s'ouvrir — l'adresse est alors dérivée du nom, des deux côtés. L'identifiant
+ * reste accepté, pour les liens forgés avant que les slugs existent.
+ */
+export async function chargerPack(slug: string): Promise<Pack | null> {
+  const { packs } = await chargerDonnees();
+  return packs.find((p) => slugDuPack(p) === slug) ?? packs.find((p) => p.id === slug) ?? null;
 }
 
 export async function chargerProduits(): Promise<Produit[]> {

@@ -13,6 +13,7 @@ import { IconAgenda, IconBag, IconClose, IconMenu } from "./Icons";
 const liens = [
   { label: "Accueil", href: "/" },
   { label: "Services", href: "/#services" },
+  { label: "Packs", href: "/packs" },
   { label: "Boutique", href: "/boutique" },
   { label: "Galerie", href: "/#galerie" },
   { label: "Contact", href: "/#contact" },
