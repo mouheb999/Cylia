@@ -1,11 +1,13 @@
 "use client";
 
 import Image, { type StaticImageData } from "next/image";
-import { useRef, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ajouterPhoto, deplacerPhoto, supprimerPhoto } from "@/app/actions/admin";
 import { useEdition } from "@/components/edition/ContexteEdition";
 import { televerserImage } from "@/components/edition/televerser";
+import PhotoDistante from "@/components/PhotoDistante";
+import Visionneuse from "@/components/Visionneuse";
 
 export type PhotoAffichee = {
   /** `null` pour les photos d'origine livrées avec le site. */
@@ -21,6 +23,8 @@ export default function GrilleGalerie({ photos }: { photos: PhotoAffichee[] }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [depot, setDepot] = useState(false);
   const [enCours, demarrer] = useTransition();
+  const [ouverte, setOuverte] = useState<number | null>(null);
+  const fermer = useCallback(() => setOuverte(null), []);
 
   const modifiables = photos.some((p) => p.id !== null);
 
@@ -58,18 +62,42 @@ export default function GrilleGalerie({ photos }: { photos: PhotoAffichee[] }) {
             key={photo.id ?? index}
             className="relative aspect-[4/5] overflow-hidden rounded-xl bg-sand"
           >
-            {typeof photo.src === "string" ? (
-              <Image src={photo.src} alt={photo.alt} fill sizes="50vw" className="object-cover" />
-            ) : (
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                placeholder="blur"
-                sizes="50vw"
-                className="object-cover"
-              />
-            )}
+            <button
+              type="button"
+              onClick={() => setOuverte(index)}
+              aria-label={`Agrandir la photo ${index + 1} : ${photo.alt}`}
+              className="group absolute inset-0 block"
+            >
+              {typeof photo.src === "string" ? (
+                // Les photos déposées passent par `PhotoDistante` : si
+                // l'optimiseur refuse, c'est l'original qui s'affiche, jamais
+                // le carré barré du navigateur.
+                <PhotoDistante
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  sizes="50vw"
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] group-active:scale-[0.98]"
+                  repli={
+                    <span
+                      aria-hidden="true"
+                      className="flex h-full items-center justify-center font-script text-5xl text-gold-deep/50"
+                    >
+                      C
+                    </span>
+                  }
+                />
+              ) : (
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  placeholder="blur"
+                  sizes="50vw"
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] group-active:scale-[0.98]"
+                />
+              )}
+            </button>
 
             {edition.actif && photo.id && (
               <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1">
@@ -105,6 +133,10 @@ export default function GrilleGalerie({ photos }: { photos: PhotoAffichee[] }) {
           </div>
         ))}
       </div>
+
+      {ouverte !== null && (
+        <Visionneuse photos={photos} depart={ouverte} onFermer={fermer} />
+      )}
 
       {edition.actif && (
         <div className="mt-4">

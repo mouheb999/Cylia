@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -10,6 +9,7 @@ import {
   supprimerPhoto,
   type Resultat,
 } from "@/app/actions/admin";
+import PhotoDistante from "@/components/PhotoDistante";
 import { televerserImage } from "@/components/edition/televerser";
 import { champSombre } from "@/components/ui/champs";
 import type { EmplacementPhoto, PhotoGalerie } from "@/lib/supabase/types";
@@ -109,7 +109,7 @@ export default function GestionPhotos({
                 <span
                   className={`relative block w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-white/[0.06] ${apercu}`}
                 >
-                  <Image
+                  <PhotoDistante
                     src={photo.image_url}
                     alt={photo.alt}
                     fill
