@@ -200,7 +200,25 @@ img {
   animation: respire 1.6s ease-in-out infinite;
 }
 
+/* Visionneuse de la galerie : elle se pose en fondu, sans rien qui saute. */
+@keyframes fondu {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.visionneuse-entree {
+  animation: fondu 220ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .visionneuse-entree {
+    animation: none;
+  }
+
   .press,
   .press:active {
     transform: none;
