@@ -13,7 +13,7 @@ import {
 import { televerserImage } from "@/components/edition/televerser";
 import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre, libelle } from "@/components/ui/champs";
-import { produitsDuCoffret, visuelsDuCoffret } from "@/lib/coffrets";
+import { cheminCoffret, produitsDuCoffret, visuelsDuCoffret } from "@/lib/coffrets";
 import { formatPrix } from "@/lib/format";
 import { filtrerProduits } from "@/lib/produits";
 import type { Coffret, Produit } from "@/lib/supabase/types";
@@ -175,6 +175,15 @@ export default function GestionCoffrets({
                       >
                         Modifier
                       </button>
+
+                      <a
+                        href={cheminCoffret(coffret)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/60"
+                      >
+                        Voir la fiche
+                      </a>
 
                       <span className="ml-auto flex items-center gap-1.5">
                         <button

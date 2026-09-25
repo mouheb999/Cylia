@@ -84,7 +84,11 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
               : "Épuisé pour le moment"}
           </p>
 
-          <BoutonAjouter produitId={produit.id} epuise={produit.stock <= 0} />
+          <BoutonAjouter
+            produitId={produit.id}
+            epuise={produit.stock <= 0}
+            stock={produit.stock}
+          />
 
           <Link
             href="/boutique"

@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import Coffrets from "@/components/Coffrets";
 import Header from "@/components/Header";
 import GrilleProduits from "@/components/boutique/GrilleProduits";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT, valeurContenu } from "@/lib/contenu";
-import { chargerContenus, chargerProduits, chargerReglages } from "@/lib/donnees";
+import {
+  chargerCoffrets,
+  chargerContenus,
+  chargerProduits,
+  chargerReglages,
+} from "@/lib/donnees";
 import { formatPrix } from "@/lib/format";
 import { infosSite } from "@/lib/site";
 
@@ -18,8 +24,9 @@ export const metadata: Metadata = {
 };
 
 export default async function PageBoutique() {
-  const [produits, reglages, contenus] = await Promise.all([
+  const [produits, coffrets, reglages, contenus] = await Promise.all([
     chargerProduits(),
+    chargerCoffrets(),
     chargerReglages(),
     chargerContenus(),
   ]);
@@ -63,6 +70,12 @@ export default async function PageBoutique() {
             className="mx-auto mt-4 max-w-[24rem] whitespace-pre-line text-[0.8rem] font-light leading-relaxed text-white/55"
           />
         </div>
+
+        {reglages.boutique_active && coffrets.length > 0 && (
+          <div className="pt-6">
+            <Coffrets coffrets={coffrets} produits={produits} devise={reglages.devise} />
+          </div>
+        )}
 
         <div className="px-4 py-6">
           {!reglages.boutique_active ? (
