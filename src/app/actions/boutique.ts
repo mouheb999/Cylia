@@ -4,7 +4,9 @@ import { clientPublic } from "@/lib/supabase/public";
 import { DELAI_ECRITURE } from "@/lib/supabase/config";
 
 export type ArticleCommande = {
-  produit_id: string;
+  /** Nul pour un coffret, qui porte alors `coffret_id`. */
+  produit_id: string | null;
+  coffret_id?: string | null;
   nom: string;
   prix: number;
   quantite: number;
@@ -58,7 +60,7 @@ function messageErreur(erreur: unknown): string {
  * la même transaction.
  */
 export async function passerCommande(demande: {
-  articles: { produit_id: string; quantite: number }[];
+  articles: (({ produit_id: string } | { coffret_id: string }) & { quantite: number })[];
   nom: string;
   telephone: string;
   adresse: string;
@@ -68,10 +70,11 @@ export async function passerCommande(demande: {
 }): Promise<ReponseCommande> {
   try {
     const { data, error } = await clientPublic().rpc("creer_commande", {
-      p_articles: demande.articles.map((a) => ({
-        produit_id: a.produit_id,
-        quantite: a.quantite,
-      })),
+      p_articles: demande.articles.map((a) =>
+        "coffret_id" in a
+          ? { coffret_id: a.coffret_id, quantite: a.quantite }
+          : { produit_id: a.produit_id, quantite: a.quantite },
+      ),
       p_nom: demande.nom,
       p_telephone: demande.telephone,
       p_adresse: demande.adresse,

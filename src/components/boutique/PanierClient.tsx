@@ -4,15 +4,31 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { passerCommande, type CommandeConfirmee } from "@/app/actions/boutique";
 import { boutonOr, champSombre } from "@/components/ui/champs";
+import { produitsDuCoffret, stockDuCoffret, visuelsDuCoffret } from "@/lib/coffrets";
 import { formatPrix } from "@/lib/format";
 import {
+  cleLigne,
   reglerQuantite,
   retirerDuPanier,
   usePanierBoutique,
   viderPanierBoutique,
 } from "@/lib/panier-boutique";
-import type { Produit, Reglages } from "@/lib/supabase/types";
+import type { Coffret, Produit, Reglages } from "@/lib/supabase/types";
+import VisuelCoffret from "./VisuelCoffret";
 import VisuelProduit from "./VisuelProduit";
+
+/** Une ligne du panier, flacon ou coffret, telle que la page l'affiche. */
+type Article = {
+  cle: string;
+  nom: string;
+  /** Sous le nom : la gamme d'un flacon, le contenu d'un coffret. */
+  detail: string;
+  prix: number;
+  quantite: number;
+  stock: number;
+  visuel: React.ReactNode;
+  envoi: { produit_id: string } | { coffret_id: string };
+};
 
 /** 8 chiffres, avec ou sans indicatif +216 et espaces. */
 function telephoneValide(valeur: string): boolean {
@@ -22,9 +38,11 @@ function telephoneValide(valeur: string): boolean {
 
 export default function PanierClient({
   produits,
+  coffrets,
   reglages,
 }: {
   produits: Produit[];
+  coffrets: Coffret[];
   reglages: Reglages;
 }) {
   const lignes = usePanierBoutique();
@@ -40,14 +58,58 @@ export default function PanierClient({
   const [envoi, demarrer] = useTransition();
 
   const parId = useMemo(() => new Map(produits.map((p) => [p.id, p])), [produits]);
+  const coffretParId = useMemo(() => new Map(coffrets.map((c) => [c.id, c])), [coffrets]);
 
-  // Un produit retiré de la boutique depuis la dernière visite disparaît du
-  // panier plutôt que de faire échouer la commande au dernier moment.
-  const articles = lignes
-    .map((ligne) => ({ ligne, produit: parId.get(ligne.produit_id) }))
-    .filter((a): a is { ligne: typeof a.ligne; produit: Produit } => a.produit !== undefined);
+  // Un produit ou un coffret retiré de la boutique depuis la dernière visite
+  // disparaît du panier plutôt que de faire échouer la commande au dernier
+  // moment.
+  const articles: Article[] = lignes.flatMap((ligne): Article[] => {
+    if (ligne.coffret_id) {
+      const coffret = coffretParId.get(ligne.coffret_id);
+      if (!coffret) return [];
+      return [
+        {
+          cle: cleLigne(ligne),
+          nom: coffret.nom,
+          detail: produitsDuCoffret(coffret, produits)
+            .map((p) => p.nom)
+            .join(" · "),
+          prix: coffret.prix,
+          quantite: ligne.quantite,
+          stock: stockDuCoffret(coffret, produits),
+          visuel: (
+            <VisuelCoffret nom={coffret.nom} photos={visuelsDuCoffret(coffret, produits)} sizes="80px" />
+          ),
+          envoi: { coffret_id: coffret.id },
+        },
+      ];
+    }
+    const produit = ligne.produit_id ? parId.get(ligne.produit_id) : undefined;
+    if (!produit) return [];
+    return [
+      {
+        cle: cleLigne(ligne),
+        nom: produit.nom,
+        detail: "",
+        prix: produit.prix,
+        quantite: ligne.quantite,
+        stock: produit.stock,
+        visuel: (
+          <VisuelProduit
+            nom={produit.nom}
+            marque={produit.marque}
+            url={produit.image_url}
+            sizes="80px"
+            padding="p-1.5"
+            compact
+          />
+        ),
+        envoi: { produit_id: produit.id },
+      },
+    ];
+  });
 
-  const sousTotal = articles.reduce((t, a) => t + a.produit.prix * a.ligne.quantite, 0);
+  const sousTotal = articles.reduce((t, a) => t + a.prix * a.quantite, 0);
   const livraisonOfferte =
     reglages.livraison_gratuite_des != null && sousTotal >= reglages.livraison_gratuite_des;
   const livraison = articles.length === 0 || livraisonOfferte ? 0 : reglages.frais_livraison;
@@ -70,8 +132,8 @@ export default function PanierClient({
         </h2>
 
         <dl className="mt-7 rounded-2xl border border-sand bg-white px-5 py-5 text-left text-sm">
-          {commande.articles.map((article) => (
-            <div key={article.produit_id} className="flex justify-between gap-4 border-b border-sand/70 pb-2 pt-2 first:pt-0 last:border-0">
+          {commande.articles.map((article, index) => (
+            <div key={index} className="flex justify-between gap-4 border-b border-sand/70 pb-2 pt-2 first:pt-0 last:border-0">
               <dt className="font-light text-muted">
                 {article.nom} × {article.quantite}
               </dt>
@@ -146,10 +208,7 @@ export default function PanierClient({
     setErreurEnvoi(null);
     demarrer(async () => {
       const reponse = await passerCommande({
-        articles: articles.map((a) => ({
-          produit_id: a.produit.id,
-          quantite: a.ligne.quantite,
-        })),
+        articles: articles.map((a) => ({ ...a.envoi, quantite: a.quantite })),
         nom: nom.trim(),
         telephone: telephone.trim(),
         adresse: adresse.trim(),
@@ -171,46 +230,44 @@ export default function PanierClient({
   return (
     <div className="px-5 pb-16 pt-4">
       <ul className="space-y-3">
-        {articles.map(({ ligne, produit }) => (
+        {articles.map((article) => (
           <li
-            key={produit.id}
+            key={article.cle}
             className="flex gap-3 rounded-2xl border border-sand bg-white p-3"
           >
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl">
-              <VisuelProduit
-                nom={produit.nom}
-                marque={produit.marque}
-                url={produit.image_url}
-                sizes="80px"
-                padding="p-1.5"
-                compact
-              />
+              {article.visuel}
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col">
-              <p className="font-serif text-[0.95rem] leading-snug text-ink">{produit.nom}</p>
-              <p className="mt-0.5 font-serif text-lg font-semibold leading-none text-gold-deep lining-nums">
-                {formatPrix(produit.prix, reglages.devise)}
+              <p className="font-serif text-[0.95rem] leading-snug text-ink">{article.nom}</p>
+              {article.detail && (
+                <p className="mt-0.5 line-clamp-2 text-[0.7rem] font-light leading-snug text-muted">
+                  {article.detail}
+                </p>
+              )}
+              <p className="mt-1 font-serif text-lg font-semibold leading-none text-gold-deep lining-nums">
+                {formatPrix(article.prix, reglages.devise)}
               </p>
 
               <div className="mt-auto flex items-center justify-between pt-2">
                 <div className="flex items-center gap-3 rounded-full border border-sand px-2 py-1">
                   <button
                     type="button"
-                    onClick={() => reglerQuantite(produit.id, ligne.quantite - 1)}
-                    aria-label={`Retirer un ${produit.nom}`}
+                    onClick={() => reglerQuantite(article.cle, article.quantite - 1)}
+                    aria-label={`Retirer un ${article.nom}`}
                     className="px-2 text-lg text-gold-deep"
                   >
                     −
                   </button>
                   <span className="min-w-4 text-center text-sm text-ink lining-nums">
-                    {ligne.quantite}
+                    {article.quantite}
                   </span>
                   <button
                     type="button"
-                    onClick={() => reglerQuantite(produit.id, ligne.quantite + 1)}
-                    disabled={ligne.quantite >= produit.stock}
-                    aria-label={`Ajouter un ${produit.nom}`}
+                    onClick={() => reglerQuantite(article.cle, article.quantite + 1)}
+                    disabled={article.quantite >= article.stock}
+                    aria-label={`Ajouter un ${article.nom}`}
                     className="px-2 text-lg text-gold-deep disabled:opacity-30"
                   >
                     +
@@ -219,7 +276,7 @@ export default function PanierClient({
 
                 <button
                   type="button"
-                  onClick={() => retirerDuPanier(produit.id)}
+                  onClick={() => retirerDuPanier(article.cle)}
                   className="text-xs font-light text-muted"
                 >
                   Retirer

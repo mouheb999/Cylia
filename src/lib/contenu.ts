@@ -32,6 +32,11 @@ export const CONTENUS_DEFAUT = {
     "Une sélection de soins à tarif réduit. Les offres changent — celles-ci sont celles d'aujourd'hui.",
   "promos.bouton": "Réserver une offre",
 
+  "coffrets.surtitre": "Idées cadeaux",
+  "coffrets.titre": "Nos coffrets",
+  "coffrets.texte":
+    "Des soins réunis pour aller ensemble, à un prix pensé pour l'ensemble. Livrés partout en Tunisie.",
+
   "boutique.accueil_surtitre": "Boutique",
   "boutique.accueil_titre": "Nos cosmétiques",
   "boutique.accueil_texte":
@@ -92,6 +97,10 @@ export const GROUPES_CONTENU: { titre: string; cles: CleContenu[] }[] = [
     cles: ["promos.surtitre", "promos.titre", "promos.texte", "promos.bouton"],
   },
   { titre: "Accueil — galerie", cles: ["galerie.surtitre", "galerie.titre"] },
+  {
+    titre: "Accueil — « Nos coffrets »",
+    cles: ["coffrets.surtitre", "coffrets.titre", "coffrets.texte"],
+  },
   {
     titre: "Accueil — encart boutique",
     cles: [

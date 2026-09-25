@@ -12,6 +12,7 @@ import type { ContenuMap } from "@/lib/contenu";
 import { slugDuPack } from "@/lib/packs";
 import type {
   Categorie,
+  Coffret,
   EmplacementPhoto,
   Groupe,
   Pack,
@@ -31,6 +32,7 @@ export type DonneesPubliques = {
   prestations: Prestation[];
   produits: Produit[];
   packs: Pack[];
+  coffrets: Coffret[];
   galerie: PhotoGalerie[];
   contenus: ContenuMap;
   fermetures: Fermeture[];
@@ -45,7 +47,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "12";
+const MILLESIME = "13";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -54,6 +56,7 @@ const REPLI: DonneesPubliques = {
   prestations: PRESTATIONS_DEFAUT,
   produits: [],
   packs: [],
+  coffrets: [],
   galerie: [],
   contenus: {},
   fermetures: [],
@@ -91,6 +94,8 @@ const lireDonneesPubliques = unstable_cache(
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
       packs: brut.packs ?? [],
+      // Absent tant que la migration 0030 n'est pas passée : pas de coffrets.
+      coffrets: brut.coffrets ?? [],
       galerie: brut.galerie ?? [],
       contenus: brut.contenus ?? {},
       fermetures: brut.fermetures ?? [],
@@ -204,6 +209,10 @@ export async function chargerPacks(): Promise<Pack[]> {
 export async function chargerPack(slug: string): Promise<Pack | null> {
   const { packs } = await chargerDonnees();
   return packs.find((p) => slugDuPack(p) === slug) ?? packs.find((p) => p.id === slug) ?? null;
+}
+
+export async function chargerCoffrets(): Promise<Coffret[]> {
+  return (await chargerDonnees()).coffrets;
 }
 
 export async function chargerProduits(): Promise<Produit[]> {

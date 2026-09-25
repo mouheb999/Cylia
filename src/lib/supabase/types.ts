@@ -153,6 +153,26 @@ export type Pack = {
   cree_le: string;
 };
 
+/**
+ * Un coffret : des produits de la boutique vendus ensemble, sous un prix.
+ *
+ * Deux façons de le composer : choisir des produits du catalogue
+ * (`produit_ids`, et le coffret suit leur stock), ou seulement poser la photo
+ * d'un coffret tout prêt (`produit_ids` vide, rien n'est suivi en stock).
+ */
+export type Coffret = {
+  id: string;
+  nom: string;
+  description: string;
+  prix: number;
+  /** La photo du coffret. Sans elle, la carte assemble celles de ses produits. */
+  image_url: string | null;
+  produit_ids: string[];
+  ordre: number;
+  actif: boolean;
+  cree_le: string;
+};
+
 export type StatutCommande =
   | "en_attente"
   | "confirmee"
@@ -180,6 +200,8 @@ export type ArticleCommande = {
   id: string;
   commande_id: string;
   produit_id: string | null;
+  /** Renseigné quand la ligne est un coffret : `produit_id` est alors nul. */
+  coffret_id: string | null;
   nom: string;
   prix: number;
   quantite: number;
@@ -241,6 +263,7 @@ export type Database = {
       groupes: Ligne<Groupe, "categorie_id" | "nom">;
       produits: Ligne<Produit, "slug" | "nom" | "prix">;
       packs: Ligne<Pack, "nom">;
+      coffrets: Ligne<Coffret, "nom" | "prix">;
       commandes: Ligne<Commande, "reference" | "nom" | "telephone" | "adresse" | "ville" | "sous_total" | "total">;
       commande_articles: Ligne<ArticleCommande, "commande_id" | "nom" | "prix" | "quantite">;
       reglages: Ligne<Reglages>;
@@ -267,7 +290,10 @@ export type Database = {
       };
       creer_commande: {
         Args: {
-          p_articles: { produit_id: string; quantite: number }[];
+          p_articles: (
+            | { produit_id: string; quantite: number }
+            | { coffret_id: string; quantite: number }
+          )[];
           p_nom: string;
           p_telephone: string;
           p_adresse: string;

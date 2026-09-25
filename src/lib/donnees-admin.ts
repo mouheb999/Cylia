@@ -11,6 +11,7 @@ import type {
   Fermeture,
   Groupe,
   Pack,
+  Coffret,
   PhotoGalerie,
   Prestation,
   Produit,
@@ -142,6 +143,13 @@ export async function packsAdmin(): Promise<Pack[]> {
   const { data, error } = await supabase.from("packs").select("*").order("ordre");
   if (error) throw error;
   return data as Pack[];
+}
+
+export async function coffretsAdmin(): Promise<Coffret[]> {
+  const supabase = await clientPanneau();
+  const { data, error } = await supabase.from("coffrets").select("*").order("ordre");
+  if (error) throw error;
+  return data as Coffret[];
 }
 
 export async function fermeturesAdmin(): Promise<Fermeture[]> {

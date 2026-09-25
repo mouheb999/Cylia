@@ -10,6 +10,7 @@ import { CONTENUS_DEFAUT, GROUPES_CONTENU, type CleContenu } from "@/lib/contenu
 const LONGUES = new Set<string>([
   "hero.texte",
   "promos.texte",
+  "coffrets.texte",
   "boutique.accueil_texte",
   "boutique.texte",
   "maps.requete",
