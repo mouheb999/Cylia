@@ -215,6 +215,11 @@ export async function chargerCoffrets(): Promise<Coffret[]> {
   return (await chargerDonnees()).coffrets;
 }
 
+export async function chargerCoffret(id: string): Promise<Coffret | null> {
+  const { coffrets } = await chargerDonnees();
+  return coffrets.find((c) => c.id === id) ?? null;
+}
+
 export async function chargerProduits(): Promise<Produit[]> {
   return (await chargerDonnees()).produits;
 }

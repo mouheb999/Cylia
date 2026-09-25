@@ -46,3 +46,8 @@ export function visuelsDuCoffret(coffret: Coffret, produits: Produit[]): string[
     .map((p) => p.image_url)
     .filter((url): url is string => Boolean(url));
 }
+
+/** La fiche du coffret. */
+export function cheminCoffret(coffret: Pick<Coffret, "id">): string {
+  return `/coffrets/${coffret.id}`;
+}

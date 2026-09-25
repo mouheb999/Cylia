@@ -1,7 +1,9 @@
+import Link from "next/link";
 import BoutonCoffret from "@/components/boutique/BoutonCoffret";
 import VisuelCoffret from "@/components/boutique/VisuelCoffret";
 import { Texte } from "@/components/edition/Modifiable";
 import {
+  cheminCoffret,
   produitsDuCoffret,
   stockDuCoffret,
   valeurSepareeDuCoffret,
@@ -82,7 +84,11 @@ export default function Coffrets({
                 seul ? "w-full" : "w-[16rem]"
               }`}
             >
-              <div className="relative aspect-[4/3] overflow-hidden">
+              <Link
+                href={cheminCoffret(coffret)}
+                aria-label={`Voir le coffret ${coffret.nom}`}
+                className="relative block aspect-[4/3] overflow-hidden"
+              >
                 <VisuelCoffret
                   nom={coffret.nom}
                   photos={visuelsDuCoffret(coffret, produits)}
@@ -93,29 +99,38 @@ export default function Coffrets({
                     −{Math.round((1 - coffret.prix / valeur) * 100)} %
                   </span>
                 )}
-              </div>
+                {epuise && (
+                  <span className="absolute inset-0 flex items-center justify-center bg-noir/65 text-xs uppercase tracking-[0.2em] text-cream">
+                    Épuisé
+                  </span>
+                )}
+              </Link>
 
               <div className="flex flex-1 flex-col p-3.5">
-                <h3 className="font-serif text-lg leading-snug text-ink">{coffret.nom}</h3>
-                {coffret.description && (
-                  <p className="mt-1 line-clamp-3 text-[0.75rem] font-light leading-relaxed text-muted">
-                    {coffret.description}
-                  </p>
-                )}
+                <h3 className="font-serif text-lg leading-snug text-ink">
+                  <Link href={cheminCoffret(coffret)}>{coffret.nom}</Link>
+                </h3>
+                <Link href={cheminCoffret(coffret)} tabIndex={-1} className="block">
+                  {coffret.description && (
+                    <p className="mt-1 line-clamp-3 text-[0.75rem] font-light leading-relaxed text-muted">
+                      {coffret.description}
+                    </p>
+                  )}
 
-                {contenu.length > 0 && (
-                  <ul className="mt-2.5 space-y-1 border-t border-sand/70 pt-2.5">
-                    {contenu.map((produit) => (
-                      <li
-                        key={produit.id}
-                        className="flex gap-2 text-[0.72rem] font-light leading-snug text-ink"
-                      >
-                        <span className="mt-[0.4rem] h-1 w-1 shrink-0 rounded-full bg-gold-deep" aria-hidden="true" />
-                        {produit.nom}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                  {contenu.length > 0 && (
+                    <ul className="mt-2.5 space-y-1 border-t border-sand/70 pt-2.5">
+                      {contenu.map((produit) => (
+                        <li
+                          key={produit.id}
+                          className="flex gap-2 text-[0.72rem] font-light leading-snug text-ink"
+                        >
+                          <span className="mt-[0.4rem] h-1 w-1 shrink-0 rounded-full bg-gold-deep" aria-hidden="true" />
+                          {produit.nom}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Link>
 
                 <div className="mt-auto pt-3">
                   <p className="flex items-baseline gap-2">
