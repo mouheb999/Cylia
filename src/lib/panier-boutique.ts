@@ -4,7 +4,21 @@ import { useSyncExternalStore } from "react";
 
 const CLE_STOCKAGE = "cylia.boutique.v1";
 
-export type LignePanier = { produit_id: string; quantite: number };
+/**
+ * Une ligne du panier : un flacon, ou un coffret.
+ *
+ * Les lignes de flacon gardent leur forme d'origine — `{ produit_id, quantite }`
+ * — pour que les paniers déjà enregistrés dans les navigateurs se relisent
+ * tels quels. Le coffret porte `coffret_id` à la place.
+ */
+export type LignePanier =
+  | { produit_id: string; coffret_id?: undefined; quantite: number }
+  | { coffret_id: string; produit_id?: undefined; quantite: number };
+
+/** Identité d'une ligne : deux lignes de même clé n'en font qu'une. */
+export function cleLigne(ligne: LignePanier): string {
+  return ligne.coffret_id ? `coffret:${ligne.coffret_id}` : `produit:${ligne.produit_id}`;
+}
 
 /** Référence stable renvoyée au rendu serveur : le panier y est toujours vide. */
 const VIDE: readonly LignePanier[] = [];
@@ -13,19 +27,22 @@ let panier: readonly LignePanier[] = VIDE;
 let chargeDepuisStockage = false;
 const abonnes = new Set<() => void>();
 
+function lireLigne(v: unknown): LignePanier | null {
+  if (typeof v !== "object" || v === null) return null;
+  const brut = v as Record<string, unknown>;
+  if (!Number.isFinite(brut.quantite)) return null;
+  const quantite = borner(brut.quantite as number);
+  if (typeof brut.coffret_id === "string") return { coffret_id: brut.coffret_id, quantite };
+  if (typeof brut.produit_id === "string") return { produit_id: brut.produit_id, quantite };
+  return null;
+}
+
 function lireStockage(): readonly LignePanier[] {
   try {
     const brut = window.localStorage.getItem(CLE_STOCKAGE);
     const valeurs = brut ? (JSON.parse(brut) as unknown) : null;
     if (!Array.isArray(valeurs)) return VIDE;
-    return valeurs
-      .filter(
-        (v): v is LignePanier =>
-          typeof v === "object" && v !== null &&
-          typeof (v as LignePanier).produit_id === "string" &&
-          Number.isFinite((v as LignePanier).quantite),
-      )
-      .map((v) => ({ produit_id: v.produit_id, quantite: borner(v.quantite) }));
+    return valeurs.map(lireLigne).filter((l): l is LignePanier => l !== null);
   } catch {
     // Navigation privée, stockage refusé, JSON corrompu : panier vide.
     return VIDE;
@@ -79,29 +96,37 @@ export function totalArticles(lignes: readonly LignePanier[]): number {
   return lignes.reduce((total, l) => total + l.quantite, 0);
 }
 
-export function ajouterAuPanier(produit_id: string, quantite = 1): void {
+function ajouter(nouvelle: LignePanier): void {
   const actuel = instantane();
-  const existante = actuel.find((l) => l.produit_id === produit_id);
+  const cle = cleLigne(nouvelle);
+  const existante = actuel.find((l) => cleLigne(l) === cle);
   definir(
     existante
       ? actuel.map((l) =>
-          l.produit_id === produit_id ? { ...l, quantite: borner(l.quantite + quantite) } : l,
+          cleLigne(l) === cle ? { ...l, quantite: borner(l.quantite + nouvelle.quantite) } : l,
         )
-      : [...actuel, { produit_id, quantite: borner(quantite) }],
+      : [...actuel, { ...nouvelle, quantite: borner(nouvelle.quantite) }],
   );
 }
 
-export function reglerQuantite(produit_id: string, quantite: number): void {
-  if (quantite <= 0) return retirerDuPanier(produit_id);
+export function ajouterAuPanier(produit_id: string, quantite = 1): void {
+  ajouter({ produit_id, quantite });
+}
+
+export function ajouterCoffretAuPanier(coffret_id: string, quantite = 1): void {
+  ajouter({ coffret_id, quantite });
+}
+
+/** `cle` : celle de `cleLigne`. */
+export function reglerQuantite(cle: string, quantite: number): void {
+  if (quantite <= 0) return retirerDuPanier(cle);
   definir(
-    instantane().map((l) =>
-      l.produit_id === produit_id ? { ...l, quantite: borner(quantite) } : l,
-    ),
+    instantane().map((l) => (cleLigne(l) === cle ? { ...l, quantite: borner(quantite) } : l)),
   );
 }
 
-export function retirerDuPanier(produit_id: string): void {
-  definir(instantane().filter((l) => l.produit_id !== produit_id));
+export function retirerDuPanier(cle: string): void {
+  definir(instantane().filter((l) => cleLigne(l) !== cle));
 }
 
 export function viderPanierBoutique(): void {

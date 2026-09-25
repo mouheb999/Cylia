@@ -1,3 +1,4 @@
+import Coffrets from "@/components/Coffrets";
 import EncartBoutique from "@/components/EncartBoutique";
 import Footer from "@/components/Footer";
 import Galerie from "@/components/Galerie";
@@ -8,6 +9,7 @@ import Promotions from "@/components/Promotions";
 import Services from "@/components/Services";
 import {
   chargerCategories,
+  chargerCoffrets,
   chargerContenus,
   chargerGalerie,
   chargerGroupes,
@@ -37,6 +39,7 @@ export default async function Page() {
     groupes,
     prestations,
     packs,
+    coffrets,
     photosAccueil,
     photos,
     produits,
@@ -47,6 +50,7 @@ export default async function Page() {
     chargerGroupes(),
     chargerPrestations(),
     chargerPacks(),
+    chargerCoffrets(),
     chargerPhotosAccueil(),
     chargerGalerie(),
     chargerProduits(),
@@ -54,7 +58,7 @@ export default async function Page() {
     chargerReglages(),
   ]);
 
-  // Toutes ces lectures viennent du même appel mis en cache : les neuf lignes
+  // Toutes ces lectures viennent du même appel mis en cache : les dix lignes
   // ci-dessus ne font pas neuf allers-retours. Voir `chargerDonnees()`.
   const offres = promotionsEnCours(prestations);
 
@@ -67,7 +71,10 @@ export default async function Page() {
         <Packs packs={packs} devise={reglages.devise} />
         <Promotions offres={offres} groupes={groupes} devise={reglages.devise} />
         {reglages.boutique_active && (
-          <EncartBoutique produits={produits} devise={reglages.devise} />
+          <>
+            <Coffrets coffrets={coffrets} produits={produits} devise={reglages.devise} />
+            <EncartBoutique produits={produits} devise={reglages.devise} />
+          </>
         )}
         <Galerie photos={photos} />
       </main>

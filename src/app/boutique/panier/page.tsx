@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import PanierClient from "@/components/boutique/PanierClient";
-import { chargerContenus, chargerProduits, chargerReglages } from "@/lib/donnees";
+import {
+  chargerCoffrets,
+  chargerContenus,
+  chargerProduits,
+  chargerReglages,
+} from "@/lib/donnees";
 import { infosSite } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default async function PagePanier() {
-  const [produits, reglages, contenus] = await Promise.all([
+  const [produits, coffrets, reglages, contenus] = await Promise.all([
     chargerProduits(),
+    chargerCoffrets(),
     chargerReglages(),
     chargerContenus(),
   ]);
@@ -31,7 +37,7 @@ export default async function PagePanier() {
           </h1>
         </div>
 
-        <PanierClient produits={produits} reglages={reglages} />
+        <PanierClient produits={produits} coffrets={coffrets} reglages={reglages} />
       </main>
       <Footer site={infosSite(contenus)} />
     </>

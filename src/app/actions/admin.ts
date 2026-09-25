@@ -72,6 +72,9 @@ async function agir(
         message: "Donnez d'abord un prix à cette prestation, dans « Prestations ».",
       };
     }
+    if (brut.includes("COFFRET_SANS_PRIX")) {
+      return { ok: false, message: "Indiquez le prix du coffret." };
+    }
     if (brut.includes("PROMO_TROP_HAUTE")) {
       return { ok: false, message: "Le tarif promo doit être inférieur au prix affiché." };
     }
@@ -611,6 +614,83 @@ export async function deplacerPack(id: string, sens: -1 | 1): Promise<Resultat> 
     await Promise.all([
       supabase.from("packs").update({ ordre: voisin.ordre }).eq("id", courant.id),
       supabase.from("packs").update({ ordre: courant.ordre }).eq("id", voisin.id),
+    ]);
+  });
+}
+
+// ----------------------------------------------------------------- coffrets
+
+export type FormCoffret = {
+  id?: string;
+  nom: string;
+  description: string;
+  prix: number;
+  /** La photo du coffret tout prêt. Sans elle, la carte assemble ses flacons. */
+  image_url: string | null;
+  /** Les produits du catalogue qu'il contient. Vide : coffret « photo seule ». */
+  produit_ids: string[];
+  ordre: number;
+  actif: boolean;
+};
+
+export async function enregistrerCoffret(form: FormCoffret): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const nom = form.nom.trim();
+    if (nom.length < 2) throw new Error("NOM_COURT");
+    if (!Number.isFinite(form.prix)) throw new Error("COFFRET_SANS_PRIX");
+
+    const ligne = {
+      nom,
+      description: form.description.trim(),
+      prix: Math.max(0, form.prix),
+      image_url: form.image_url?.trim() || null,
+      // Un même flacon deux fois ne ferait que décrémenter deux fois le stock
+      // à la commande : on n'en garde qu'un.
+      produit_ids: [...new Set(form.produit_ids)],
+      actif: form.actif,
+    };
+
+    if (form.id) {
+      const { error } = await supabase.from("coffrets").update(ligne).eq("id", form.id);
+      if (error) throw error;
+      return;
+    }
+
+    const { data } = await supabase
+      .from("coffrets")
+      .select("ordre")
+      .order("ordre", { ascending: false })
+      .limit(1);
+    const { error } = await supabase
+      .from("coffrets")
+      .insert({ ...ligne, ordre: (data?.[0]?.ordre ?? 0) + 1 });
+    if (error) throw error;
+  });
+}
+
+export async function supprimerCoffret(id: string): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase.from("coffrets").delete().eq("id", id);
+    if (error) throw error;
+  });
+}
+
+/** Un coffret échange son rang avec son voisin — c'est l'ordre de l'accueil. */
+export async function deplacerCoffret(id: string, sens: -1 | 1): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { data } = await supabase.from("coffrets").select("id, ordre").order("ordre");
+    const liste = data ?? [];
+    const index = liste.findIndex((c) => c.id === id);
+    const voisin = liste[index + sens];
+    if (index < 0 || !voisin) return;
+
+    const courant = liste[index];
+    await Promise.all([
+      supabase.from("coffrets").update({ ordre: voisin.ordre }).eq("id", courant.id),
+      supabase.from("coffrets").update({ ordre: courant.ordre }).eq("id", voisin.id),
     ]);
   });
 }

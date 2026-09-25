@@ -80,6 +80,7 @@ Format JPG, PNG ou WebP, 8 Mo au maximum.
 | **Commandes** | commandes de cosmétiques, articles et coordonnées de livraison. À traiter → confirmée → expédiée → livrée |
 | **Prestations** | catalogue complet, y compris ce qui est masqué. Une photo par prestation |
 | **Produits** | catalogue de la boutique, stock, prix barrés, photos. Recherche, filtres par famille et par gamme, tri |
+| **Coffrets** | produits vendus ensemble sous un prix : la photo du coffret, et/ou les produits du catalogue qu'il contient (le coffret suit alors leur stock). Affichés sur l'accueil au-dessus de la boutique, ajoutés au même panier |
 | **Promotions** | les remises posées sur les prestations : tarif promo, phrase d'annonce, date de fin |
 | **Photos** | toutes les images de l'accueil — bandeau, encart « Prenez soin de vous », logo, galerie |
 | **Contenu** | tous les textes du site en une page, pour une relecture d'ensemble |
