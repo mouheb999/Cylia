@@ -15,7 +15,7 @@ import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre, libelle } from "@/components/ui/champs";
 import { formatDuree, formatPrix } from "@/lib/format";
 import { cheminPack, inclusionsDuPack, photosDuPack, prestationDuPack } from "@/lib/packs";
-import type { Pack, Prestation } from "@/lib/supabase/types";
+import type { CategoriePack, Pack, Prestation } from "@/lib/supabase/types";
 
 const VIDE: FormPack = {
   nom: "",
@@ -25,6 +25,7 @@ const VIDE: FormPack = {
   duree_minutes: null,
   images: [],
   prestation_id: null,
+  categorie_id: null,
   ordre: 0,
   actif: true,
 };
@@ -58,9 +59,11 @@ function depuisLignes(texte: string): string[] {
 export default function GestionPacks({
   packs,
   prestations,
+  categories,
 }: {
   packs: Pack[];
   prestations: Prestation[];
+  categories: CategoriePack[];
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormPack | null>(null);
@@ -128,6 +131,7 @@ export default function GestionPacks({
       duree_minutes: pack.duree_minutes,
       images: photosDuPack(pack),
       prestation_id: prestationDuPack(pack, prestations)?.id ?? null,
+      categorie_id: pack.categorie_id ?? null,
       ordre: pack.ordre,
       actif: pack.actif,
     });
@@ -172,6 +176,12 @@ export default function GestionPacks({
                       {pack.duree_minutes ? ` · ${formatDuree(pack.duree_minutes)}` : ""}
                       {!pack.actif && " · masqué"}
                     </p>
+                    {categories.length > 0 && (
+                      <p className="mt-0.5 truncate text-xs font-light text-gold/70">
+                        {categories.find((c) => c.id === pack.categorie_id)?.nom ??
+                          "Sans catégorie"}
+                      </p>
+                    )}
                     <p className="mt-0.5 truncate text-xs font-light text-white/30">
                       {reservee
                         ? `Réserve : ${reservee.nom}`
@@ -352,6 +362,27 @@ export default function GestionPacks({
                 className={champSombre}
               />
             </label>
+
+            {categories.length > 0 && (
+              <label className="block text-sm">
+                <span className={libelle}>Catégorie</span>
+                <select
+                  value={form.categorie_id ?? ""}
+                  onChange={(e) => setForm({ ...form, categorie_id: e.target.value || null })}
+                  className={champSombre}
+                >
+                  <option value="" className="bg-noir-soft">
+                    Aucune — affiché sous les catégories
+                  </option>
+                  {categories.map((categorie) => (
+                    <option key={categorie.id} value={categorie.id} className="bg-noir-soft">
+                      {categorie.nom}
+                      {categorie.actif ? "" : " (masquée)"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label className="block text-sm">
               <span className={libelle}>Phrase de présentation</span>

@@ -19,6 +19,7 @@ export const CONTENUS_DEFAUT = {
   "hero.image": "",
 
   "packs.surtitre": "Nos formules",
+  "packs.image": "",
   "packs.titre": "Nos packs",
   "packs.texte":
     "Plusieurs soins réunis en une seule formule, à un tarif pensé pour l'ensemble.",

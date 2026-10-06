@@ -1,27 +1,45 @@
-import Link from "next/link";
-import GrillePacks from "@/components/packs/GrillePacks";
+import GrandeCarte from "@/components/packs/GrandeCarte";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
-import type { Pack } from "@/lib/supabase/types";
+import { couverturePack, imageCategoriePack, libelleNombrePacks } from "@/lib/packs";
+import type { CategoriePack, Pack } from "@/lib/supabase/types";
 
 /**
- * « Nos packs » — les formules du salon.
+ * « Nos packs » — une seule grande carte sur l'accueil.
  *
- * Elle remplace l'encart figé « Prenez soin de vous », qui était une photo et
- * deux lignes écrites dans le code. Ici, tout vient du panneau : le salon
- * ajoute un pack, le photographie, le range, le retire.
+ * L'accueil alignait toutes les formules en grille ; avec les packs hammam,
+ * mariée et les autres, la section devenait une liste à faire défiler. Une
+ * seule carte suffit à dire « il y a des packs » : elle ouvre `/packs`, où la
+ * cliente choisit sa catégorie, puis sa formule.
  *
- * Sans aucun pack, la section n'existe pas — comme les promotions. Une section
- * « Nos packs » vide se lirait comme une panne, là où son absence ne se
- * remarque pas.
+ * La photo est celle que le salon dépose dans le panneau (« Packs » → photo
+ * de l'accueil). À défaut, celle de la première catégorie, puis la couverture
+ * du premier pack.
  *
- * Chaque carte mène à la fiche du pack, et non plus droit au tunnel de
- * réservation : la cliente arrivait dans une liste de prestations où la
- * formule qui l'avait arrêtée n'apparaissait nulle part. La fiche lui montre
- * d'abord ce que le pack comprend, puis lui tend le bouton qui le réserve.
+ * Sans aucun pack, la section n'existe pas — comme les promotions.
  */
-export default function Packs({ packs, devise }: { packs: Pack[]; devise: string }) {
+export default function Packs({
+  packs,
+  categories,
+  image,
+}: {
+  packs: Pack[];
+  categories: CategoriePack[];
+  /** Photo choisie par le salon — "" tant qu'il n'en a déposé aucune. */
+  image: string;
+}) {
   if (packs.length === 0) return null;
+
+  const photo =
+    image ||
+    categories.map((c) => imageCategoriePack(c, packs)).find(Boolean) ||
+    packs.map(couverturePack).find(Boolean) ||
+    null;
+
+  const mention =
+    categories.length > 1
+      ? `${categories.length} catégories · ${libelleNombrePacks(packs.length)}`
+      : libelleNombrePacks(packs.length);
 
   return (
     <section id="packs" className="scroll-mt-24 bg-cream px-4 pb-10 pt-4">
@@ -34,13 +52,6 @@ export default function Packs({ packs, devise }: { packs: Pack[]; devise: string
           className="text-[10px] uppercase tracking-[0.3em] text-gold-deep"
         />
         <Texte
-          cle="packs.titre"
-          titre="Titre des packs"
-          defaut={CONTENUS_DEFAUT["packs.titre"]}
-          balise="h2"
-          className="mt-2 font-serif text-2xl font-light text-ink"
-        />
-        <Texte
           cle="packs.texte"
           titre="Texte des packs"
           type="multiligne"
@@ -48,17 +59,24 @@ export default function Packs({ packs, devise }: { packs: Pack[]; devise: string
           balise="p"
           className="mx-auto mt-2 max-w-[24rem] whitespace-pre-line text-[0.8rem] font-light leading-relaxed text-muted"
         />
-        <div className="gold-rule mx-auto mt-3 h-px w-16" aria-hidden="true" />
       </div>
 
-      <GrillePacks packs={packs} devise={devise} />
-
-      <Link
-        href="/packs"
-        className="mx-auto mt-5 flex w-full max-w-[20rem] items-center justify-center rounded-full border border-gold-deep/40 py-3 font-serif text-base text-gold-deep"
-      >
-        Voir tous nos packs
-      </Link>
+      <div className="mx-auto max-w-[40rem]">
+        <GrandeCarte
+          href="/packs"
+          alt="Nos packs"
+          titre={
+            <Texte
+              cle="packs.titre"
+              titre="Titre des packs"
+              defaut={CONTENUS_DEFAUT["packs.titre"]}
+            />
+          }
+          image={photo}
+          mention={mention}
+          texte="Hammam, mariée et plus encore — découvrez nos formules."
+        />
+      </div>
     </section>
   );
 }

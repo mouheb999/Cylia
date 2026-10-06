@@ -9,6 +9,7 @@ import Promotions from "@/components/Promotions";
 import Services from "@/components/Services";
 import {
   chargerCategories,
+  chargerCategoriesPacks,
   chargerCoffrets,
   chargerContenus,
   chargerGalerie,
@@ -39,6 +40,7 @@ export default async function Page() {
     groupes,
     prestations,
     packs,
+    categoriesPacks,
     coffrets,
     photosAccueil,
     photos,
@@ -50,6 +52,7 @@ export default async function Page() {
     chargerGroupes(),
     chargerPrestations(),
     chargerPacks(),
+    chargerCategoriesPacks(),
     chargerCoffrets(),
     chargerPhotosAccueil(),
     chargerGalerie(),
@@ -68,7 +71,11 @@ export default async function Page() {
       <main className="flex-1">
         <Hero photos={photosAccueil} />
         <Services categories={categories} />
-        <Packs packs={packs} devise={reglages.devise} />
+        <Packs
+          packs={packs}
+          categories={categoriesPacks}
+          image={contenus["packs.image"] ?? ""}
+        />
         <Promotions offres={offres} groupes={groupes} devise={reglages.devise} />
         {reglages.boutique_active && (
           <>

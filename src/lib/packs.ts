@@ -1,4 +1,4 @@
-import type { Pack, Prestation } from "@/lib/supabase/types";
+import type { CategoriePack, Pack, Prestation } from "@/lib/supabase/types";
 
 /**
  * Ce qu'un pack sait de lui-même, une fois la base interrogée.
@@ -104,4 +104,39 @@ export function lienReservationPack(
 export function dureeDuPack(pack: Pack, prestations: Prestation[]): number | null {
   if (pack.duree_minutes && pack.duree_minutes > 0) return pack.duree_minutes;
   return prestationDuPack(pack, prestations)?.duree_minutes ?? null;
+}
+
+// ------------------------------------------------------------- catégories
+
+export function cheminCategoriePack(categorie: CategoriePack): string {
+  return `/packs/categorie/${categorie.slug || categorie.id}`;
+}
+
+/** Les packs d'une catégorie, dans l'ordre du salon. */
+export function packsDeCategorie(categorie: CategoriePack, packs: Pack[]): Pack[] {
+  return packs.filter((p) => p.categorie_id === categorie.id);
+}
+
+/**
+ * Les packs qu'aucune catégorie visible ne recueille — sans catégorie, ou dans
+ * une catégorie masquée. Ils restent affichés, sous les catégories : un pack
+ * visible ne doit pas devenir introuvable parce qu'on a rangé autour de lui.
+ */
+export function packsHorsCategorie(categories: CategoriePack[], packs: Pack[]): Pack[] {
+  const ids = new Set(categories.map((c) => c.id));
+  return packs.filter((p) => !p.categorie_id || !ids.has(p.categorie_id));
+}
+
+/** La photo d'une catégorie — la sienne, sinon la couverture de son premier pack. */
+export function imageCategoriePack(categorie: CategoriePack, packs: Pack[]): string | null {
+  if (categorie.image_url) return categorie.image_url;
+  for (const pack of packsDeCategorie(categorie, packs)) {
+    const couverture = couverturePack(pack);
+    if (couverture) return couverture;
+  }
+  return null;
+}
+
+export function libelleNombrePacks(n: number): string {
+  return n === 1 ? "1 pack" : `${n} packs`;
 }

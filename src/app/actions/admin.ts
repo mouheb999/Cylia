@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { adminConnecte, clientServeur } from "@/lib/supabase/serveur";
 import { TAG_SITE } from "@/lib/donnees";
+import { versSlug } from "@/lib/packs";
 import type {
   EmplacementPhoto,
   Reglages,
@@ -541,6 +542,8 @@ export type FormPack = {
   images: string[];
   /** La prestation que « Réserver ce pack » dépose dans le panier. */
   prestation_id: string | null;
+  /** La catégorie où il se range sur `/packs`. */
+  categorie_id: string | null;
   ordre: number;
   actif: boolean;
 };
@@ -568,6 +571,7 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
       image_url: images[0] ?? null,
       images,
       prestation_id: form.prestation_id || null,
+      categorie_id: form.categorie_id || null,
       ordre: form.ordre,
       actif: form.actif,
     };
@@ -614,6 +618,75 @@ export async function deplacerPack(id: string, sens: -1 | 1): Promise<Resultat> 
     await Promise.all([
       supabase.from("packs").update({ ordre: voisin.ordre }).eq("id", courant.id),
       supabase.from("packs").update({ ordre: courant.ordre }).eq("id", voisin.id),
+    ]);
+  });
+}
+
+// ------------------------------------------------------ catégories de packs
+
+export type FormCategoriePack = {
+  id?: string;
+  nom: string;
+  description: string;
+  image_url: string | null;
+  actif: boolean;
+};
+
+export async function enregistrerCategoriePack(form: FormCategoriePack): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const nom = form.nom.trim();
+    if (nom.length < 2) throw new Error("NOM_COURT");
+
+    const ligne = {
+      nom,
+      description: form.description.trim(),
+      image_url: form.image_url?.trim() || null,
+      actif: form.actif,
+    };
+
+    if (form.id) {
+      const { error } = await supabase.from("categories_packs").update(ligne).eq("id", form.id);
+      if (error) throw error;
+      return;
+    }
+
+    // L'adresse se pose à la création et ne bouge plus : renommer la
+    // catégorie ne casse pas les liens déjà partagés.
+    const { data } = await supabase.from("categories_packs").select("slug, ordre");
+    const existants = new Set((data ?? []).map((c) => c.slug));
+    const base = versSlug(nom) || "packs";
+    let slug = base;
+    for (let n = 2; existants.has(slug); n += 1) slug = `${base}-${n}`;
+    const ordre = Math.max(0, ...(data ?? []).map((c) => c.ordre)) + 1;
+
+    const { error } = await supabase.from("categories_packs").insert({ ...ligne, slug, ordre });
+    if (error) throw error;
+  });
+}
+
+/** Ses packs restent, sans catégorie : ils s'affichent sous les autres. */
+export async function supprimerCategoriePack(id: string): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { error } = await supabase.from("categories_packs").delete().eq("id", id);
+    if (error) throw error;
+  });
+}
+
+export async function deplacerCategoriePack(id: string, sens: -1 | 1): Promise<Resultat> {
+  return agir(async () => {
+    const supabase = await clientServeur();
+    const { data } = await supabase.from("categories_packs").select("id, ordre").order("ordre");
+    const liste = data ?? [];
+    const index = liste.findIndex((c) => c.id === id);
+    const voisin = liste[index + sens];
+    if (index < 0 || !voisin) return;
+
+    const courant = liste[index];
+    await Promise.all([
+      supabase.from("categories_packs").update({ ordre: voisin.ordre }).eq("id", courant.id),
+      supabase.from("categories_packs").update({ ordre: courant.ordre }).eq("id", voisin.id),
     ]);
   });
 }

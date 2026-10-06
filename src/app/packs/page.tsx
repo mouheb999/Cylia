@@ -2,10 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import GrandeCarte from "@/components/packs/GrandeCarte";
 import GrillePacks from "@/components/packs/GrillePacks";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
-import { chargerContenus, chargerPacks, chargerReglages } from "@/lib/donnees";
+import {
+  chargerCategoriesPacks,
+  chargerContenus,
+  chargerPacks,
+  chargerReglages,
+} from "@/lib/donnees";
+import {
+  cheminCategoriePack,
+  imageCategoriePack,
+  libelleNombrePacks,
+  packsDeCategorie,
+  packsHorsCategorie,
+} from "@/lib/packs";
 import { infosSite } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -17,19 +30,24 @@ export const metadata: Metadata = {
 };
 
 /**
- * La liste des packs.
+ * Les packs, par catégorie.
  *
- * Elle existe pour deux chemins : celle qui vient de l'accueil et veut voir
- * les autres formules, et celle qui arrive de la fiche d'un pack et compare.
- * D'où la grille complète, sans filtre ni catégorie — le salon en propose une
- * poignée, pas un catalogue.
+ * Une grande carte par catégorie — hammam, mariée, les autres —, chacune
+ * ouvre ses formules. Les packs qu'aucune catégorie ne recueille suivent en
+ * grille, en dessous. Tant que le salon n'a créé aucune catégorie, la page
+ * reste la grille complète d'avant.
  */
 export default async function PagePacks() {
-  const [packs, reglages, contenus] = await Promise.all([
+  const [packs, categoriesToutes, reglages, contenus] = await Promise.all([
     chargerPacks(),
+    chargerCategoriesPacks(),
     chargerReglages(),
     chargerContenus(),
   ]);
+
+  // Une catégorie vide ne mène nulle part : elle attend son premier pack.
+  const categories = categoriesToutes.filter((c) => packsDeCategorie(c, packs).length > 0);
+  const horsCategorie = packsHorsCategorie(categories, packs);
 
   return (
     <>
@@ -68,7 +86,39 @@ export default async function PagePacks() {
               prestations se réservent une à une.
             </p>
           ) : (
-            <GrillePacks packs={packs} devise={reglages.devise} />
+            <>
+              {categories.length > 0 && (
+                <ul className="mx-auto max-w-[40rem] space-y-4">
+                  {categories.map((categorie, index) => (
+                    <li key={categorie.id}>
+                      <GrandeCarte
+                        href={cheminCategoriePack(categorie)}
+                        titre={categorie.nom}
+                        alt={categorie.nom}
+                        texte={categorie.description || undefined}
+                        image={imageCategoriePack(categorie, packs)}
+                        mention={libelleNombrePacks(packsDeCategorie(categorie, packs).length)}
+                        priority={index === 0}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {horsCategorie.length > 0 && (
+                <div className={categories.length > 0 ? "mt-8" : ""}>
+                  {categories.length > 0 && (
+                    <>
+                      <h2 className="text-center font-serif text-xl font-light text-ink">
+                        Nos autres formules
+                      </h2>
+                      <div className="gold-rule mx-auto mt-3 mb-5 h-px w-16" aria-hidden="true" />
+                    </>
+                  )}
+                  <GrillePacks packs={horsCategorie} devise={reglages.devise} />
+                </div>
+              )}
+            </>
           )}
 
           <Link

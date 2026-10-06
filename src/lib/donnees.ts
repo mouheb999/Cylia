@@ -12,6 +12,7 @@ import type { ContenuMap } from "@/lib/contenu";
 import { slugDuPack } from "@/lib/packs";
 import type {
   Categorie,
+  CategoriePack,
   Coffret,
   EmplacementPhoto,
   Groupe,
@@ -32,6 +33,7 @@ export type DonneesPubliques = {
   prestations: Prestation[];
   produits: Produit[];
   packs: Pack[];
+  categoriesPacks: CategoriePack[];
   coffrets: Coffret[];
   galerie: PhotoGalerie[];
   contenus: ContenuMap;
@@ -47,7 +49,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "13";
+const MILLESIME = "14";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -56,6 +58,7 @@ const REPLI: DonneesPubliques = {
   prestations: PRESTATIONS_DEFAUT,
   produits: [],
   packs: [],
+  categoriesPacks: [],
   coffrets: [],
   galerie: [],
   contenus: {},
@@ -83,7 +86,9 @@ const lireDonneesPubliques = unstable_cache(
       .abortSignal(AbortSignal.timeout(DELAI_LECTURE));
     if (error) throw error;
 
-    const brut = data as Partial<DonneesPubliques> | null;
+    const brut = data as
+      | (Partial<DonneesPubliques> & { categories_packs?: CategoriePack[] })
+      | null;
     if (!brut?.reglages) throw new Error("Réponse vide de donnees_publiques()");
 
     return {
@@ -94,6 +99,8 @@ const lireDonneesPubliques = unstable_cache(
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
       packs: brut.packs ?? [],
+      // Absent tant que la migration 0031 n'est pas passée : pas de catégories.
+      categoriesPacks: brut.categories_packs ?? [],
       // Absent tant que la migration 0030 n'est pas passée : pas de coffrets.
       coffrets: brut.coffrets ?? [],
       galerie: brut.galerie ?? [],
@@ -209,6 +216,16 @@ export async function chargerPacks(): Promise<Pack[]> {
 export async function chargerPack(slug: string): Promise<Pack | null> {
   const { packs } = await chargerDonnees();
   return packs.find((p) => slugDuPack(p) === slug) ?? packs.find((p) => p.id === slug) ?? null;
+}
+
+/** Les catégories de packs, dans l'ordre choisi par le salon. */
+export async function chargerCategoriesPacks(): Promise<CategoriePack[]> {
+  return (await chargerDonnees()).categoriesPacks;
+}
+
+export async function chargerCategoriePack(slug: string): Promise<CategoriePack | null> {
+  const { categoriesPacks } = await chargerDonnees();
+  return categoriesPacks.find((c) => c.slug === slug || c.id === slug) ?? null;
 }
 
 export async function chargerCoffrets(): Promise<Coffret[]> {

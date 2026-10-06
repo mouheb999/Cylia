@@ -11,6 +11,7 @@ import type {
   Fermeture,
   Groupe,
   Pack,
+  CategoriePack,
   Coffret,
   PhotoGalerie,
   Prestation,
@@ -143,6 +144,14 @@ export async function packsAdmin(): Promise<Pack[]> {
   const { data, error } = await supabase.from("packs").select("*").order("ordre");
   if (error) throw error;
   return data as Pack[];
+}
+
+/** Vide tant que la migration 0031 n'est pas passée : la table n'existe pas. */
+export async function categoriesPacksAdmin(): Promise<CategoriePack[]> {
+  const supabase = await clientPanneau();
+  const { data, error } = await supabase.from("categories_packs").select("*").order("ordre");
+  if (error) return [];
+  return data as CategoriePack[];
 }
 
 export async function coffretsAdmin(): Promise<Coffret[]> {

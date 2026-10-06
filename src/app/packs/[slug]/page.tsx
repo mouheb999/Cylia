@@ -7,9 +7,17 @@ import { IconClock } from "@/components/Icons";
 import DiaporamaPack from "@/components/packs/DiaporamaPack";
 import GrillePacks from "@/components/packs/GrillePacks";
 import LienSuivi from "@/components/LienSuivi";
-import { chargerContenus, chargerPack, chargerPacks, chargerPrestations, chargerReglages } from "@/lib/donnees";
+import {
+  chargerCategoriesPacks,
+  chargerContenus,
+  chargerPack,
+  chargerPacks,
+  chargerPrestations,
+  chargerReglages,
+} from "@/lib/donnees";
 import { formatDuree, formatPrix } from "@/lib/format";
 import {
+  cheminCategoriePack,
   dureeDuPack,
   inclusionsDuPack,
   lienReservationPack,
@@ -47,9 +55,10 @@ export async function generateMetadata({
  */
 export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
   const { slug } = await params;
-  const [pack, packs, prestations, reglages, contenus] = await Promise.all([
+  const [pack, packs, categories, prestations, reglages, contenus] = await Promise.all([
     chargerPack(slug),
     chargerPacks(),
+    chargerCategoriesPacks(),
     chargerPrestations(),
     chargerReglages(),
     chargerContenus(),
@@ -61,7 +70,12 @@ export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
   const photos = photosDuPack(pack);
   const inclusions = inclusionsDuPack(pack);
   const duree = dureeDuPack(pack, prestations);
-  const autres = packs.filter((p) => p.id !== pack.id);
+  // Les autres packs de la même catégorie d'abord : c'est entre eux qu'on
+  // compare. Sans catégorie, tous les autres.
+  const categorie = categories.find((c) => c.id === pack.categorie_id) ?? null;
+  const autres = packs.filter(
+    (p) => p.id !== pack.id && (!categorie || p.categorie_id === categorie.id),
+  );
 
   return (
     <>
@@ -70,7 +84,9 @@ export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
         <DiaporamaPack photos={photos} nom={pack.nom} />
 
         <div className="px-5 pb-10 pt-6">
-          <p className="text-[0.65rem] uppercase tracking-[0.25em] text-gold-deep">Notre pack</p>
+          <p className="text-[0.65rem] uppercase tracking-[0.25em] text-gold-deep">
+            {categorie?.nom ?? "Notre pack"}
+          </p>
           <h1 className="mt-2 font-serif text-2xl font-light leading-tight text-ink">
             {pack.nom}
           </h1>
@@ -150,8 +166,11 @@ export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
             </section>
           )}
 
-          <Link href="/packs" className="mt-6 block text-center text-sm font-light text-muted">
-            ← Tous nos packs
+          <Link
+            href={categorie ? cheminCategoriePack(categorie) : "/packs"}
+            className="mt-6 block text-center text-sm font-light text-muted"
+          >
+            ← {categorie ? categorie.nom : "Tous nos packs"}
           </Link>
         </div>
       </main>

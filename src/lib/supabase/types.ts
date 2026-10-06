@@ -148,6 +148,23 @@ export type Pack = {
    * bouton mène au tunnel sans rien y retenir.
    */
   prestation_id: string | null;
+  /** La catégorie où le pack se range (`categories_packs`). `null` : aucune. */
+  categorie_id: string | null;
+  ordre: number;
+  actif: boolean;
+  cree_le: string;
+};
+
+/**
+ * Une catégorie de packs — « Packs Hammam », « Packs Mariée »… L'accueil n'en
+ * montre qu'une grande carte ; `/packs` les présente, chacune ouvre ses packs.
+ */
+export type CategoriePack = {
+  id: string;
+  slug: string;
+  nom: string;
+  description: string;
+  image_url: string | null;
   ordre: number;
   actif: boolean;
   cree_le: string;
@@ -263,6 +280,7 @@ export type Database = {
       groupes: Ligne<Groupe, "categorie_id" | "nom">;
       produits: Ligne<Produit, "slug" | "nom" | "prix">;
       packs: Ligne<Pack, "nom">;
+      categories_packs: Ligne<CategoriePack, "slug" | "nom">;
       coffrets: Ligne<Coffret, "nom" | "prix">;
       commandes: Ligne<Commande, "reference" | "nom" | "telephone" | "adresse" | "ville" | "sous_total" | "total">;
       commande_articles: Ligne<ArticleCommande, "commande_id" | "nom" | "prix" | "quantite">;
