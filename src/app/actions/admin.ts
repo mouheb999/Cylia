@@ -3,7 +3,8 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { adminConnecte, clientServeur } from "@/lib/supabase/serveur";
 import { TAG_SITE } from "@/lib/donnees";
-import { versSlug } from "@/lib/packs";
+import { CLE_CATEGORIES_PACKS, lireCategoriesPacks, versSlug } from "@/lib/packs";
+import type { CategoriePack } from "@/lib/supabase/types";
 import type {
   EmplacementPhoto,
   Reglages,
@@ -571,20 +572,14 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
       image_url: images[0] ?? null,
       images,
       prestation_id: form.prestation_id || null,
-      categorie_id: form.categorie_id || null,
       ordre: form.ordre,
       actif: form.actif,
     };
 
     if (form.id) {
-      let { error } = await supabase.from("packs").update(ligne).eq("id", form.id);
-      // Base sans la migration 0031 : la colonne n'existe pas encore.
-      if (error?.message.includes("categorie_id")) {
-        const { categorie_id: _ignore, ...sansCategorie } = ligne;
-        void _ignore;
-        ({ error } = await supabase.from("packs").update(sansCategorie).eq("id", form.id));
-      }
+      const { error } = await supabase.from("packs").update(ligne).eq("id", form.id);
       if (error) throw error;
+      await rangerPackDans(supabase, form.id, form.categorie_id);
       return;
     }
 
@@ -595,14 +590,13 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
       .select("ordre")
       .order("ordre", { ascending: false })
       .limit(1);
-    const ordre = (data?.[0]?.ordre ?? 0) + 1;
-    let { error } = await supabase.from("packs").insert({ ...ligne, ordre });
-    if (error?.message.includes("categorie_id")) {
-      const { categorie_id: _ignore, ...sansCategorie } = ligne;
-      void _ignore;
-      ({ error } = await supabase.from("packs").insert({ ...sansCategorie, ordre }));
-    }
+    const { data: cree, error } = await supabase
+      .from("packs")
+      .insert({ ...ligne, ordre: (data?.[0]?.ordre ?? 0) + 1 })
+      .select("id")
+      .single();
     if (error) throw error;
+    await rangerPackDans(supabase, cree.id, form.categorie_id);
   });
 }
 
@@ -633,6 +627,50 @@ export async function deplacerPack(id: string, sens: -1 | 1): Promise<Resultat> 
 }
 
 // ------------------------------------------------------ catégories de packs
+//
+// Les catégories vivent en JSON dans `contenus` (clé `packs.categories`) : le
+// panneau sait déjà y écrire, aucune table n'est à créer. Chaque geste relit
+// la liste, la modifie, et la réenregistre entière.
+
+type ClientServeur = Awaited<ReturnType<typeof clientServeur>>;
+
+async function lireCategories(supabase: ClientServeur): Promise<CategoriePack[]> {
+  const [{ data: contenu }, { data: packs, error }] = await Promise.all([
+    supabase.from("contenus").select("valeur").eq("cle", CLE_CATEGORIES_PACKS).maybeSingle(),
+    supabase.from("packs").select("*").order("ordre"),
+  ]);
+  if (error) throw error;
+  return lireCategoriesPacks(contenu?.valeur, packs ?? []);
+}
+
+async function ecrireCategories(supabase: ClientServeur, categories: CategoriePack[]) {
+  const { error } = await supabase.from("contenus").upsert(
+    {
+      cle: CLE_CATEGORIES_PACKS,
+      valeur: JSON.stringify(categories),
+      type: "texte",
+      maj_le: new Date().toISOString(),
+    },
+    { onConflict: "cle" },
+  );
+  if (error) throw error;
+}
+
+/** Le pack quitte sa catégorie et rejoint, en dernier, celle choisie. */
+async function rangerPackDans(
+  supabase: ClientServeur,
+  packId: string,
+  categorieId: string | null,
+) {
+  const categories = await lireCategories(supabase);
+  const avant = categories.find((c) => c.pack_ids.includes(packId))?.id ?? null;
+  if (avant === (categorieId || null)) return;
+  for (const c of categories) {
+    c.pack_ids = c.pack_ids.filter((id) => id !== packId);
+    if (c.id === categorieId) c.pack_ids.push(packId);
+  }
+  await ecrireCategories(supabase, categories);
+}
 
 export type FormCategoriePack = {
   id?: string;
@@ -648,30 +686,27 @@ export async function enregistrerCategoriePack(form: FormCategoriePack): Promise
     const nom = form.nom.trim();
     if (nom.length < 2) throw new Error("NOM_COURT");
 
-    const ligne = {
+    const categories = await lireCategories(supabase);
+    const champs = {
       nom,
       description: form.description.trim(),
       image_url: form.image_url?.trim() || null,
       actif: form.actif,
     };
 
-    if (form.id) {
-      const { error } = await supabase.from("categories_packs").update(ligne).eq("id", form.id);
-      if (error) throw error;
-      return;
+    const existante = form.id ? categories.find((c) => c.id === form.id) : undefined;
+    if (existante) {
+      Object.assign(existante, champs);
+    } else {
+      // L'adresse se pose à la création et ne bouge plus : renommer la
+      // catégorie ne casse pas les liens déjà partagés.
+      const pris = new Set(categories.flatMap((c) => [c.slug, c.id]));
+      const base = versSlug(nom) || "packs";
+      let slug = base;
+      for (let n = 2; pris.has(slug); n += 1) slug = `${base}-${n}`;
+      categories.push({ id: slug, slug, pack_ids: [], ...champs });
     }
-
-    // L'adresse se pose à la création et ne bouge plus : renommer la
-    // catégorie ne casse pas les liens déjà partagés.
-    const { data } = await supabase.from("categories_packs").select("slug, ordre");
-    const existants = new Set((data ?? []).map((c) => c.slug));
-    const base = versSlug(nom) || "packs";
-    let slug = base;
-    for (let n = 2; existants.has(slug); n += 1) slug = `${base}-${n}`;
-    const ordre = Math.max(0, ...(data ?? []).map((c) => c.ordre)) + 1;
-
-    const { error } = await supabase.from("categories_packs").insert({ ...ligne, slug, ordre });
-    if (error) throw error;
+    await ecrireCategories(supabase, categories);
   });
 }
 
@@ -679,25 +714,23 @@ export async function enregistrerCategoriePack(form: FormCategoriePack): Promise
 export async function supprimerCategoriePack(id: string): Promise<Resultat> {
   return agir(async () => {
     const supabase = await clientServeur();
-    const { error } = await supabase.from("categories_packs").delete().eq("id", id);
-    if (error) throw error;
+    const categories = await lireCategories(supabase);
+    await ecrireCategories(
+      supabase,
+      categories.filter((c) => c.id !== id),
+    );
   });
 }
 
 export async function deplacerCategoriePack(id: string, sens: -1 | 1): Promise<Resultat> {
   return agir(async () => {
     const supabase = await clientServeur();
-    const { data } = await supabase.from("categories_packs").select("id, ordre").order("ordre");
-    const liste = data ?? [];
-    const index = liste.findIndex((c) => c.id === id);
-    const voisin = liste[index + sens];
-    if (index < 0 || !voisin) return;
-
-    const courant = liste[index];
-    await Promise.all([
-      supabase.from("categories_packs").update({ ordre: voisin.ordre }).eq("id", courant.id),
-      supabase.from("categories_packs").update({ ordre: courant.ordre }).eq("id", voisin.id),
-    ]);
+    const categories = await lireCategories(supabase);
+    const index = categories.findIndex((c) => c.id === id);
+    const cible = index + sens;
+    if (index < 0 || cible < 0 || cible >= categories.length) return;
+    [categories[index], categories[cible]] = [categories[cible], categories[index]];
+    await ecrireCategories(supabase, categories);
   });
 }
 

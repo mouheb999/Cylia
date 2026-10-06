@@ -114,7 +114,10 @@ export function cheminCategoriePack(categorie: CategoriePack): string {
 
 /** Les packs d'une catégorie, dans l'ordre du salon. */
 export function packsDeCategorie(categorie: CategoriePack, packs: Pack[]): Pack[] {
-  return packs.filter((p) => p.categorie_id === categorie.id);
+  const rang = new Map(categorie.pack_ids.map((id, i) => [id, i]));
+  return packs
+    .filter((p) => p.categorie_id === categorie.id)
+    .sort((a, b) => (rang.get(a.id) ?? 0) - (rang.get(b.id) ?? 0));
 }
 
 /**
@@ -141,6 +144,8 @@ export function libelleNombrePacks(n: number): string {
   return n === 1 ? "1 pack" : `${n} packs`;
 }
 
+export const CLE_CATEGORIES_PACKS = "packs.categories";
+
 const FAMILLES = [
   {
     slug: "hammam",
@@ -152,7 +157,7 @@ const FAMILLES = [
     slug: "mariage",
     nom: "Packs Mariée",
     description: "Tout ce qu'il faut pour le grand jour.",
-    motif: /mari|wedding/i,
+    motif: /mari|wedding|arous/i,
   },
   {
     slug: "autres",
@@ -162,28 +167,52 @@ const FAMILLES = [
   },
 ];
 
-/**
- * Les catégories d'une base où la table `categories_packs` n'existe pas
- * encore : rangées d'après le nom de chaque pack, comme le fera la migration
- * 0031. Les packs repartent avec leur `categorie_id` posé.
- */
-export function categoriesDevinees(packs: Pack[]): {
-  packs: Pack[];
-  categoriesPacks: CategoriePack[];
-} {
-  const ranges = packs.map((pack) => {
-    const famille = FAMILLES.find((f) => f.motif.test(pack.nom))!;
-    return { ...pack, categorie_id: pack.categorie_id ?? `auto-${famille.slug}` };
-  });
-  const categoriesPacks = FAMILLES.map((f, index) => ({
-    id: `auto-${f.slug}`,
+/** Tant que le salon n'a rien rangé : les catégories devinées d'après le nom des packs. */
+function categoriesDevinees(packs: Pack[]): CategoriePack[] {
+  return FAMILLES.map((f) => ({
+    id: f.slug,
     slug: f.slug,
     nom: f.nom,
     description: f.description,
     image_url: null,
-    ordre: index + 1,
     actif: true,
-    cree_le: "",
+    pack_ids: packs
+      .filter((pack) => FAMILLES.find((x) => x.motif.test(pack.nom)) === f)
+      .map((pack) => pack.id),
   }));
-  return { packs: ranges, categoriesPacks };
+}
+
+/** Relit le contenu `packs.categories` ; à défaut, devine d'après les noms. */
+export function lireCategoriesPacks(valeur: string | undefined, packs: Pack[]): CategoriePack[] {
+  if (valeur) {
+    try {
+      const brut = JSON.parse(valeur) as Partial<CategoriePack>[];
+      if (Array.isArray(brut)) {
+        return brut
+          .filter((c) => c && typeof c.id === "string" && typeof c.nom === "string")
+          .map((c) => ({
+            id: c.id!,
+            slug: c.slug || c.id!,
+            nom: c.nom!,
+            description: c.description ?? "",
+            image_url: c.image_url ?? null,
+            actif: c.actif !== false,
+            pack_ids: Array.isArray(c.pack_ids) ? c.pack_ids : [],
+          }));
+      }
+    } catch {
+      // Un contenu illisible ne doit pas casser la page : on devine.
+    }
+  }
+  return categoriesDevinees(packs);
+}
+
+/**
+ * Pose `categorie_id` sur chaque pack, et range ceux de chaque catégorie dans
+ * l'ordre choisi par le salon.
+ */
+export function rangerPacks(categories: CategoriePack[], packs: Pack[]): Pack[] {
+  const ou = new Map<string, string>();
+  for (const c of categories) for (const id of c.pack_ids) if (!ou.has(id)) ou.set(id, c.id);
+  return packs.map((pack) => ({ ...pack, categorie_id: ou.get(pack.id) ?? null }));
 }

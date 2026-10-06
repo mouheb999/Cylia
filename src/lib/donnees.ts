@@ -9,7 +9,12 @@ import {
   REGLAGES_DEFAUT,
 } from "@/lib/catalogue-defaut";
 import type { ContenuMap } from "@/lib/contenu";
-import { categoriesDevinees, slugDuPack } from "@/lib/packs";
+import {
+  CLE_CATEGORIES_PACKS,
+  lireCategoriesPacks,
+  rangerPacks,
+  slugDuPack,
+} from "@/lib/packs";
 import type {
   Categorie,
   CategoriePack,
@@ -40,6 +45,15 @@ export type DonneesPubliques = {
   fermetures: Fermeture[];
 };
 
+/** Les catégories visibles, et les packs avec leur `categorie_id` posé. */
+function categoriserPacks(
+  packs: Pack[],
+  valeur: string | undefined,
+): { packs: Pack[]; categoriesPacks: CategoriePack[] } {
+  const categories = lireCategoriesPacks(valeur, packs).filter((c) => c.actif);
+  return { packs: rangerPacks(categories, packs), categoriesPacks: categories };
+}
+
 /** Étiquette de cache : toute écriture d'administration la périme. */
 export const TAG_SITE = "site";
 
@@ -49,7 +63,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "15";
+const MILLESIME = "16";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -86,9 +100,7 @@ const lireDonneesPubliques = unstable_cache(
       .abortSignal(AbortSignal.timeout(DELAI_LECTURE));
     if (error) throw error;
 
-    const brut = data as
-      | (Partial<DonneesPubliques> & { categories_packs?: CategoriePack[] })
-      | null;
+    const brut = data as Partial<DonneesPubliques> | null;
     if (!brut?.reglages) throw new Error("Réponse vide de donnees_publiques()");
 
     return {
@@ -98,11 +110,7 @@ const lireDonneesPubliques = unstable_cache(
       groupes: brut.groupes ?? [],
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
-      // Tant que la migration 0031 n'est pas passée, la base ne connaît pas
-      // les catégories : on les devine d'après le nom des packs.
-      ...(brut.categories_packs
-        ? { packs: brut.packs ?? [], categoriesPacks: brut.categories_packs }
-        : categoriesDevinees(brut.packs ?? [])),
+      ...categoriserPacks(brut.packs ?? [], brut.contenus?.[CLE_CATEGORIES_PACKS]),
       // Absent tant que la migration 0030 n'est pas passée : pas de coffrets.
       coffrets: brut.coffrets ?? [],
       galerie: brut.galerie ?? [],

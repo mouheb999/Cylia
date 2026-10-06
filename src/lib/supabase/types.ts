@@ -148,8 +148,11 @@ export type Pack = {
    * bouton mène au tunnel sans rien y retenir.
    */
   prestation_id: string | null;
-  /** La catégorie où le pack se range (`categories_packs`). `null` : aucune. */
-  categorie_id: string | null;
+  /**
+   * La catégorie où le pack se range. Pas une colonne : posée au chargement
+   * d'après le contenu `packs.categories` (voir `lib/packs.ts`).
+   */
+  categorie_id?: string | null;
   ordre: number;
   actif: boolean;
   cree_le: string;
@@ -158,6 +161,9 @@ export type Pack = {
 /**
  * Une catégorie de packs — « Packs Hammam », « Packs Mariée »… L'accueil n'en
  * montre qu'une grande carte ; `/packs` les présente, chacune ouvre ses packs.
+ *
+ * Elles vivent en JSON dans `contenus`, sous la clé `packs.categories` : ni
+ * table ni migration, et le panneau sait déjà y écrire.
  */
 export type CategoriePack = {
   id: string;
@@ -165,9 +171,9 @@ export type CategoriePack = {
   nom: string;
   description: string;
   image_url: string | null;
-  ordre: number;
   actif: boolean;
-  cree_le: string;
+  /** Les packs rangés ici, dans l'ordre. */
+  pack_ids: string[];
 };
 
 /**
@@ -280,7 +286,6 @@ export type Database = {
       groupes: Ligne<Groupe, "categorie_id" | "nom">;
       produits: Ligne<Produit, "slug" | "nom" | "prix">;
       packs: Ligne<Pack, "nom">;
-      categories_packs: Ligne<CategoriePack, "slug" | "nom">;
       coffrets: Ligne<Coffret, "nom" | "prix">;
       commandes: Ligne<Commande, "reference" | "nom" | "telephone" | "adresse" | "ville" | "sous_total" | "total">;
       commande_articles: Ligne<ArticleCommande, "commande_id" | "nom" | "prix" | "quantite">;

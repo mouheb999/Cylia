@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import PhotoDistante from "@/components/PhotoDistante";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -84,7 +84,7 @@ export default function GestionCategoriesPacks({
                 <div className="flex gap-3">
                   <span className="relative block aspect-[4/3] w-[5.5rem] shrink-0 overflow-hidden rounded-xl bg-white/[0.06]">
                     {photo ? (
-                      <Image src={photo} alt="" fill sizes="88px" className="object-cover" />
+                      <PhotoDistante src={photo} alt="" fill sizes="88px" className="object-cover" />
                     ) : (
                       <span className="flex h-full items-center justify-center text-xs text-white/25">
                         sans photo
@@ -203,7 +203,13 @@ export default function GestionCategoriesPacks({
               </p>
               {form.image_url && (
                 <span className="relative mt-2 block aspect-[4/3] w-full overflow-hidden rounded-xl bg-white/[0.06]">
-                  <Image src={form.image_url} alt="" fill sizes="400px" className="object-cover" />
+                  <PhotoDistante
+                    src={form.image_url}
+                    alt=""
+                    fill
+                    sizes="400px"
+                    className="object-cover"
+                  />
                 </span>
               )}
               <div className="mt-2 flex flex-wrap gap-2">

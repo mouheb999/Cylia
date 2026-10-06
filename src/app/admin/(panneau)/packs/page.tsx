@@ -11,12 +11,12 @@ import {
 export const metadata = { title: "Packs — CYLIA" };
 
 export default async function PagePacks() {
-  const [packs, prestations, categories, contenus] = await Promise.all([
+  const [packsBruts, prestations, contenus] = await Promise.all([
     packsAdmin(),
     prestationsAdmin(),
-    categoriesPacksAdmin(),
     contenusAdmin(),
   ]);
+  const { categories, packs } = await categoriesPacksAdmin(packsBruts, contenus);
 
   return (
     <div>

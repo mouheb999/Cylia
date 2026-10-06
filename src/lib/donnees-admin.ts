@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { clientServeur } from "@/lib/supabase/serveur";
 import { supabaseConfigure } from "@/lib/supabase/config";
+import { CLE_CATEGORIES_PACKS, lireCategoriesPacks, rangerPacks } from "@/lib/packs";
 import type {
   ArticleCommande,
   Categorie,
@@ -146,12 +147,13 @@ export async function packsAdmin(): Promise<Pack[]> {
   return data as Pack[];
 }
 
-/** Vide tant que la migration 0031 n'est pas passée : la table n'existe pas. */
-export async function categoriesPacksAdmin(): Promise<CategoriePack[]> {
-  const supabase = await clientPanneau();
-  const { data, error } = await supabase.from("categories_packs").select("*").order("ordre");
-  if (error) return [];
-  return data as CategoriePack[];
+/** Toutes les catégories, masquées comprises, et les packs avec leur catégorie. */
+export async function categoriesPacksAdmin(
+  packs: Pack[],
+  contenus: Record<string, string>,
+): Promise<{ categories: CategoriePack[]; packs: Pack[] }> {
+  const categories = lireCategoriesPacks(contenus[CLE_CATEGORIES_PACKS], packs);
+  return { categories, packs: rangerPacks(categories, packs) };
 }
 
 export async function coffretsAdmin(): Promise<Coffret[]> {
