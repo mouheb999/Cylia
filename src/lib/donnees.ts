@@ -9,7 +9,7 @@ import {
   REGLAGES_DEFAUT,
 } from "@/lib/catalogue-defaut";
 import type { ContenuMap } from "@/lib/contenu";
-import { slugDuPack } from "@/lib/packs";
+import { categoriesDevinees, slugDuPack } from "@/lib/packs";
 import type {
   Categorie,
   CategoriePack,
@@ -49,7 +49,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "14";
+const MILLESIME = "15";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -98,9 +98,11 @@ const lireDonneesPubliques = unstable_cache(
       groupes: brut.groupes ?? [],
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
-      packs: brut.packs ?? [],
-      // Absent tant que la migration 0031 n'est pas passée : pas de catégories.
-      categoriesPacks: brut.categories_packs ?? [],
+      // Tant que la migration 0031 n'est pas passée, la base ne connaît pas
+      // les catégories : on les devine d'après le nom des packs.
+      ...(brut.categories_packs
+        ? { packs: brut.packs ?? [], categoriesPacks: brut.categories_packs }
+        : categoriesDevinees(brut.packs ?? [])),
       // Absent tant que la migration 0030 n'est pas passée : pas de coffrets.
       coffrets: brut.coffrets ?? [],
       galerie: brut.galerie ?? [],

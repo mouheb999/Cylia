@@ -577,7 +577,13 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
     };
 
     if (form.id) {
-      const { error } = await supabase.from("packs").update(ligne).eq("id", form.id);
+      let { error } = await supabase.from("packs").update(ligne).eq("id", form.id);
+      // Base sans la migration 0031 : la colonne n'existe pas encore.
+      if (error?.message.includes("categorie_id")) {
+        const { categorie_id: _ignore, ...sansCategorie } = ligne;
+        void _ignore;
+        ({ error } = await supabase.from("packs").update(sansCategorie).eq("id", form.id));
+      }
       if (error) throw error;
       return;
     }
@@ -589,9 +595,13 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
       .select("ordre")
       .order("ordre", { ascending: false })
       .limit(1);
-    const { error } = await supabase
-      .from("packs")
-      .insert({ ...ligne, ordre: (data?.[0]?.ordre ?? 0) + 1 });
+    const ordre = (data?.[0]?.ordre ?? 0) + 1;
+    let { error } = await supabase.from("packs").insert({ ...ligne, ordre });
+    if (error?.message.includes("categorie_id")) {
+      const { categorie_id: _ignore, ...sansCategorie } = ligne;
+      void _ignore;
+      ({ error } = await supabase.from("packs").insert({ ...sansCategorie, ordre }));
+    }
     if (error) throw error;
   });
 }

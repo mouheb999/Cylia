@@ -1,7 +1,12 @@
 import GrandeCarte from "@/components/packs/GrandeCarte";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
-import { couverturePack, imageCategoriePack, libelleNombrePacks } from "@/lib/packs";
+import {
+  couverturePack,
+  imageCategoriePack,
+  libelleNombrePacks,
+  packsDeCategorie,
+} from "@/lib/packs";
 import type { CategoriePack, Pack } from "@/lib/supabase/types";
 
 /**
@@ -20,7 +25,7 @@ import type { CategoriePack, Pack } from "@/lib/supabase/types";
  */
 export default function Packs({
   packs,
-  categories,
+  categories: toutes,
   image,
 }: {
   packs: Pack[];
@@ -29,6 +34,8 @@ export default function Packs({
   image: string;
 }) {
   if (packs.length === 0) return null;
+
+  const categories = toutes.filter((c) => packsDeCategorie(c, packs).length > 0);
 
   const photo =
     image ||

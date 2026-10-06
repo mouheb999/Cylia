@@ -140,3 +140,50 @@ export function imageCategoriePack(categorie: CategoriePack, packs: Pack[]): str
 export function libelleNombrePacks(n: number): string {
   return n === 1 ? "1 pack" : `${n} packs`;
 }
+
+const FAMILLES = [
+  {
+    slug: "hammam",
+    nom: "Packs Hammam",
+    description: "Le rituel du hammam, du gommage au bain d'huile.",
+    motif: /hammam/i,
+  },
+  {
+    slug: "mariage",
+    nom: "Packs Mariée",
+    description: "Tout ce qu'il faut pour le grand jour.",
+    motif: /mari|wedding/i,
+  },
+  {
+    slug: "autres",
+    nom: "Autres packs",
+    description: "Head spa, soins et formules de saison.",
+    motif: /.*/,
+  },
+];
+
+/**
+ * Les catégories d'une base où la table `categories_packs` n'existe pas
+ * encore : rangées d'après le nom de chaque pack, comme le fera la migration
+ * 0031. Les packs repartent avec leur `categorie_id` posé.
+ */
+export function categoriesDevinees(packs: Pack[]): {
+  packs: Pack[];
+  categoriesPacks: CategoriePack[];
+} {
+  const ranges = packs.map((pack) => {
+    const famille = FAMILLES.find((f) => f.motif.test(pack.nom))!;
+    return { ...pack, categorie_id: pack.categorie_id ?? `auto-${famille.slug}` };
+  });
+  const categoriesPacks = FAMILLES.map((f, index) => ({
+    id: `auto-${f.slug}`,
+    slug: f.slug,
+    nom: f.nom,
+    description: f.description,
+    image_url: null,
+    ordre: index + 1,
+    actif: true,
+    cree_le: "",
+  }));
+  return { packs: ranges, categoriesPacks };
+}
