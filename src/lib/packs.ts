@@ -77,6 +77,9 @@ export function prestationDuPack(
   pack: Pack,
   prestations: Prestation[],
 ): Prestation | null {
+  if (pack.prestation_ids?.length) {
+    return prestations.find((p) => p.id === pack.prestation_ids![0]) ?? null;
+  }
   if (pack.prestation_id) {
     const liee = prestations.find((p) => p.id === pack.prestation_id);
     if (liee) return liee;
@@ -96,6 +99,10 @@ export function lienReservationPack(
   pack: Pack,
   prestations: Prestation[],
 ): string {
+  // Un pack composé de plusieurs prestations les dépose toutes d'un coup.
+  if (prestationsDuPack(pack, prestations).length > 1) {
+    return `/reserver?pack=${encodeURIComponent(slugDuPack(pack))}`;
+  }
   const prestation = prestationDuPack(pack, prestations);
   return prestation ? `/reserver?prestation=${encodeURIComponent(prestation.id)}` : "/reserver";
 }
@@ -103,7 +110,30 @@ export function lienReservationPack(
 /** La durée annoncée sur la fiche — celle du pack, sinon celle qu'il réserve. */
 export function dureeDuPack(pack: Pack, prestations: Prestation[]): number | null {
   if (pack.duree_minutes && pack.duree_minutes > 0) return pack.duree_minutes;
-  return prestationDuPack(pack, prestations)?.duree_minutes ?? null;
+  const incluses = prestationsDuPack(pack, prestations);
+  if (incluses.length === 0) return null;
+  return incluses.reduce((total, p) => total + p.duree_minutes, 0);
+}
+
+/**
+ * Les prestations que réunit le pack, dans l'ordre choisi par le salon. Un
+ * pack d'avant les compositions retombe sur sa prestation unique.
+ */
+export function prestationsDuPack(pack: Pack, prestations: Prestation[]): Prestation[] {
+  if (pack.prestation_ids?.length) {
+    const parId = new Map(prestations.map((p) => [p.id, p]));
+    return pack.prestation_ids
+      .map((id) => parId.get(id))
+      .filter((p): p is Prestation => p !== undefined);
+  }
+  const seule = prestationDuPack(pack, prestations);
+  return seule ? [seule] : [];
+}
+
+/** Ce que coûteraient les prestations prises une à une — `null` si un prix manque. */
+export function valeurALUnite(incluses: Prestation[]): number | null {
+  if (incluses.length === 0 || incluses.some((p) => p.prix == null)) return null;
+  return incluses.reduce((total, p) => total + (p.prix ?? 0), 0);
 }
 
 // ------------------------------------------------------------- catégories
@@ -145,6 +175,31 @@ export function libelleNombrePacks(n: number): string {
 }
 
 export const CLE_CATEGORIES_PACKS = "packs.categories";
+export const CLE_COMPOSITIONS_PACKS = "packs.compositions";
+
+/** `packs.compositions` : pour chaque pack, ses prestations. */
+export function lireCompositions(valeur: string | undefined): Record<string, string[]> {
+  if (!valeur) return {};
+  try {
+    const brut = JSON.parse(valeur) as unknown;
+    if (!brut || typeof brut !== "object" || Array.isArray(brut)) return {};
+    const propre: Record<string, string[]> = {};
+    for (const [id, ids] of Object.entries(brut)) {
+      if (Array.isArray(ids)) propre[id] = ids.filter((x) => typeof x === "string");
+    }
+    return propre;
+  } catch {
+    return {};
+  }
+}
+
+/** Pose `prestation_ids` sur chaque pack composé. */
+export function composerPacks(packs: Pack[], valeur: string | undefined): Pack[] {
+  const compositions = lireCompositions(valeur);
+  return packs.map((pack) =>
+    compositions[pack.id]?.length ? { ...pack, prestation_ids: compositions[pack.id] } : pack,
+  );
+}
 
 const FAMILLES = [
   {

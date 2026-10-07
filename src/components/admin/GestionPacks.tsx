@@ -11,11 +11,12 @@ import {
   type Resultat,
 } from "@/app/actions/admin";
 import { televerserImage } from "@/components/edition/televerser";
+import ChoixPrestations from "@/components/admin/ChoixPrestations";
 import Feuille from "@/components/ui/Feuille";
 import { boutonOr, champSombre, libelle } from "@/components/ui/champs";
 import { formatDuree, formatPrix } from "@/lib/format";
-import { cheminPack, inclusionsDuPack, photosDuPack, prestationDuPack } from "@/lib/packs";
-import type { CategoriePack, Pack, Prestation } from "@/lib/supabase/types";
+import { cheminPack, inclusionsDuPack, photosDuPack, prestationsDuPack } from "@/lib/packs";
+import type { Categorie, CategoriePack, Pack, Prestation } from "@/lib/supabase/types";
 
 const VIDE: FormPack = {
   nom: "",
@@ -24,7 +25,7 @@ const VIDE: FormPack = {
   prix: null,
   duree_minutes: null,
   images: [],
-  prestation_id: null,
+  prestation_ids: [],
   categorie_id: null,
   ordre: 0,
   actif: true,
@@ -60,10 +61,13 @@ export default function GestionPacks({
   packs,
   prestations,
   categories,
+  categoriesPrestations,
 }: {
   packs: Pack[];
   prestations: Prestation[];
   categories: CategoriePack[];
+  /** Esthétique, maquillage, coiffure… — pour ranger le choix des prestations. */
+  categoriesPrestations: Categorie[];
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormPack | null>(null);
@@ -130,7 +134,7 @@ export default function GestionPacks({
       prix: pack.prix,
       duree_minutes: pack.duree_minutes,
       images: photosDuPack(pack),
-      prestation_id: prestationDuPack(pack, prestations)?.id ?? null,
+      prestation_ids: prestationsDuPack(pack, prestations).map((p) => p.id),
       categorie_id: pack.categorie_id ?? null,
       ordre: pack.ordre,
       actif: pack.actif,
@@ -149,7 +153,7 @@ export default function GestionPacks({
         <ul className="space-y-2.5">
           {packs.map((pack, index) => {
             const photos = photosDuPack(pack);
-            const reservee = prestationDuPack(pack, prestations);
+            const incluses = prestationsDuPack(pack, prestations);
 
             return (
               <li key={pack.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-2.5">
@@ -183,9 +187,9 @@ export default function GestionPacks({
                       </p>
                     )}
                     <p className="mt-0.5 truncate text-xs font-light text-white/30">
-                      {reservee
-                        ? `Réserve : ${reservee.nom}`
-                        : "Aucune prestation liée — le bouton ouvre le tunnel sans rien retenir"}
+                      {incluses.length > 0
+                        ? incluses.map((p) => p.nom).join(" · ")
+                        : "Aucune prestation — le bouton ouvre le tunnel sans rien retenir"}
                     </p>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -448,36 +452,18 @@ export default function GestionPacks({
               />
               <span className="mt-1 block text-xs font-light text-white/35">
                 Affichée sur la fiche. Ce n&apos;est pas elle qui décide des
-                créneaux — c&apos;est la durée de la prestation réservée,
+                créneaux — c&apos;est la durée des prestations du pack,
                 ci-dessous.
               </span>
             </label>
 
-            <label className="block text-sm">
-              <span className={libelle}>Prestation réservée par le bouton</span>
-              <select
-                value={form.prestation_id ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, prestation_id: e.target.value || null })
-                }
-                className={champSombre}
-              >
-                <option value="" className="bg-noir-soft">
-                  Aucune — le bouton ouvre le tunnel
-                </option>
-                {prestations.map((prestation) => (
-                  <option key={prestation.id} value={prestation.id} className="bg-noir-soft">
-                    {prestation.nom}
-                    {prestation.actif ? "" : " (masquée)"}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-1 block text-xs font-light text-white/35">
-                « Réserver ce pack » la dépose dans le panier de la cliente :
-                c&apos;est sa durée qui réserve le bon temps de cabine, et son
-                tarif qui part au salon.
-              </span>
-            </label>
+            <ChoixPrestations
+              prestations={prestations}
+              categories={categoriesPrestations}
+              valeur={form.prestation_ids}
+              prixPack={form.prix}
+              onChange={(ids) => setForm({ ...form, prestation_ids: ids })}
+            />
 
             <label className="flex items-center gap-2.5 text-sm text-white/70">
               <input

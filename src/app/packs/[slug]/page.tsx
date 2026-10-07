@@ -22,6 +22,8 @@ import {
   inclusionsDuPack,
   lienReservationPack,
   photosDuPack,
+  prestationsDuPack,
+  valeurALUnite,
 } from "@/lib/packs";
 import { infosSite } from "@/lib/site";
 
@@ -70,6 +72,11 @@ export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
   const photos = photosDuPack(pack);
   const inclusions = inclusionsDuPack(pack);
   const duree = dureeDuPack(pack, prestations);
+  // Seul un pack composé de plusieurs prestations les détaille : une seule,
+  // c'est la formule elle-même, déjà décrite au-dessus.
+  const incluses = prestationsDuPack(pack, prestations);
+  const composees = incluses.length > 1 ? incluses : [];
+  const valeur = valeurALUnite(composees);
   // Les autres packs de la même catégorie d'abord : c'est entre eux qu'on
   // compare. Sans catégorie, tous les autres.
   const categorie = categories.find((c) => c.id === pack.categorie_id) ?? null;
@@ -107,6 +114,39 @@ export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
             <p className="mt-4 whitespace-pre-line text-[0.9rem] font-light leading-relaxed text-ink/80">
               {pack.description}
             </p>
+          )}
+
+          {composees.length > 0 && (
+            <div className="mt-6 rounded-2xl border border-sand bg-white p-5">
+              <p className="font-serif text-base text-ink">Les prestations du pack</p>
+              <div className="gold-rule mt-3 h-px w-12" aria-hidden="true" />
+              <ul className="mt-3 divide-y divide-sand">
+                {composees.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex items-baseline justify-between gap-3 py-2 text-[0.85rem] font-light text-ink/80"
+                  >
+                    <span>{p.nom}</span>
+                    <span className="shrink-0 text-xs text-muted lining-nums">
+                      {formatDuree(p.duree_minutes)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {valeur !== null && pack.prix !== null && pack.prix < valeur && (
+                <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-sand pt-3 text-sm">
+                  <span className="font-light text-muted">
+                    Prises une à une{" "}
+                    <span className="line-through lining-nums">
+                      {formatPrix(valeur, reglages.devise)}
+                    </span>
+                  </span>
+                  <span className="font-serif text-base text-gold-deep lining-nums">
+                    − {formatPrix(valeur - pack.prix, reglages.devise)}
+                  </span>
+                </p>
+              )}
+            </div>
           )}
 
           {inclusions.length > 0 && (

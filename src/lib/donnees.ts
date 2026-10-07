@@ -11,6 +11,8 @@ import {
 import type { ContenuMap } from "@/lib/contenu";
 import {
   CLE_CATEGORIES_PACKS,
+  CLE_COMPOSITIONS_PACKS,
+  composerPacks,
   lireCategoriesPacks,
   rangerPacks,
   slugDuPack,
@@ -63,7 +65,7 @@ export const TAG_SITE = "site";
  * À incrémenter en même temps qu'une modification du catalogue faite hors du
  * panneau — voir la clé de `lireDonneesPubliques` plus bas.
  */
-const MILLESIME = "16";
+const MILLESIME = "17";
 
 const REPLI: DonneesPubliques = {
   reglages: REGLAGES_DEFAUT,
@@ -110,7 +112,10 @@ const lireDonneesPubliques = unstable_cache(
       groupes: brut.groupes ?? [],
       prestations: brut.prestations?.length ? brut.prestations : PRESTATIONS_DEFAUT,
       produits: brut.produits ?? [],
-      ...categoriserPacks(brut.packs ?? [], brut.contenus?.[CLE_CATEGORIES_PACKS]),
+      ...categoriserPacks(
+        composerPacks(brut.packs ?? [], brut.contenus?.[CLE_COMPOSITIONS_PACKS]),
+        brut.contenus?.[CLE_CATEGORIES_PACKS],
+      ),
       // Absent tant que la migration 0030 n'est pas passée : pas de coffrets.
       coffrets: brut.coffrets ?? [],
       galerie: brut.galerie ?? [],

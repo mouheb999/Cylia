@@ -3,7 +3,13 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { clientServeur } from "@/lib/supabase/serveur";
 import { supabaseConfigure } from "@/lib/supabase/config";
-import { CLE_CATEGORIES_PACKS, lireCategoriesPacks, rangerPacks } from "@/lib/packs";
+import {
+  CLE_CATEGORIES_PACKS,
+  CLE_COMPOSITIONS_PACKS,
+  composerPacks,
+  lireCategoriesPacks,
+  rangerPacks,
+} from "@/lib/packs";
 import type {
   ArticleCommande,
   Categorie,
@@ -152,8 +158,9 @@ export async function categoriesPacksAdmin(
   packs: Pack[],
   contenus: Record<string, string>,
 ): Promise<{ categories: CategoriePack[]; packs: Pack[] }> {
-  const categories = lireCategoriesPacks(contenus[CLE_CATEGORIES_PACKS], packs);
-  return { categories, packs: rangerPacks(categories, packs) };
+  const composes = composerPacks(packs, contenus[CLE_COMPOSITIONS_PACKS]);
+  const categories = lireCategoriesPacks(contenus[CLE_CATEGORIES_PACKS], composes);
+  return { categories, packs: rangerPacks(categories, composes) };
 }
 
 export async function coffretsAdmin(): Promise<Coffret[]> {

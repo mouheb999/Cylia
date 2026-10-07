@@ -2,6 +2,7 @@ import GestionCategoriesPacks from "@/components/admin/GestionCategoriesPacks";
 import GestionPacks from "@/components/admin/GestionPacks";
 import PhotoUnique from "@/components/admin/PhotoUnique";
 import {
+  categoriesAdmin,
   categoriesPacksAdmin,
   contenusAdmin,
   packsAdmin,
@@ -11,9 +12,10 @@ import {
 export const metadata = { title: "Packs — CYLIA" };
 
 export default async function PagePacks() {
-  const [packsBruts, prestations, contenus] = await Promise.all([
+  const [packsBruts, prestations, categoriesPrestations, contenus] = await Promise.all([
     packsAdmin(),
     prestationsAdmin(),
+    categoriesAdmin(),
     contenusAdmin(),
   ]);
   const { categories, packs } = await categoriesPacksAdmin(packsBruts, contenus);
@@ -56,7 +58,12 @@ export default async function PagePacks() {
         <p className="mt-1 mb-3 text-xs font-light leading-relaxed text-white/40">
           Rangez chacun dans sa catégorie depuis « Modifier ».
         </p>
-        <GestionPacks packs={packs} prestations={prestations} categories={categories} />
+        <GestionPacks
+          packs={packs}
+          prestations={prestations}
+          categories={categories}
+          categoriesPrestations={categoriesPrestations}
+        />
       </section>
     </div>
   );

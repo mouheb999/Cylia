@@ -153,6 +153,11 @@ export type Pack = {
    * d'après le contenu `packs.categories` (voir `lib/packs.ts`).
    */
   categorie_id?: string | null;
+  /**
+   * Les prestations que le pack réunit, choisies dans le panneau. Pas une
+   * colonne non plus : contenu `packs.compositions` (voir `lib/packs.ts`).
+   */
+  prestation_ids?: string[];
   ordre: number;
   actif: boolean;
   cree_le: string;

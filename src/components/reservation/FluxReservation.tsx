@@ -34,6 +34,8 @@ type Props = {
   categorieInitiale?: string;
   /** Prestation arrivée par l'adresse — une offre de l'accueil, par exemple. */
   prestationInitiale?: string;
+  /** Pack arrivé par l'adresse : ses prestations, et le prix du pack. */
+  packInitial?: { nom: string; prix: number | null; prestationIds: string[] };
 };
 
 export default function FluxReservation({
@@ -46,6 +48,7 @@ export default function FluxReservation({
   reservationActive,
   categorieInitiale,
   prestationInitiale,
+  packInitial,
 }: Props) {
   const edition = useEdition();
   const panier = usePanier();
@@ -61,7 +64,9 @@ export default function FluxReservation({
    */
   const demandee = prestationInitiale
     ? prestations.find((p) => p.id === prestationInitiale)
-    : undefined;
+    : packInitial
+      ? prestations.find((p) => p.id === packInitial.prestationIds[0])
+      : undefined;
 
   const [etape, setEtape] = useState(0);
   const [categorie, setCategorie] = useState(() => {
@@ -125,12 +130,22 @@ export default function FluxReservation({
    * remettrait aussitôt, et le bouton paraîtrait cassé.
    */
   const deposee = useRef(false);
-  const idDemande = demandee?.id;
+  const idsDemandes = (packInitial?.prestationIds ?? (demandee ? [demandee.id] : [])).join(",");
   useEffect(() => {
-    if (deposee.current || !idDemande) return;
+    if (deposee.current || !idsDemandes) return;
     deposee.current = true;
-    ajouterPrestation(idDemande);
-  }, [idDemande]);
+    for (const id of idsDemandes.split(",")) ajouterPrestation(id);
+  }, [idsDemandes]);
+
+  /*
+   * Le pack tient tant que toutes ses prestations sont dans le panier : son
+   * prix s'affiche alors à la place de leur somme, et son nom part au salon
+   * avec le rendez-vous. En retirer une, c'est revenir aux prix à l'unité.
+   */
+  const packComplet =
+    packInitial && packInitial.prestationIds.every((id) => selection.includes(id))
+      ? packInitial
+      : null;
 
   const etapeCourante = selection.length === 0 ? 0 : etape;
   const cleCalcul = dateCle && selection.length > 0 ? `${selection.join(",")}|${dateCle}` : null;
@@ -169,7 +184,16 @@ export default function FluxReservation({
         heureMinutes,
         nom: donnees.nom,
         telephone: donnees.telephone,
-        note: donnees.note || undefined,
+        note:
+          [
+            packComplet &&
+              `Pack ${packComplet.nom}${
+                packComplet.prix !== null ? ` — ${formatPrix(packComplet.prix, devise)}` : ""
+              }`,
+            donnees.note,
+          ]
+            .filter(Boolean)
+            .join("\n") || undefined,
       });
       if (!reponse.ok) {
         setErreurEnvoi(reponse.message);
@@ -503,7 +527,22 @@ export default function FluxReservation({
               <p className="mt-3 border-t border-white/10 pt-3 text-sm text-white/70">
                 Durée totale&nbsp;: <span className="text-gold">{formatDuree(duree)}</span>
               </p>
-              {prixConnu && prixTotal > 0 && (
+              {packComplet && (
+                <p className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-sm text-white/70">{packComplet.nom}</span>
+                  <span className="flex items-baseline gap-2">
+                    {packComplet.prix !== null && prixConnu && prixPlein > packComplet.prix && (
+                      <span className="text-xs font-light text-white/30 line-through lining-nums">
+                        {formatPrix(prixPlein, devise)}
+                      </span>
+                    )}
+                    <span className="font-serif text-2xl font-semibold leading-none text-gold lining-nums">
+                      {packComplet.prix === null ? "Sur devis" : formatPrix(packComplet.prix, devise)}
+                    </span>
+                  </span>
+                </p>
+              )}
+              {!packComplet && prixConnu && prixTotal > 0 && (
                 <p className="mt-2 flex items-center justify-between gap-3">
                   <span className="text-sm text-white/70">
                     Total{totalDepart ? " à partir de" : ""}

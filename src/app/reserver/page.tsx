@@ -9,9 +9,11 @@ import {
   chargerCategories,
   chargerContenus,
   chargerGroupes,
+  chargerPack,
   chargerPrestations,
   chargerReglages,
 } from "@/lib/donnees";
+import { prestationsDuPack } from "@/lib/packs";
 import { infosSite } from "@/lib/site";
 import { clesJours } from "@/lib/temps-salon";
 
@@ -37,6 +39,19 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
   const categorieDemandee = parametres.categorie;
   // Une offre touchée sur l'accueil arrive avec sa prestation dans l'adresse.
   const prestationDemandee = parametres.prestation;
+  // « Réserver ce pack » arrive avec le pack : toutes ses prestations entrent
+  // dans le panier, et son prix remplace leur somme.
+  const packDemande =
+    typeof parametres.pack === "string" ? await chargerPack(parametres.pack) : null;
+  const incluses = packDemande ? prestationsDuPack(packDemande, prestations) : [];
+  const packInitial =
+    packDemande && incluses.length > 0
+      ? {
+          nom: packDemande.nom,
+          prix: packDemande.prix,
+          prestationIds: incluses.map((p) => p.id),
+        }
+      : undefined;
 
   return (
     <>
@@ -79,6 +94,7 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
           prestationInitiale={
             typeof prestationDemandee === "string" ? prestationDemandee : undefined
           }
+          packInitial={packInitial}
         />
       </main>
 

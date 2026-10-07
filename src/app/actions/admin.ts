@@ -3,7 +3,13 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { adminConnecte, clientServeur } from "@/lib/supabase/serveur";
 import { TAG_SITE } from "@/lib/donnees";
-import { CLE_CATEGORIES_PACKS, lireCategoriesPacks, versSlug } from "@/lib/packs";
+import {
+  CLE_CATEGORIES_PACKS,
+  CLE_COMPOSITIONS_PACKS,
+  lireCategoriesPacks,
+  lireCompositions,
+  versSlug,
+} from "@/lib/packs";
 import type { CategoriePack } from "@/lib/supabase/types";
 import type {
   EmplacementPhoto,
@@ -541,8 +547,8 @@ export type FormPack = {
   duree_minutes: number | null;
   /** L'album de la fiche, couverture en tête. */
   images: string[];
-  /** La prestation que « Réserver ce pack » dépose dans le panier. */
-  prestation_id: string | null;
+  /** Les prestations réunies dans le pack — « Réserver ce pack » les dépose toutes. */
+  prestation_ids: string[];
   /** La catégorie où il se range sur `/packs`. */
   categorie_id: string | null;
   ordre: number;
@@ -571,7 +577,9 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
         form.duree_minutes === null ? null : Math.max(5, Math.round(form.duree_minutes)),
       image_url: images[0] ?? null,
       images,
-      prestation_id: form.prestation_id || null,
+      // La colonne d'origine garde la première : ce qui la lit encore seule
+      // réserve au moins une prestation du pack.
+      prestation_id: form.prestation_ids[0] ?? null,
       ordre: form.ordre,
       actif: form.actif,
     };
@@ -580,6 +588,7 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
       const { error } = await supabase.from("packs").update(ligne).eq("id", form.id);
       if (error) throw error;
       await rangerPackDans(supabase, form.id, form.categorie_id);
+      await composerPack(supabase, form.id, form.prestation_ids);
       return;
     }
 
@@ -597,6 +606,7 @@ export async function enregistrerPack(form: FormPack): Promise<Resultat> {
       .single();
     if (error) throw error;
     await rangerPackDans(supabase, cree.id, form.categorie_id);
+    await composerPack(supabase, cree.id, form.prestation_ids);
   });
 }
 
@@ -670,6 +680,29 @@ async function rangerPackDans(
     if (c.id === categorieId) c.pack_ids.push(packId);
   }
   await ecrireCategories(supabase, categories);
+}
+
+/** Enregistre les prestations d'un pack dans `packs.compositions`. */
+async function composerPack(supabase: ClientServeur, packId: string, ids: string[]) {
+  const { data } = await supabase
+    .from("contenus")
+    .select("valeur")
+    .eq("cle", CLE_COMPOSITIONS_PACKS)
+    .maybeSingle();
+  const compositions = lireCompositions(data?.valeur);
+  const propres = [...new Set(ids.filter(Boolean))];
+  if (propres.length > 0) compositions[packId] = propres;
+  else delete compositions[packId];
+  const { error } = await supabase.from("contenus").upsert(
+    {
+      cle: CLE_COMPOSITIONS_PACKS,
+      valeur: JSON.stringify(compositions),
+      type: "texte",
+      maj_le: new Date().toISOString(),
+    },
+    { onConflict: "cle" },
+  );
+  if (error) throw error;
 }
 
 export type FormCategoriePack = {
