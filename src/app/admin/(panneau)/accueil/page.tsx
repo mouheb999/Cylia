@@ -58,8 +58,8 @@ export default async function PagePhotosAccueil() {
         <h2 className="font-serif text-lg font-light text-gold">Galerie « Nos réalisations »</h2>
         <p className="mt-1 mb-3 text-xs font-light leading-relaxed text-white/40">
           Elles s&apos;affichent deux par rangée, en bas de l&apos;accueil, dans
-          l&apos;ordre de cette liste. Tant qu&apos;il n&apos;y en a aucune, ce
-          sont les quatre photos livrées avec le site qui tiennent la place.
+          l&apos;ordre de cette liste. Tant qu&apos;il n&apos;y en a aucune, la
+          galerie n&apos;apparaît pas sur le site.
         </p>
         <GestionPhotos
           photos={galerie}
@@ -67,7 +67,7 @@ export default async function PagePhotosAccueil() {
           dossier="galerie"
           altParDefaut="Réalisation CYLIA Maison de Beauté"
           apercu="aspect-[4/5]"
-          vide="Aucune photo : ce sont les quatre photos d'origine qui s'affichent."
+          vide="Aucune photo : la galerie est masquée sur le site."
         />
       </section>
     </div>

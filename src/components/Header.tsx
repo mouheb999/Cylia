@@ -15,7 +15,7 @@ const liens = [
   { label: "Services", href: "/#services" },
   { label: "Packs", href: "/packs" },
   { label: "Boutique", href: "/boutique" },
-  { label: "Galerie", href: "/#galerie" },
+  { label: "Avis", href: "/#avis" },
   { label: "Contact", href: "/#contact" },
   { label: "Réserver", href: "/reserver" },
 ];

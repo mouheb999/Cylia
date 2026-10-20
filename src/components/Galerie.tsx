@@ -1,25 +1,23 @@
-import galerie1 from "@/images/galerie-1.jpg";
-import galerie2 from "@/images/galerie-2.jpg";
-import galerie3 from "@/images/galerie-3.jpg";
-import galerie4 from "@/images/galerie-4.jpg";
 import { Texte } from "@/components/edition/Modifiable";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
 import type { PhotoGalerie } from "@/lib/supabase/types";
 import GrilleGalerie, { type PhotoAffichee } from "./GrilleGalerie";
 
-/** Photos livrées avec le site, affichées tant que le salon n'a pas mis les siennes. */
-const PHOTOS_ORIGINE: PhotoAffichee[] = [
-  { id: null, src: galerie1, alt: "L'espace d'accueil de la Maison de Beauté CYLIA" },
-  { id: null, src: galerie2, alt: "Soin du visage en cabine à la Maison de Beauté CYLIA" },
-  { id: null, src: galerie3, alt: "La réception CYLIA et son logo lumineux" },
-  { id: null, src: galerie4, alt: "Linge brodé et pinceaux de maquillage CYLIA" },
-];
-
+/**
+ * Les réalisations du salon.
+ *
+ * Sans photo déposée, la section n'existe pas : le salon préfère ne rien
+ * montrer plutôt que des photos qui ne sont pas les siennes. La première se
+ * dépose depuis le panneau, page « Accueil ».
+ */
 export default function Galerie({ photos }: { photos: PhotoGalerie[] }) {
-  const affichees: PhotoAffichee[] =
-    photos.length > 0
-      ? photos.map((p) => ({ id: p.id, src: p.image_url, alt: p.alt }))
-      : PHOTOS_ORIGINE;
+  if (photos.length === 0) return null;
+
+  const affichees: PhotoAffichee[] = photos.map((p) => ({
+    id: p.id,
+    src: p.image_url,
+    alt: p.alt,
+  }));
 
   return (
     <section id="galerie" className="bg-cream px-4 pb-10">

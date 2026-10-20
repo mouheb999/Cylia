@@ -26,8 +26,6 @@ export default function GrilleGalerie({ photos }: { photos: PhotoAffichee[] }) {
   const [ouverte, setOuverte] = useState<number | null>(null);
   const fermer = useCallback(() => setOuverte(null), []);
 
-  const modifiables = photos.some((p) => p.id !== null);
-
   function lancer(travail: () => Promise<{ ok: boolean; message?: string }>) {
     setErreur(null);
     demarrer(async () => {
@@ -140,13 +138,6 @@ export default function GrilleGalerie({ photos }: { photos: PhotoAffichee[] }) {
 
       {edition.actif && (
         <div className="mt-4">
-          {!modifiables && (
-            <p className="mb-3 text-center text-xs font-light leading-relaxed text-muted">
-              Ce sont les photos livrées avec le site. Dès que vous en ajoutez une,
-              elles laissent la place aux vôtres.
-            </p>
-          )}
-
           <label className="gold-gradient block cursor-pointer rounded-full py-3 text-center font-serif text-base text-noir">
             {depot ? "Envoi de la photo…" : "Ajouter une photo"}
             <input

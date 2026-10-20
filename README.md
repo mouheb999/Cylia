@@ -109,7 +109,6 @@ l'empreinte, donc l'adresse, et **aucun cache ne peut resservir l'ancienne**.
 | `src/images/logo.png` | logo dans l'en-tête et le pied de page | carré, fond transparent |
 | `src/images/salon-1.jpg` | photo du bandeau, tant que le salon n'a pas déposé les siennes | portrait, ~4:5, ≥ 1200 px de large |
 | `src/images/salon-2.jpg` | bandeau « Prenez soin de vous » | paysage, ~16:9, ≥ 1200 px de large |
-| `src/images/galerie-1…4.jpg` | grille de la galerie | portrait 4:5, ≥ 800 px de large |
 
 Les photos déposées **depuis le panneau** (`/admin/accueil`, les fiches de
 prestations et de produits) ne passent pas par là : elles vont dans le stockage
