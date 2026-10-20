@@ -27,6 +27,10 @@ export const CONTENUS_DEFAUT = {
   "galerie.surtitre": "Galerie",
   "galerie.titre": "Nos réalisations",
 
+  "avis.surtitre": "Avis de nos clientes",
+  "avis.titre": "Votre satisfaction est notre récompense",
+  "avis.bouton": "Tous nos avis sur Google",
+
   "promos.surtitre": "Offres",
   "promos.titre": "Nos promotions du moment",
   "promos.texte":
@@ -98,6 +102,7 @@ export const GROUPES_CONTENU: { titre: string; cles: CleContenu[] }[] = [
     cles: ["promos.surtitre", "promos.titre", "promos.texte", "promos.bouton"],
   },
   { titre: "Accueil — galerie", cles: ["galerie.surtitre", "galerie.titre"] },
+  { titre: "Accueil — avis clientes", cles: ["avis.surtitre", "avis.titre", "avis.bouton"] },
   {
     titre: "Accueil — « Nos coffrets »",
     cles: ["coffrets.surtitre", "coffrets.titre", "coffrets.texte"],

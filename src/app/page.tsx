@@ -1,3 +1,4 @@
+import AvisClientes from "@/components/AvisClientes";
 import Coffrets from "@/components/Coffrets";
 import EncartBoutique from "@/components/EncartBoutique";
 import Footer from "@/components/Footer";
@@ -64,6 +65,7 @@ export default async function Page() {
   // Toutes ces lectures viennent du même appel mis en cache : les dix lignes
   // ci-dessus ne font pas neuf allers-retours. Voir `chargerDonnees()`.
   const offres = promotionsEnCours(prestations);
+  const site = infosSite(contenus);
 
   return (
     <>
@@ -84,8 +86,9 @@ export default async function Page() {
           </>
         )}
         <Galerie photos={photos} />
+        <AvisClientes lienGoogle={site.lienMaps} />
       </main>
-      <Footer site={infosSite(contenus)} />
+      <Footer site={site} />
     </>
   );
 }
