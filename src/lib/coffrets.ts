@@ -1,3 +1,4 @@
+import { pourcentageRemise } from "@/lib/format";
 import type { Coffret, Produit } from "@/lib/supabase/types";
 
 /**
@@ -30,24 +31,29 @@ export function stockDuCoffret(coffret: Coffret, produits: Produit[]): number {
 
 /**
  * Ce que coûteraient les mêmes flacons achetés un par un — affiché barré
- * quand le coffret est moins cher. `null` sans produit ou sans économie.
+ * quand le coffret est moins cher. `null` sans produit, ou quand la remise
+ * n'atteint pas 1 % une fois arrondie : un « −0 % » se lirait comme une panne.
  */
 export function valeurSepareeDuCoffret(coffret: Coffret, produits: Produit[]): number | null {
   const contenu = produitsDuCoffret(coffret, produits);
   if (contenu.length === 0) return null;
-  const total = contenu.reduce((somme, p) => somme + p.prix, 0);
-  return total > coffret.prix ? total : null;
+  // Arrondi au millime : 99 + 18.85 + 99 ne tombe pas juste en virgule
+  // flottante, et un coffret au prix exact des flacons (Blonde Savior,
+  // 275 = 275) ne doit jamais afficher son propre prix barré.
+  const total = Math.round(contenu.reduce((somme, p) => somme + p.prix, 0) * 1000) / 1000;
+  return pourcentageRemise(coffret.prix, total) !== null ? total : null;
 }
 
 /**
  * Le prix à afficher barré à côté de celui du coffret.
  *
  * L'ancien prix fixé par le salon d'abord ; à défaut, ce que coûteraient les
- * flacons achetés séparément. `null` quand il n'y a rien à barrer.
+ * flacons achetés séparément. `null` quand il n'y a rien à barrer — même
+ * règle que le badge, pour qu'un prix barré ne paraisse jamais sans lui.
  */
 export function prixBarreDuCoffret(coffret: Coffret, produits: Produit[]): number | null {
-  if (coffret.ancien_prix != null && coffret.ancien_prix > coffret.prix) {
-    return coffret.ancien_prix;
+  if (pourcentageRemise(coffret.prix, coffret.ancien_prix) !== null) {
+    return coffret.ancien_prix ?? null;
   }
   return valeurSepareeDuCoffret(coffret, produits);
 }
