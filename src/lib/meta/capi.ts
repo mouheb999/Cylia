@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { numeroInternational } from "@/lib/telephone";
 import {
   ID_PIXEL,
+  ID_PIXEL_SECONDAIRE,
   type EvenementMeta,
   type ParametresMeta,
   type UtilisateurMeta,
@@ -97,10 +98,23 @@ export function decouperNom(nom: string): { firstName?: string; lastName?: strin
   return { firstName: prenom || undefined, lastName: reste.join(" ") || undefined };
 }
 
-/** Envoie un évènement à Meta. Ne lève jamais ; journalise les refus. */
+/**
+ * Chaque pixel avec son jeton. Un pixel sans jeton est ignoré ici (le pixel du
+ * navigateur continue de l'alimenter) : un jeton n'ouvre l'API Conversions
+ * que pour le pixel qui l'a généré.
+ */
+function pixelsServeur(): { pixel: string; jeton: string }[] {
+  const paires = [
+    { pixel: ID_PIXEL, jeton: process.env.META_CAPI_TOKEN },
+    { pixel: ID_PIXEL_SECONDAIRE, jeton: process.env.META_CAPI_TOKEN_2 },
+  ];
+  return paires.filter((p): p is { pixel: string; jeton: string } => Boolean(p.pixel && p.jeton));
+}
+
+/** Envoie un évènement à Meta, à chaque pixel. Ne lève jamais ; journalise les refus. */
 export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise<ReponseCapi> {
-  const jeton = process.env.META_CAPI_TOKEN;
-  if (!jeton) {
+  const cibles = pixelsServeur();
+  if (cibles.length === 0) {
     return { ok: false, status: 503, message: "META_CAPI_TOKEN absent" };
   }
 
@@ -134,17 +148,36 @@ export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise
         custom_data: evenement.params,
       },
     ],
-    ...(testEventCode ? { test_event_code: testEventCode } : {}),
-    access_token: jeton,
   };
 
+  const resultats = await Promise.all(
+    cibles.map(({ pixel, jeton }) =>
+      envoyerAuPixel(
+        pixel,
+        jeton,
+        // Le code de test vient du pixel du salon : il ne vaut que pour lui.
+        testEventCode && pixel === ID_PIXEL ? { ...charge, test_event_code: testEventCode } : charge,
+        evenement.event,
+      ),
+    ),
+  );
+  // Réussi dès qu'un pixel a accepté : les refus sont déjà journalisés.
+  return resultats.find((r) => r.ok) ?? resultats[0];
+}
+
+async function envoyerAuPixel(
+  pixel: string,
+  jeton: string,
+  charge: Record<string, unknown>,
+  nom: EvenementMeta,
+): Promise<ReponseCapi> {
   try {
     const reponse = await fetch(
-      `https://graph.facebook.com/${VERSION_GRAPH}/${ID_PIXEL}/events`,
+      `https://graph.facebook.com/${VERSION_GRAPH}/${pixel}/events`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(charge),
+        body: JSON.stringify({ ...charge, access_token: jeton }),
         cache: "no-store",
         signal: AbortSignal.timeout(DELAI_MS),
       },
@@ -154,10 +187,10 @@ export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise
     const corps = (await reponse.json().catch(() => null)) as {
       error?: { message?: string; code?: number; error_subcode?: number; fbtrace_id?: string };
     } | null;
-    console.error("[cylia] meta capi :", evenement.event, reponse.status, corps?.error ?? corps);
+    console.error("[cylia] meta capi :", pixel, nom, reponse.status, corps?.error ?? corps);
     return { ok: false, status: 502, message: corps?.error?.message ?? `HTTP ${reponse.status}` };
   } catch (erreur) {
-    console.error("[cylia] meta capi :", evenement.event, erreur);
+    console.error("[cylia] meta capi :", pixel, nom, erreur);
     return { ok: false, status: 502, message: "Meta injoignable" };
   }
 }

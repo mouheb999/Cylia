@@ -29,6 +29,19 @@ export const TND_TO_USD = 0.34;
  */
 export const ID_PIXEL = process.env.NEXT_PUBLIC_META_PIXEL_ID || "4465663150349853";
 
+/**
+ * Second pixel, facultatif : celui du compte publicitaire qui diffuse les
+ * campagnes (portefeuille de l'agence). Le pixel Meta envoie chaque `track`
+ * à tous les pixels initialisés sur la page, et l'API Conversions envoie à
+ * chacun avec son propre jeton — voir `lib/meta/capi.ts`.
+ */
+export const ID_PIXEL_SECONDAIRE = process.env.NEXT_PUBLIC_META_PIXEL_ID_2 || "";
+
+/** Tous les pixels actifs sur le site, le salon d'abord. */
+export const IDS_PIXELS = [ID_PIXEL, ID_PIXEL_SECONDAIRE].filter(
+  (id, i, liste) => id && liste.indexOf(id) === i,
+);
+
 export const EVENEMENTS_META = ["ViewContent", "AddToCart", "InitiateCheckout", "Purchase"] as const;
 export type EvenementMeta = (typeof EVENEMENTS_META)[number];
 
