@@ -49,6 +49,15 @@ export const metadata: Metadata = {
     title: "CYLIA",
     statusBarStyle: "black-translucent",
   },
+  // Vérification du domaine par Meta (Business Manager → Sécurité de la
+  // marque → Domaines) : la balise n'est posée que si la valeur est déclarée.
+  ...(process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION
+    ? {
+        other: {
+          "facebook-domain-verification": process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION,
+        },
+      }
+    : {}),
 };
 
 export const viewport: Viewport = {

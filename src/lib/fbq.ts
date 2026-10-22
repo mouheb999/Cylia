@@ -6,14 +6,11 @@
  * rien à appeler. Tout passe donc par ici, où l'absence est le cas normal et
  * ne casse rien — un `onClick` qui lèverait une erreur empêcherait le lien de
  * partir, ce qui coûterait un vrai rendez-vous pour une mesure manquée.
+ *
+ * Le type de `window.fbq` est déclaré dans `types/fbq.d.ts`. Les évènements
+ * de la boutique, eux, passent par `lib/meta/track.ts`, qui les double côté
+ * serveur.
  */
-
-declare global {
-  interface Window {
-    /** Posée par le code de base du pixel (voir `components/MetaPixel.tsx`). */
-    fbq?: (...arguments_: unknown[]) => void;
-  }
-}
 
 /**
  * Remonte un évènement à Meta.

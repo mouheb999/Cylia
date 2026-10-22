@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import BoutonAjouter from "@/components/boutique/BoutonAjouter";
+import LienConseil from "@/components/boutique/LienConseil";
+import PrixFiche from "@/components/boutique/PrixFiche";
 import VisuelProduit from "@/components/boutique/VisuelProduit";
+import VueMeta from "@/components/boutique/VueMeta";
 import { chargerContenus, chargerProduit, chargerReglages } from "@/lib/donnees";
-import { formatPrix } from "@/lib/format";
 import { infosSite } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -33,12 +35,11 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
 
   if (!produit) notFound();
 
-  const enPromo = produit.ancien_prix != null && produit.ancien_prix > produit.prix;
-
   return (
     <>
       <Header />
       <main className="flex-1 bg-cream">
+        <VueMeta id={produit.id} name={produit.nom} priceTnd={produit.prix} />
         <div className="relative aspect-square w-full">
           <VisuelProduit
             nom={produit.nom}
@@ -59,16 +60,12 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
             {produit.nom}
           </h1>
 
-          <p className="mt-3 flex items-baseline gap-3">
-            <span className="font-serif text-[2rem] font-semibold leading-none text-gold-deep lining-nums">
-              {formatPrix(produit.prix, reglages.devise)}
-            </span>
-            {enPromo && produit.ancien_prix != null && (
-              <span className="text-sm font-light text-muted line-through lining-nums">
-                {formatPrix(produit.ancien_prix, reglages.devise)}
-              </span>
-            )}
-          </p>
+          <PrixFiche
+            prix={produit.prix}
+            prixBarre={produit.ancien_prix}
+            devise={reglages.devise}
+            livraison={reglages.boutique_active}
+          />
 
           {produit.description && (
             <p className="mt-4 text-[0.9rem] font-light leading-relaxed text-ink/80">
@@ -86,9 +83,13 @@ export default async function PageProduit({ params }: PageProps<"/boutique/[slug
 
           <BoutonAjouter
             produitId={produit.id}
+            nom={produit.nom}
+            prix={produit.prix}
             epuise={produit.stock <= 0}
             stock={produit.stock}
           />
+
+          <LienConseil nom={produit.nom} />
 
           <Link
             href="/boutique"

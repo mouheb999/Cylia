@@ -193,6 +193,11 @@ export type Coffret = {
   nom: string;
   description: string;
   prix: number;
+  /**
+   * Prix barré, facultatif — comme `ancien_prix` sur un produit. Absent
+   * (`undefined`) tant que la migration 0031 n'est pas passée.
+   */
+  ancien_prix?: number | null;
   /** La photo du coffret. Sans elle, la carte assemble celles de ses produits. */
   image_url: string | null;
   produit_ids: string[];

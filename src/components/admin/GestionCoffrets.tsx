@@ -22,6 +22,7 @@ const VIDE: FormCoffret = {
   nom: "",
   description: "",
   prix: Number.NaN,
+  ancien_prix: null,
   image_url: null,
   produit_ids: [],
   ordre: 0,
@@ -101,6 +102,7 @@ export default function GestionCoffrets({
       nom: coffret.nom,
       description: coffret.description,
       prix: coffret.prix,
+      ancien_prix: coffret.ancien_prix ?? null,
       image_url: coffret.image_url,
       produit_ids: coffret.produit_ids ?? [],
       ordre: coffret.ordre,
@@ -430,6 +432,28 @@ export default function GestionCoffrets({
                     : " Un prix plus bas s'affiche avec ce total barré."}
                 </span>
               )}
+            </label>
+
+            <label className="block text-sm">
+              <span className={libelle}>Ancien prix (facultatif)</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.5"
+                value={form.ancien_prix ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    ancien_prix: e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+                className={champSombre}
+              />
+              <span className="mt-1 block text-xs font-light text-white/35">
+                Plus haut que le prix, il s&apos;affiche barré avec le pourcentage de remise.
+                Vide : c&apos;est le total des flacons qui est barré, s&apos;il est plus haut.
+              </span>
             </label>
 
             <label className="flex items-center gap-2.5 text-sm text-white/70">

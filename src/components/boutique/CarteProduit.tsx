@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { trackMeta } from "@/lib/meta/track";
 import { ajouterAuPanier } from "@/lib/panier-boutique";
 import { formatPrix } from "@/lib/format";
 import type { Produit } from "@/lib/supabase/types";
@@ -22,6 +23,9 @@ export default function CarteProduit({
 
   function ajouter() {
     ajouterAuPanier(produit.id, 1);
+    trackMeta("AddToCart", [
+      { id: produit.id, name: produit.nom, priceTnd: produit.prix, quantity: 1 },
+    ]);
     setAjoute(true);
     window.setTimeout(() => setAjoute(false), 1600);
   }

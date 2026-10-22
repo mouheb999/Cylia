@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState, useTransition } from "react";
 import { passerCommande, type CommandeConfirmee } from "@/app/actions/boutique";
 import { boutonOr, champSombre } from "@/components/ui/champs";
 import { produitsDuCoffret, stockDuCoffret, visuelsDuCoffret } from "@/lib/coffrets";
 import { formatPrix } from "@/lib/format";
+import { caisseAnnoncee, trackMeta, type ArticleMeta } from "@/lib/meta/track";
 import {
   cleLigne,
   reglerQuantite,
@@ -28,6 +29,8 @@ type Article = {
   stock: number;
   visuel: React.ReactNode;
   envoi: { produit_id: string } | { coffret_id: string };
+  /** La même ligne, telle que Meta la voit. */
+  meta: ArticleMeta;
 };
 
 /** 8 chiffres, avec ou sans indicatif +216 et espaces. */
@@ -81,6 +84,7 @@ export default function PanierClient({
             <VisuelCoffret nom={coffret.nom} photos={visuelsDuCoffret(coffret, produits)} sizes="80px" />
           ),
           envoi: { coffret_id: coffret.id },
+          meta: { id: coffret.id, name: coffret.nom, priceTnd: coffret.prix, quantity: ligne.quantite },
         },
       ];
     }
@@ -105,9 +109,33 @@ export default function PanierClient({
           />
         ),
         envoi: { produit_id: produit.id },
+        meta: { id: produit.id, name: produit.nom, priceTnd: produit.prix, quantity: ligne.quantite },
       },
     ];
   });
+
+  /*
+   * Mise en caisse, une fois par visite du panier : à l'arrivée par
+   * « Commander maintenant », ou au premier champ de livraison touché quand
+   * la cliente vient du panier lui-même. Tout le contenu du panier part.
+   */
+  const caisseSignalee = useRef(false);
+
+  function signalerCaisse() {
+    if (caisseSignalee.current || articles.length === 0) return;
+    caisseSignalee.current = true;
+    trackMeta("InitiateCheckout", articles.map((a) => a.meta));
+  }
+
+  // Le panier se lit dans le stockage après l'hydratation : on attend qu'il
+  // soit là pour consommer l'annonce de « Commander maintenant ».
+  const panierCharge = articles.length > 0;
+  const arriveeEnCaisse = useEffectEvent(() => {
+    if (caisseAnnoncee()) signalerCaisse();
+  });
+  useEffect(() => {
+    if (panierCharge) arriveeEnCaisse();
+  }, [panierCharge]);
 
   const sousTotal = articles.reduce((t, a) => t + a.prix * a.quantite, 0);
   const livraisonOfferte =
@@ -220,8 +248,22 @@ export default function PanierClient({
         setErreurEnvoi(reponse.message);
         return;
       }
+      // Seulement ici, commande enregistrée. La confirmation ne vit qu'en
+      // mémoire et le panier est vidé : un rafraîchissement ne la réaffiche
+      // pas, et `trackMeta` refuse de toute façon une référence déjà vue.
+      const confirmee = reponse.commande;
+      trackMeta(
+        "Purchase",
+        confirmee.articles.map((a) => ({
+          id: a.coffret_id ?? a.produit_id ?? a.nom,
+          name: a.nom,
+          priceTnd: Number(a.prix),
+          quantity: a.quantite,
+        })),
+        { orderId: confirmee.reference, valeurTnd: Number(confirmee.total) },
+      );
       viderPanierBoutique();
-      setCommande(reponse.commande);
+      setCommande(confirmee);
     });
   }
 
@@ -312,7 +354,7 @@ export default function PanierClient({
         )}
       </dl>
 
-      <form onSubmit={soumettre} noValidate className="mt-7">
+      <form onSubmit={soumettre} onFocus={signalerCaisse} noValidate className="mt-7">
         <h2 className="font-serif text-xl font-light text-ink">Livraison</h2>
 
         <label className="mt-4 block text-sm">

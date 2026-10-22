@@ -83,6 +83,13 @@ async function agir(
     if (brut.includes("COFFRET_SANS_PRIX")) {
       return { ok: false, message: "Indiquez le prix du coffret." };
     }
+    if (brut.includes("ANCIEN_PRIX_INDISPONIBLE")) {
+      return {
+        ok: false,
+        message:
+          "L'ancien prix des coffrets demande la migration 0031. Laissez-le vide en attendant.",
+      };
+    }
     if (brut.includes("PROMO_TROP_HAUTE")) {
       return { ok: false, message: "Le tarif promo doit être inférieur au prix affiché." };
     }
@@ -774,6 +781,8 @@ export type FormCoffret = {
   nom: string;
   description: string;
   prix: number;
+  /** Prix barré, facultatif. Vide : la carte barre le total des flacons, s'il est plus haut. */
+  ancien_prix: number | null;
   /** La photo du coffret tout prêt. Sans elle, la carte assemble ses flacons. */
   image_url: string | null;
   /** Les produits du catalogue qu'il contient. Vide : coffret « photo seule ». */
@@ -788,6 +797,10 @@ export async function enregistrerCoffret(form: FormCoffret): Promise<Resultat> {
     const nom = form.nom.trim();
     if (nom.length < 2) throw new Error("NOM_COURT");
     if (!Number.isFinite(form.prix)) throw new Error("COFFRET_SANS_PRIX");
+    const ancienPrix =
+      form.ancien_prix != null && Number.isFinite(form.ancien_prix) && form.ancien_prix > 0
+        ? form.ancien_prix
+        : null;
 
     const ligne = {
       nom,
@@ -800,20 +813,28 @@ export async function enregistrerCoffret(form: FormCoffret): Promise<Resultat> {
       actif: form.actif,
     };
 
-    if (form.id) {
-      const { error } = await supabase.from("coffrets").update(ligne).eq("id", form.id);
-      if (error) throw error;
-      return;
+    /*
+     * Tant que la migration 0031 n'est pas passée, la colonne `ancien_prix`
+     * n'existe pas et PostgREST refuse toute la ligne. Sans ancien prix saisi,
+     * on réessaie simplement sans elle : le panneau marche avant comme après.
+     */
+    async function ecrire(valeurs: typeof ligne & { ancien_prix?: number | null }) {
+      if (form.id) {
+        return supabase.from("coffrets").update(valeurs).eq("id", form.id);
+      }
+      const { data } = await supabase
+        .from("coffrets")
+        .select("ordre")
+        .order("ordre", { ascending: false })
+        .limit(1);
+      return supabase.from("coffrets").insert({ ...valeurs, ordre: (data?.[0]?.ordre ?? 0) + 1 });
     }
 
-    const { data } = await supabase
-      .from("coffrets")
-      .select("ordre")
-      .order("ordre", { ascending: false })
-      .limit(1);
-    const { error } = await supabase
-      .from("coffrets")
-      .insert({ ...ligne, ordre: (data?.[0]?.ordre ?? 0) + 1 });
+    let { error } = await ecrire({ ...ligne, ancien_prix: ancienPrix });
+    if (error && error.message.includes("ancien_prix")) {
+      if (ancienPrix !== null) throw new Error("ANCIEN_PRIX_INDISPONIBLE");
+      ({ error } = await ecrire(ligne));
+    }
     if (error) throw error;
   });
 }

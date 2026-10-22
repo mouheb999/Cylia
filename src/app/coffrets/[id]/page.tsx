@@ -4,10 +4,14 @@ import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import BoutonAjouter from "@/components/boutique/BoutonAjouter";
+import LienConseil from "@/components/boutique/LienConseil";
+import PrixFiche from "@/components/boutique/PrixFiche";
 import VisuelCoffret from "@/components/boutique/VisuelCoffret";
 import VisuelProduit from "@/components/boutique/VisuelProduit";
+import VueMeta from "@/components/boutique/VueMeta";
 import {
   cheminCoffret,
+  prixBarreDuCoffret,
   produitsDuCoffret,
   stockDuCoffret,
   valeurSepareeDuCoffret,
@@ -58,6 +62,7 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
 
   const contenu = produitsDuCoffret(coffret, produits);
   const valeur = valeurSepareeDuCoffret(coffret, produits);
+  const prixBarre = prixBarreDuCoffret(coffret, produits);
   const stock = stockDuCoffret(coffret, produits);
   const autres = coffrets.filter((c) => c.id !== coffret.id);
 
@@ -65,17 +70,13 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
     <>
       <Header />
       <main className="flex-1 bg-cream">
+        <VueMeta id={coffret.id} name={coffret.nom} priceTnd={coffret.prix} />
         <div className="relative aspect-square w-full">
           <VisuelCoffret
             nom={coffret.nom}
             photos={visuelsDuCoffret(coffret, produits)}
             sizes="100vw"
           />
-          {valeur !== null && (
-            <span className="absolute left-4 top-4 rounded-full bg-noir/80 px-3 py-1 text-[0.65rem] uppercase tracking-[0.18em] text-gold">
-              −{Math.round((1 - coffret.prix / valeur) * 100)} %
-            </span>
-          )}
         </div>
 
         <div className="px-5 pb-10 pt-6">
@@ -84,17 +85,15 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
             {coffret.nom}
           </h1>
 
-          <p className="mt-3 flex items-baseline gap-3">
-            <span className="font-serif text-[2rem] font-semibold leading-none text-gold-deep lining-nums">
-              {formatPrix(coffret.prix, reglages.devise)}
-            </span>
-            {valeur !== null && (
-              <span className="text-sm font-light text-muted line-through lining-nums">
-                {formatPrix(valeur, reglages.devise)}
-              </span>
-            )}
-          </p>
-          {valeur !== null && (
+          <PrixFiche
+            prix={coffret.prix}
+            prixBarre={prixBarre}
+            devise={reglages.devise}
+            livraison={reglages.boutique_active}
+          />
+          {/* L'économie « par rapport aux flacons » ne se dit que si c'est
+              bien leur total qui est barré, pas un ancien prix du salon. */}
+          {valeur !== null && prixBarre === valeur && (
             <p className="mt-1.5 text-xs font-light text-muted">
               Soit {formatPrix(valeur - coffret.prix, reglages.devise)} d&apos;économie par
               rapport aux produits achetés séparément.
@@ -161,11 +160,18 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
                   : stock <= 3
                     ? `Plus que ${stock} en stock`
                     : "En stock"}
-                {" · "}Livraison partout en Tunisie, paiement à la livraison.
               </p>
-              <BoutonAjouter coffretId={coffret.id} epuise={stock <= 0} stock={stock} />
+              <BoutonAjouter
+                coffretId={coffret.id}
+                nom={coffret.nom}
+                prix={coffret.prix}
+                epuise={stock <= 0}
+                stock={stock}
+              />
             </>
           )}
+
+          <LienConseil nom={coffret.nom} />
 
           {autres.length > 0 && (
             <div className="mt-10">

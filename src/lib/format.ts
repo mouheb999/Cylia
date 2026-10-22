@@ -117,3 +117,13 @@ export function formatJourCourt(date: Date) {
     mois: date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
   };
 }
+
+/**
+ * La remise en pourcentage, arrondie : 120 au lieu de 150 → 20.
+ * `null` quand il n'y a pas de remise à annoncer.
+ */
+export function pourcentageRemise(prix: number, prixBarre: number | null | undefined): number | null {
+  if (prixBarre == null || !(prixBarre > prix) || prixBarre <= 0) return null;
+  const remise = Math.round((1 - prix / prixBarre) * 100);
+  return remise > 0 ? remise : null;
+}

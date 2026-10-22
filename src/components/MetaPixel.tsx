@@ -1,45 +1,50 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Script from "next/script";
 import { track } from "@/lib/fbq";
+import { ID_PIXEL } from "@/lib/meta/track";
 
 /**
- * Identifiant du pixel du salon (Events Manager → « cylia »).
+ * Une navigation interne ne recharge pas la page : sans ceci, passer de
+ * l'accueil à « Réserver » ne compterait pour aucune vue.
  *
- * La variable d'environnement permet d'en viser un autre — un pixel de test,
- * par exemple — sans redéploiement de code ; sans elle, c'est celui du salon.
+ * Le premier rendu est déjà couvert par le `fbq('track', 'PageView')` du code
+ * de base, d'où la comparaison à l'adresse déjà mesurée plutôt qu'un simple
+ * drapeau — elle tient aussi face au double montage du mode strict, en
+ * développement.
+ *
+ * Les paramètres comptent : `/boutique?famille=masque` est une autre vue que
+ * `/boutique`, et c'est par eux que les publicités font arriver (`fbclid`).
  */
-const ID_PIXEL = process.env.NEXT_PUBLIC_META_PIXEL_ID || "4465663150349853";
+function VuesDeNavigation() {
+  const chemin = usePathname();
+  const recherche = useSearchParams().toString();
+  const adresse = recherche ? `${chemin}?${recherche}` : chemin;
+  const adresseMesuree = useRef(adresse);
+
+  useEffect(() => {
+    if (adresseMesuree.current === adresse) return;
+    adresseMesuree.current = adresse;
+    track("PageView");
+  }, [adresse]);
+
+  return null;
+}
 
 /**
- * Pixel Meta, posé une seule fois pour tout le site.
+ * Pixel Meta, posé une seule fois pour tout le site (dans `app/layout.tsx`).
  *
  * Le code de base est celui fourni par Meta, mot pour mot : il se protège
  * lui-même d'une double exécution (`if (f.fbq) return`), et `next/script` ne
  * l'insère de toute façon qu'une fois grâce à son `id`.
  *
  * `afterInteractive` plutôt que `beforeInteractive` : la mesure n'a aucune
- * raison de passer avant l'affichage du salon.
+ * raison de passer avant l'affichage du salon. Les évènements de la boutique
+ * attendent son arrivée — voir `lib/meta/track.ts`.
  */
 export default function MetaPixel() {
-  const chemin = usePathname();
-  const cheminMesure = useRef(chemin);
-
-  /*
-   * Une navigation interne ne recharge pas la page : sans ceci, passer de
-   * l'accueil à « Réserver » ne compterait pour aucune vue. Le premier rendu
-   * est déjà couvert par le `fbq('track', 'PageView')` du code de base, d'où
-   * la comparaison au chemin déjà mesuré plutôt qu'un simple drapeau — elle
-   * tient aussi face au double montage du mode strict, en développement.
-   */
-  useEffect(() => {
-    if (cheminMesure.current === chemin) return;
-    cheminMesure.current = chemin;
-    track("PageView");
-  }, [chemin]);
-
   return (
     <>
       <Script id="meta-pixel" strategy="afterInteractive">
@@ -54,6 +59,11 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 fbq('init', '${ID_PIXEL}');
 fbq('track', 'PageView');`}
       </Script>
+
+      {/* `useSearchParams` suspend le rendu : la limite reste ici, sans rien afficher. */}
+      <Suspense fallback={null}>
+        <VuesDeNavigation />
+      </Suspense>
 
       {/*
         Repli sans JavaScript. Écrit en HTML brut : le navigateur ne lit le

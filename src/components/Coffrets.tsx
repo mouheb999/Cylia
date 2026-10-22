@@ -4,13 +4,13 @@ import VisuelCoffret from "@/components/boutique/VisuelCoffret";
 import { Texte } from "@/components/edition/Modifiable";
 import {
   cheminCoffret,
+  prixBarreDuCoffret,
   produitsDuCoffret,
   stockDuCoffret,
-  valeurSepareeDuCoffret,
   visuelsDuCoffret,
 } from "@/lib/coffrets";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
-import { formatPrix } from "@/lib/format";
+import { formatPrix, pourcentageRemise } from "@/lib/format";
 import type { Coffret, Produit } from "@/lib/supabase/types";
 
 /**
@@ -74,7 +74,8 @@ export default function Coffrets({
       >
         {coffrets.map((coffret) => {
           const contenu = produitsDuCoffret(coffret, produits);
-          const valeur = valeurSepareeDuCoffret(coffret, produits);
+          const prixBarre = prixBarreDuCoffret(coffret, produits);
+          const remise = pourcentageRemise(coffret.prix, prixBarre);
           const epuise = stockDuCoffret(coffret, produits) <= 0;
 
           return (
@@ -94,9 +95,9 @@ export default function Coffrets({
                   photos={visuelsDuCoffret(coffret, produits)}
                   sizes={seul ? "100vw" : "256px"}
                 />
-                {valeur !== null && (
+                {remise !== null && (
                   <span className="absolute left-2.5 top-2.5 rounded-full bg-noir/80 px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] text-gold">
-                    −{Math.round((1 - coffret.prix / valeur) * 100)} %
+                    −{remise} %
                   </span>
                 )}
                 {epuise && (
@@ -137,14 +138,19 @@ export default function Coffrets({
                     <span className="font-serif text-xl font-semibold leading-none text-gold-deep lining-nums">
                       {formatPrix(coffret.prix, devise)}
                     </span>
-                    {valeur !== null && (
+                    {prixBarre !== null && (
                       <span className="text-xs font-light text-muted line-through lining-nums">
-                        {formatPrix(valeur, devise)}
+                        {formatPrix(prixBarre, devise)}
                       </span>
                     )}
                   </p>
                   <div className="mt-3">
-                    <BoutonCoffret coffretId={coffret.id} nom={coffret.nom} epuise={epuise} />
+                    <BoutonCoffret
+                      coffretId={coffret.id}
+                      nom={coffret.nom}
+                      prix={coffret.prix}
+                      epuise={epuise}
+                    />
                   </div>
                 </div>
               </div>

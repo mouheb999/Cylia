@@ -1,5 +1,9 @@
 "use server";
 
+import { cookies, headers } from "next/headers";
+import { after } from "next/server";
+import { adresseIp, decouperNom, envoyerEvenementMeta } from "@/lib/meta/capi";
+import { parametresMeta } from "@/lib/meta/track";
 import { clientPublic } from "@/lib/supabase/public";
 import { DELAI_ECRITURE } from "@/lib/supabase/config";
 
@@ -53,6 +57,44 @@ function messageErreur(erreur: unknown): string {
 }
 
 /**
+ * L'achat, remonté à Meta par l'API Conversions.
+ *
+ * Il part du serveur, une fois la commande enregistrée, avec les montants que
+ * `creer_commande` a relus en base — jamais ceux qu'aurait envoyés le
+ * navigateur. `order_<référence>` est aussi l'`eventID` du `Purchase` que le
+ * pixel envoie sur la page de confirmation : Meta n'en garde qu'un.
+ */
+async function signalerAchat(commande: CommandeConfirmee, email: string | undefined) {
+  const [entetes, biscuits] = await Promise.all([headers(), cookies()]);
+  await envoyerEvenementMeta({
+    event: "Purchase",
+    eventId: `order_${commande.reference}`,
+    params: parametresMeta(
+      commande.articles.map((a) => ({
+        id: a.coffret_id ?? a.produit_id ?? a.nom,
+        name: a.nom,
+        priceTnd: Number(a.prix),
+        quantity: a.quantite,
+      })),
+      Number(commande.total),
+    ),
+    url: entetes.get("referer"),
+    user: {
+      phone: commande.telephone,
+      email,
+      city: commande.ville,
+      ...decouperNom(commande.nom),
+    },
+    navigateur: {
+      ip: adresseIp(entetes),
+      userAgent: entetes.get("user-agent"),
+      fbp: biscuits.get("_fbp")?.value ?? null,
+      fbc: biscuits.get("_fbc")?.value ?? null,
+    },
+  });
+}
+
+/**
  * Passe la commande.
  *
  * Le navigateur n'envoie que des identifiants et des quantités : `creer_commande`
@@ -83,7 +125,10 @@ export async function passerCommande(demande: {
       p_note: demande.note || null,
     }).abortSignal(AbortSignal.timeout(DELAI_ECRITURE));
     if (error) throw error;
-    return { ok: true, commande: data as CommandeConfirmee };
+    const commande = data as CommandeConfirmee;
+    // Après la réponse : la cliente voit sa confirmation sans attendre Meta.
+    after(() => signalerAchat(commande, demande.email));
+    return { ok: true, commande };
   } catch (erreur) {
     return { ok: false, message: messageErreur(erreur) };
   }

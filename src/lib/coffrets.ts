@@ -39,6 +39,19 @@ export function valeurSepareeDuCoffret(coffret: Coffret, produits: Produit[]): n
   return total > coffret.prix ? total : null;
 }
 
+/**
+ * Le prix à afficher barré à côté de celui du coffret.
+ *
+ * L'ancien prix fixé par le salon d'abord ; à défaut, ce que coûteraient les
+ * flacons achetés séparément. `null` quand il n'y a rien à barrer.
+ */
+export function prixBarreDuCoffret(coffret: Coffret, produits: Produit[]): number | null {
+  if (coffret.ancien_prix != null && coffret.ancien_prix > coffret.prix) {
+    return coffret.ancien_prix;
+  }
+  return valeurSepareeDuCoffret(coffret, produits);
+}
+
 /** Les photos à montrer : celle du coffret, sinon celles de ses flacons. */
 export function visuelsDuCoffret(coffret: Coffret, produits: Produit[]): string[] {
   if (coffret.image_url) return [coffret.image_url];

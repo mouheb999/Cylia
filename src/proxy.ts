@@ -66,8 +66,9 @@ export const config = {
   matcher: [
     /*
      * Toutes les pages sauf les fichiers statiques et les images : inutile de
-     * réveiller Supabase pour un logo.
+     * réveiller Supabase pour un logo. Ni pour le relais Meta, appelé à
+     * chaque vue de fiche et qui n'a aucune session à renouveler.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/meta-capi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico)$).*)",
   ],
 };

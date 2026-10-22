@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { annoncerCaisse, trackMeta } from "@/lib/meta/track";
 import { ajouterCoffretAuPanier } from "@/lib/panier-boutique";
 
 /**
@@ -13,14 +14,21 @@ import { ajouterCoffretAuPanier } from "@/lib/panier-boutique";
 export default function BoutonCoffret({
   coffretId,
   nom,
+  prix,
   epuise,
 }: {
   coffretId: string;
   nom: string;
+  prix: number;
   epuise: boolean;
 }) {
   const router = useRouter();
   const [ajoute, setAjoute] = useState(false);
+
+  function deposer() {
+    ajouterCoffretAuPanier(coffretId);
+    trackMeta("AddToCart", [{ id: coffretId, name: nom, priceTnd: prix, quantity: 1 }]);
+  }
 
   if (epuise) {
     return (
@@ -35,7 +43,8 @@ export default function BoutonCoffret({
       <button
         type="button"
         onClick={() => {
-          ajouterCoffretAuPanier(coffretId);
+          deposer();
+          annoncerCaisse();
           router.push("/boutique/panier");
         }}
         aria-label={`Commander ${nom}`}
@@ -55,7 +64,7 @@ export default function BoutonCoffret({
         <button
           type="button"
           onClick={() => {
-            ajouterCoffretAuPanier(coffretId);
+            deposer();
             setAjoute(true);
           }}
           aria-label={`Ajouter ${nom} au panier`}
