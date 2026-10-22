@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useEffectEvent, useMemo, useRef, useState, useTransition } from "react";
 import { passerCommande, type CommandeConfirmee } from "@/app/actions/boutique";
-import { boutonOr, champSombre } from "@/components/ui/champs";
+import { boutonOr, champClair } from "@/components/ui/champs";
 import { produitsDuCoffret, stockDuCoffret, visuelsDuCoffret } from "@/lib/coffrets";
 import { formatPrix } from "@/lib/format";
 import { caisseAnnoncee, trackMeta, type ArticleMeta } from "@/lib/meta/track";
@@ -267,7 +267,7 @@ export default function PanierClient({
     });
   }
 
-  const champ = `${champSombre} border-sand bg-white text-ink placeholder:text-muted/60 focus:border-gold-deep`;
+  const champ = champClair;
 
   return (
     <div className="px-5 pb-16 pt-4">
