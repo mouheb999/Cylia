@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Jost, Parisienne } from "next/font/google";
+import localFont from "next/font/local";
 import AgentService from "@/components/AgentService";
 import MetaPixel from "@/components/MetaPixel";
 import NettoyerAncre from "@/components/NettoyerAncre";
@@ -9,23 +9,37 @@ import { adminConnecte } from "@/lib/supabase/serveur";
 import { supabaseConfigure } from "@/lib/supabase/config";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
+/*
+ * Les trois polices sont servies depuis le dépôt (`src/fonts/`), plus depuis
+ * Google Fonts au moment du build.
+ *
+ * Fin octobre 2026, Google s'est mis à servir Jost depuis une adresse à
+ * paramètres (`fonts.gstatic.com/l/font?kit=…&skey=…`) au lieu d'un `.woff2`.
+ * `next/font/google` ne sait pas la lire — « next/font/google queries have
+ * exactly one entry » sous Turbopack — et plus aucun déploiement ne passait,
+ * code du site inchangé. Des fichiers à nous ne dépendent plus de personne.
+ *
+ * Ce sont les fichiers de Google, sous-ensemble « latin » (le français y est
+ * entier : accents, œ, tirets, guillemets). Jost et Cormorant sont variables :
+ * un fichier couvre toutes les graisses utilisées. Licence SIL OFL.
+ */
+const cormorant = localFont({
+  src: "../fonts/cormorant-garamond-latin.woff2",
   variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: "300 600",
   display: "swap",
 });
 
-const jost = Jost({
+const jost = localFont({
+  src: "../fonts/jost-latin.woff2",
   variable: "--font-jost",
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: "300 500",
   display: "swap",
 });
 
-const parisienne = Parisienne({
+const parisienne = localFont({
+  src: "../fonts/parisienne-latin.woff2",
   variable: "--font-parisienne",
-  subsets: ["latin"],
   weight: "400",
   display: "swap",
 });
