@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { annoncerCaisse, trackMeta, type ArticleMeta } from "@/lib/meta/track";
+import { trackMeta, type ArticleMeta } from "@/lib/meta/track";
 import { ajouterAuPanier, ajouterCoffretAuPanier } from "@/lib/panier-boutique";
 
 /**
@@ -15,8 +15,8 @@ import { ajouterAuPanier, ajouterCoffretAuPanier } from "@/lib/panier-boutique";
  * en deux gestes, sans chercher le panier.
  *
  * Les deux boutons déposent l'article, donc tous deux comptent comme un ajout
- * au panier pour Meta ; « Commander maintenant » annonce en plus la mise en
- * caisse, que le panier signale à l'arrivée avec tout son contenu.
+ * au panier pour Meta. La mise en caisse, elle, n'est signalée qu'au premier
+ * champ de livraison touché dans le panier — voir `PanierClient`.
  */
 export default function BoutonAjouter({
   produitId,
@@ -86,7 +86,6 @@ export default function BoutonAjouter({
         type="button"
         onClick={() => {
           deposer();
-          annoncerCaisse();
           router.push("/boutique/panier");
         }}
         className="gold-gradient mt-3 w-full rounded-full py-3.5 font-serif text-base text-noir"

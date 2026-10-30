@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useEffectEvent, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { passerCommande, type CommandeConfirmee } from "@/app/actions/boutique";
+import { IconWhatsApp } from "@/components/Icons";
+import LienSuivi from "@/components/LienSuivi";
 import { boutonOr, champClair } from "@/components/ui/champs";
 import { produitsDuCoffret, stockDuCoffret, visuelsDuCoffret } from "@/lib/coffrets";
 import { formatPrix } from "@/lib/format";
-import { caisseAnnoncee, trackMeta, type ArticleMeta } from "@/lib/meta/track";
+import { GOUVERNORATS, estGouvernorat } from "@/lib/gouvernorats";
+import { trackMeta, type ArticleMeta } from "@/lib/meta/track";
 import {
   cleLigne,
   reglerQuantite,
@@ -15,6 +18,7 @@ import {
   viderPanierBoutique,
 } from "@/lib/panier-boutique";
 import type { Coffret, Produit, Reglages } from "@/lib/supabase/types";
+import { mobileTunisienValide } from "@/lib/telephone";
 import VisuelCoffret from "./VisuelCoffret";
 import VisuelProduit from "./VisuelProduit";
 
@@ -33,10 +37,24 @@ type Article = {
   meta: ArticleMeta;
 };
 
-/** 8 chiffres, avec ou sans indicatif +216 et espaces. */
-function telephoneValide(valeur: string): boolean {
-  const chiffres = valeur.replace(/[\s.-]/g, "").replace(/^\+?216/, "");
-  return /^\d{8}$/.test(chiffres);
+/** Le WhatsApp de la boutique — le même que « Besoin de conseil ? ». */
+const NUMERO_WHATSAPP = "21651395169";
+
+type Champ = "nom" | "telephone" | "gouvernorat";
+
+/** Les trois champs obligatoires, et ce qu'on dit quand l'un ne va pas. */
+function erreurDe(champ: Champ, valeur: string): string | undefined {
+  switch (champ) {
+    case "nom":
+      return valeur.trim().length < 2 ? "Indiquez votre nom." : undefined;
+    case "telephone":
+      if (!valeur.trim()) return "Indiquez votre numéro de téléphone.";
+      return mobileTunisienValide(valeur)
+        ? undefined
+        : "Numéro de mobile tunisien à 8 chiffres, commençant par 2, 4, 5 ou 9 — ex. 54 395 168.";
+    case "gouvernorat":
+      return estGouvernorat(valeur) ? undefined : "Choisissez votre gouvernorat.";
+  }
 }
 
 export default function PanierClient({
@@ -53,10 +71,10 @@ export default function PanierClient({
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [adresse, setAdresse] = useState("");
-  const [ville, setVille] = useState("");
+  const [gouvernorat, setGouvernorat] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
-  const [erreurs, setErreurs] = useState<Record<string, string>>({});
+  const [erreurs, setErreurs] = useState<Partial<Record<Champ, string>>>({});
   const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
   const [envoi, demarrer] = useTransition();
 
@@ -115,27 +133,21 @@ export default function PanierClient({
   });
 
   /*
-   * Mise en caisse, une fois par visite du panier : à l'arrivée par
-   * « Commander maintenant », ou au premier champ de livraison touché quand
-   * la cliente vient du panier lui-même. Tout le contenu du panier part.
+   * Mise en caisse : une seule fois, au premier champ de livraison touché —
+   * jamais à l'ouverture de la page. Arriver au panier n'est pas encore
+   * vouloir commander ; commencer à remplir le formulaire, si. Tout le contenu
+   * du panier part.
    */
   const caisseSignalee = useRef(false);
 
-  function signalerCaisse() {
+  function signalerCaisse(evenement: React.FocusEvent<HTMLFormElement>) {
+    if (!(evenement.target instanceof HTMLInputElement ||
+      evenement.target instanceof HTMLSelectElement ||
+      evenement.target instanceof HTMLTextAreaElement)) return;
     if (caisseSignalee.current || articles.length === 0) return;
     caisseSignalee.current = true;
     trackMeta("InitiateCheckout", articles.map((a) => a.meta));
   }
-
-  // Le panier se lit dans le stockage après l'hydratation : on attend qu'il
-  // soit là pour consommer l'annonce de « Commander maintenant ».
-  const panierCharge = articles.length > 0;
-  const arriveeEnCaisse = useEffectEvent(() => {
-    if (caisseAnnoncee()) signalerCaisse();
-  });
-  useEffect(() => {
-    if (panierCharge) arriveeEnCaisse();
-  }, [panierCharge]);
 
   const sousTotal = articles.reduce((t, a) => t + a.prix * a.quantite, 0);
   const livraisonOfferte =
@@ -192,7 +204,7 @@ export default function PanierClient({
 
         <p className="mt-5 text-[0.8rem] font-light leading-relaxed text-muted">
           Nous vous appelons au {commande.telephone} pour confirmer la livraison
-          à {commande.ville}. Paiement à la réception.
+          (gouvernorat de {commande.ville}). Paiement à la réception.
         </p>
 
         <Link
@@ -221,17 +233,33 @@ export default function PanierClient({
     );
   }
 
-  function soumettre(evenement: React.FormEvent) {
+  const valeurs: Record<Champ, string> = { nom, telephone, gouvernorat };
+
+  /** À la sortie d'un champ : on le juge dès qu'il a été rempli une fois. */
+  function verifier(champ: Champ, valeur = valeurs[champ]) {
+    setErreurs((avant) => ({ ...avant, [champ]: erreurDe(champ, valeur) }));
+  }
+
+  /** Pendant la saisie : une erreur affichée s'efface dès que c'est corrigé. */
+  function corriger(champ: Champ, valeur: string) {
+    if (erreurs[champ]) verifier(champ, valeur);
+  }
+
+  function soumettre(evenement: React.FormEvent<HTMLFormElement>) {
     evenement.preventDefault();
 
-    const nouvelles: Record<string, string> = {};
-    if (nom.trim().length < 2) nouvelles.nom = "Indiquez votre nom.";
-    if (!telephoneValide(telephone)) nouvelles.telephone = "Numéro à 8 chiffres, ex. 54 395 168.";
-    if (adresse.trim().length < 5) nouvelles.adresse = "Indiquez une adresse complète.";
-    if (ville.trim().length < 2) nouvelles.ville = "Indiquez votre ville.";
+    const nouvelles: Partial<Record<Champ, string>> = {};
+    for (const champ of ["nom", "telephone", "gouvernorat"] as const) {
+      const erreur = erreurDe(champ, valeurs[champ]);
+      if (erreur) nouvelles[champ] = erreur;
+    }
 
     setErreurs(nouvelles);
-    if (Object.keys(nouvelles).length > 0) return;
+    const premier = (["nom", "telephone", "gouvernorat"] as const).find((c) => nouvelles[c]);
+    if (premier) {
+      evenement.currentTarget.querySelector<HTMLElement>(`[name="${premier}"]`)?.focus();
+      return;
+    }
 
     setErreurEnvoi(null);
     demarrer(async () => {
@@ -240,7 +268,7 @@ export default function PanierClient({
         nom: nom.trim(),
         telephone: telephone.trim(),
         adresse: adresse.trim(),
-        ville: ville.trim(),
+        ville: gouvernorat,
         email: email.trim() || undefined,
         note: note.trim() || undefined,
       });
@@ -268,6 +296,30 @@ export default function PanierClient({
   }
 
   const champ = champClair;
+  const total = sousTotal + livraison;
+
+  // « Livraison offerte » ne se promet que si c'est vrai pour ce panier.
+  const promesseLivraison =
+    livraison === 0
+      ? "Livraison offerte"
+      : reglages.livraison_gratuite_des != null
+        ? `Livraison offerte dès ${formatPrix(reglages.livraison_gratuite_des, reglages.devise)}`
+        : `Livraison ${formatPrix(reglages.frais_livraison, reglages.devise)}`;
+
+  // La commande par WhatsApp : le panier tel qu'il est, et ce qui est déjà
+  // rempli du formulaire — le salon n'a plus qu'à confirmer.
+  const messageWhatsApp = [
+    "Bonjour CYLIA, je souhaite commander :",
+    ...articles.map(
+      (a) => `• ${a.nom} × ${a.quantite} — ${formatPrix(a.prix * a.quantite, reglages.devise)}`,
+    ),
+    `Livraison : ${livraison === 0 ? "offerte" : formatPrix(livraison, reglages.devise)}`,
+    `Total : ${formatPrix(total, reglages.devise)} (paiement à la livraison)`,
+    ...(nom.trim() ? [`Nom : ${nom.trim()}`] : []),
+    ...(telephone.trim() ? [`Téléphone : ${telephone.trim()}`] : []),
+    ...(gouvernorat ? [`Gouvernorat : ${gouvernorat}`] : []),
+    ...(adresse.trim() ? [`Adresse : ${adresse.trim()}`] : []),
+  ].join("\n");
 
   return (
     <div className="px-5 pb-16 pt-4">
@@ -343,7 +395,7 @@ export default function PanierClient({
         <div className="mt-3 flex justify-between gap-4 border-t border-sand pt-3">
           <dt className="text-ink">Total</dt>
           <dd className="font-serif text-2xl font-semibold leading-none text-gold-deep lining-nums">
-            {formatPrix(sousTotal + livraison, reglages.devise)}
+            {formatPrix(total, reglages.devise)}
           </dd>
         </div>
         {!livraisonOfferte && reglages.livraison_gratuite_des != null && (
@@ -360,59 +412,103 @@ export default function PanierClient({
         <label className="mt-4 block text-sm">
           <span className="font-light text-muted">Nom</span>
           <input
+            name="nom"
             value={nom}
-            onChange={(e) => setNom(e.target.value)}
+            onChange={(e) => {
+              setNom(e.target.value);
+              corriger("nom", e.target.value);
+            }}
+            onBlur={() => nom && verifier("nom")}
             autoComplete="name"
+            required
             className={champ}
             aria-invalid={Boolean(erreurs.nom)}
+            aria-describedby={erreurs.nom ? "erreur-nom" : undefined}
           />
-          {erreurs.nom && <span className="mt-1 block text-xs text-red-500">{erreurs.nom}</span>}
+          {erreurs.nom && (
+            <span id="erreur-nom" className="mt-1 block text-xs text-red-500">{erreurs.nom}</span>
+          )}
         </label>
 
         <label className="mt-4 block text-sm">
           <span className="font-light text-muted">Téléphone</span>
           <input
+            name="telephone"
             type="tel"
             inputMode="tel"
             value={telephone}
-            onChange={(e) => setTelephone(e.target.value)}
+            onChange={(e) => {
+              setTelephone(e.target.value);
+              corriger("telephone", e.target.value);
+            }}
+            onBlur={() => telephone && verifier("telephone")}
             autoComplete="tel"
             placeholder="54 395 168"
+            required
             className={champ}
             aria-invalid={Boolean(erreurs.telephone)}
+            aria-describedby={erreurs.telephone ? "erreur-telephone" : undefined}
           />
           {erreurs.telephone && (
-            <span className="mt-1 block text-xs text-red-500">{erreurs.telephone}</span>
+            <span id="erreur-telephone" className="mt-1 block text-xs text-red-500">
+              {erreurs.telephone}
+            </span>
           )}
         </label>
 
         <label className="mt-4 block text-sm">
-          <span className="font-light text-muted">Adresse</span>
+          <span className="font-light text-muted">Gouvernorat</span>
+          <span className="relative block">
+            <select
+              name="gouvernorat"
+              value={gouvernorat}
+              onChange={(e) => {
+                setGouvernorat(e.target.value);
+                verifier("gouvernorat", e.target.value);
+              }}
+              autoComplete="address-level1"
+              required
+              className={`${champ} appearance-none pr-10 ${gouvernorat ? "" : "text-muted/80"}`}
+              aria-invalid={Boolean(erreurs.gouvernorat)}
+              aria-describedby={erreurs.gouvernorat ? "erreur-gouvernorat" : undefined}
+            >
+              <option value="" disabled>
+                Choisissez…
+              </option>
+              {GOUVERNORATS.map((g) => (
+                <option key={g} value={g} className="text-ink">
+                  {g}
+                </option>
+              ))}
+            </select>
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 top-1/2 mt-[3px] h-4 w-4 -translate-y-1/2 text-gold-deep"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          {erreurs.gouvernorat && (
+            <span id="erreur-gouvernorat" className="mt-1 block text-xs text-red-500">
+              {erreurs.gouvernorat}
+            </span>
+          )}
+        </label>
+
+        <label className="mt-4 block text-sm">
+          <span className="font-light text-muted">Adresse (facultatif)</span>
           <textarea
             value={adresse}
             onChange={(e) => setAdresse(e.target.value)}
             rows={2}
             autoComplete="street-address"
-            placeholder="Rue, immeuble, étage…"
+            placeholder="Ville, rue, immeuble… — sinon on vous la demande à l'appel"
             className={`${champ} resize-none`}
-            aria-invalid={Boolean(erreurs.adresse)}
           />
-          {erreurs.adresse && (
-            <span className="mt-1 block text-xs text-red-500">{erreurs.adresse}</span>
-          )}
-        </label>
-
-        <label className="mt-4 block text-sm">
-          <span className="font-light text-muted">Ville</span>
-          <input
-            value={ville}
-            onChange={(e) => setVille(e.target.value)}
-            autoComplete="address-level2"
-            placeholder="Sousse"
-            className={champ}
-            aria-invalid={Boolean(erreurs.ville)}
-          />
-          {erreurs.ville && <span className="mt-1 block text-xs text-red-500">{erreurs.ville}</span>}
         </label>
 
         <label className="mt-4 block text-sm">
@@ -442,12 +538,38 @@ export default function PanierClient({
           </p>
         )}
 
-        <button type="submit" disabled={envoi} className={`${boutonOr} mt-6 w-full`}>
+        {/* Juste au-dessus du bouton : ce qui lève les dernières hésitations. */}
+        <ul className="mt-6 flex flex-wrap justify-center gap-x-2 gap-y-1 text-center text-[0.75rem] leading-snug text-ink/80">
+          <li><span className="text-gold-deep">✓</span> Paiement à la livraison</li>
+          <li aria-hidden="true" className="text-gold-deep/60">·</li>
+          <li><span className="text-gold-deep">✓</span> {promesseLivraison}</li>
+          <li aria-hidden="true" className="text-gold-deep/60">·</li>
+          <li>
+            <span className="text-gold-deep">✓</span> Revendeur officiel Keune — produits 100%
+            authentiques
+          </li>
+          <li aria-hidden="true" className="text-gold-deep/60">·</li>
+          <li>Livraison 24–72h</li>
+        </ul>
+
+        <button type="submit" disabled={envoi} className={`${boutonOr} mt-3 w-full`}>
           {envoi ? "Enregistrement…" : "Commander"}
         </button>
 
+        <LienSuivi
+          evenement="Contact"
+          parametres={{ method: "whatsapp", content_name: "commande" }}
+          href={`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(messageWhatsApp)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center justify-center gap-2 rounded-full border border-gold-deep/40 py-3 font-serif text-base text-gold-deep"
+        >
+          <IconWhatsApp className="h-4 w-4 shrink-0" />
+          Commander sur WhatsApp
+        </LienSuivi>
+
         <p className="mt-3 text-center text-xs font-light text-muted">
-          Paiement à la livraison. Nous vous appelons pour confirmer.
+          Nous vous appelons pour confirmer avant l&apos;envoi.
         </p>
       </form>
     </div>

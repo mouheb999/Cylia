@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Script from "next/script";
 import { track } from "@/lib/fbq";
-import { IDS_PIXELS } from "@/lib/meta/track";
+import { ID_PIXEL } from "@/lib/meta/track";
 
 /**
  * Une navigation interne ne recharge pas la page : sans ceci, passer de
@@ -56,7 +56,7 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-${IDS_PIXELS.map((id) => `fbq('init', '${id}');`).join("\n")}
+fbq('init', '${ID_PIXEL}');
 fbq('track', 'PageView');`}
       </Script>
 
@@ -72,10 +72,7 @@ fbq('track', 'PageView');`}
       */}
       <noscript
         dangerouslySetInnerHTML={{
-          __html: IDS_PIXELS.map(
-            (id) =>
-              `<img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=${id}&ev=PageView&noscript=1" />`,
-          ).join(""),
+          __html: `<img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=${ID_PIXEL}&ev=PageView&noscript=1" />`,
         }}
       />
     </>

@@ -23,23 +23,35 @@ export const metadata: Metadata = {
     "Les cosmétiques et soins utilisés en cabine chez CYLIA Maison de Beauté, livrés partout en Tunisie.",
 };
 
-export default async function PageBoutique() {
-  const [produits, coffrets, reglages, contenus] = await Promise.all([
+/**
+ * `?coffret=<id>` : le lien d'une publicité pour un coffret précis. Ce coffret
+ * passe en tête de la grille, les autres gardent leur ordre de prix.
+ */
+export default async function PageBoutique({ searchParams }: PageProps<"/boutique">) {
+  const [produits, coffrets, reglages, contenus, recherche] = await Promise.all([
     chargerProduits(),
     chargerCoffrets(),
     chargerReglages(),
     chargerContenus(),
+    searchParams,
   ]);
 
   const site = infosSite(contenus);
   const partenaireLien = valeurContenu(contenus, "boutique.partenaire_lien");
   const partenaireLibelle = valeurContenu(contenus, "boutique.partenaire_libelle");
+  const epingle = typeof recherche.coffret === "string" ? recherche.coffret : null;
 
   return (
     <>
       <Header />
       <main className="flex-1 bg-cream">
-        <div className="bg-noir px-5 pb-8 pt-8 text-center">
+        {/*
+          Bandeau court sur téléphone — 180 px au plus : la cliente venue d'une
+          publicité doit voir un coffret, son prix et « Commander » sans
+          défiler. Le titre tient sur une ligne, et la promesse de livraison
+          reste, c'est elle qui rassure avant d'acheter.
+        */}
+        <div className="max-h-[180px] overflow-hidden bg-noir px-5 pb-4 pt-4 text-center sm:max-h-none sm:pb-8 sm:pt-8">
           <Texte
             cle="boutique.surtitre"
             titre="Sur-titre de la boutique"
@@ -47,18 +59,18 @@ export default async function PageBoutique() {
             balise="p"
             className="text-[10px] uppercase tracking-[0.3em] text-gold"
           />
-          <h1 className="mt-3 font-serif text-3xl font-light text-cream">
+          <h1 className="mt-1.5 font-serif text-[1.65rem] font-light leading-tight text-cream sm:mt-3 sm:text-3xl">
             <Texte
               cle="boutique.titre"
               titre="Titre de la boutique"
               defaut={CONTENUS_DEFAUT["boutique.titre"]}
-            />
+            />{" "}
             <Texte
               cle="boutique.titre_script"
               titre="Titre manuscrit de la boutique"
               defaut={CONTENUS_DEFAUT["boutique.titre_script"]}
               balise="span"
-              className="mt-0.5 block font-script text-4xl text-gold"
+              className="font-script text-[2rem] text-gold sm:mt-0.5 sm:block sm:text-4xl"
             />
           </h1>
           <Texte
@@ -67,13 +79,19 @@ export default async function PageBoutique() {
             type="multiligne"
             defaut={CONTENUS_DEFAUT["boutique.texte"]}
             balise="p"
-            className="mx-auto mt-4 max-w-[24rem] whitespace-pre-line text-[0.8rem] font-light leading-relaxed text-white/55"
+            className="mx-auto mt-1.5 line-clamp-2 max-w-[24rem] whitespace-pre-line text-[0.75rem] font-light leading-snug text-white/70 sm:mt-4 sm:line-clamp-none sm:text-[0.8rem] sm:leading-relaxed sm:text-white/55"
           />
         </div>
 
         {reglages.boutique_active && coffrets.length > 0 && (
-          <div className="pt-6">
-            <Coffrets coffrets={coffrets} produits={produits} devise={reglages.devise} />
+          <div>
+            <Coffrets
+              coffrets={coffrets}
+              produits={produits}
+              devise={reglages.devise}
+              epingle={epingle}
+              compact
+            />
           </div>
         )}
 

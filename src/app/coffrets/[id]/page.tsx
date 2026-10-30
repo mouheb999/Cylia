@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import BarreCommande from "@/components/boutique/BarreCommande";
 import BoutonAjouter from "@/components/boutique/BoutonAjouter";
 import LienConseil from "@/components/boutique/LienConseil";
 import PrixFiche from "@/components/boutique/PrixFiche";
@@ -14,6 +15,7 @@ import {
   prixBarreDuCoffret,
   produitsDuCoffret,
   stockDuCoffret,
+  trierCoffrets,
   valeurSepareeDuCoffret,
   visuelsDuCoffret,
 } from "@/lib/coffrets";
@@ -64,7 +66,7 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
   const valeur = valeurSepareeDuCoffret(coffret, produits);
   const prixBarre = prixBarreDuCoffret(coffret, produits);
   const stock = stockDuCoffret(coffret, produits);
-  const autres = coffrets.filter((c) => c.id !== coffret.id);
+  const autres = trierCoffrets(coffrets, produits).filter((c) => c.id !== coffret.id);
 
   return (
     <>
@@ -76,6 +78,7 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
             nom={coffret.nom}
             photos={visuelsDuCoffret(coffret, produits)}
             sizes="100vw"
+            preload
           />
         </div>
 
@@ -161,13 +164,15 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
                     ? `Plus que ${stock} en stock`
                     : "En stock"}
               </p>
-              <BoutonAjouter
-                coffretId={coffret.id}
-                nom={coffret.nom}
-                prix={coffret.prix}
-                epuise={stock <= 0}
-                stock={stock}
-              />
+              <div id="commande-coffret">
+                <BoutonAjouter
+                  coffretId={coffret.id}
+                  nom={coffret.nom}
+                  prix={coffret.prix}
+                  epuise={stock <= 0}
+                  stock={stock}
+                />
+              </div>
             </>
           )}
 
@@ -189,7 +194,7 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
                         <VisuelCoffret
                           nom={autre.nom}
                           photos={visuelsDuCoffret(autre, produits)}
-                          sizes="50vw"
+                          sizes="(min-width: 640px) 320px, 50vw"
                         />
                       </span>
                       <span className="block px-3 pb-3 pt-2">
@@ -213,6 +218,16 @@ export default async function PageCoffret({ params }: PageProps<"/coffrets/[id]"
         </div>
       </main>
       <Footer site={infosSite(contenus)} />
+      {/* Après le pied de page : la place qu'elle réserve tombe tout en bas. */}
+      {reglages.boutique_active && stock > 0 && (
+        <BarreCommande
+          cible="commande-coffret"
+          coffretId={coffret.id}
+          nom={coffret.nom}
+          prix={coffret.prix}
+          devise={reglages.devise}
+        />
+      )}
     </>
   );
 }

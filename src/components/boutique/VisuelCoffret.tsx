@@ -1,23 +1,34 @@
 import PhotoDistante from "@/components/PhotoDistante";
+import { estPhotoDeGroupe } from "@/lib/coffrets";
 
 /**
- * Visuel d'un coffret.
+ * Visuel d'un coffret — toujours une seule image, le coffret entier.
  *
- * Avec la photo du coffret tout prêt, elle occupe toute la vignette : c'est une
- * mise en scène, pas un packshot détouré, donc `object-cover`. Sans elle, les
- * flacons choisis se rangent côte à côte — deux, trois ou quatre sur le même
- * fond clair que la boutique — pour qu'un coffret composé dans le panneau ait
- * l'air d'un coffret avant même d'être photographié.
+ * La photo du coffret déposée dans le panneau occupe toute la vignette : c'est
+ * une mise en scène, donc `object-cover`. La photo de groupe assemblée à
+ * partir des packshots (`scripts/visuels-coffrets.mjs`) est transparente et
+ * déjà cadrée, flacons serrés : `object-contain`, sur le fond clair de la
+ * boutique.
+ *
+ * Sans l'une ni l'autre — un coffret tout juste composé —, les flacons se
+ * rangent côte à côte et se chevauchent sur une même ligne, agrandis pour
+ * compenser la marge transparente des packshots : le coffret a l'air d'un
+ * coffret avant même d'être photographié.
+ *
+ * `preload` : pour les toutes premières cartes, visibles sans défiler. Toutes
+ * les autres images restent en chargement différé, le défaut de `next/image`.
  */
 export default function VisuelCoffret({
   nom,
   photos,
   sizes = "50vw",
+  preload = false,
 }: {
   nom: string;
-  /** `visuelsDuCoffret()` : la photo du coffret, ou celles de ses flacons. */
+  /** `visuelsDuCoffret()` : la photo du coffret, sa photo de groupe, ou celles de ses flacons. */
   photos: string[];
   sizes?: string;
+  preload?: boolean;
 }) {
   const repli = (
     <div aria-hidden="true" className="flex h-full items-center justify-center">
@@ -28,6 +39,7 @@ export default function VisuelCoffret({
   );
 
   if (photos.length <= 1) {
+    const groupe = photos[0] ? estPhotoDeGroupe(photos[0]) : false;
     return (
       <div className="absolute inset-0 bg-gradient-to-b from-cream to-white">
         {photos[0] ? (
@@ -36,7 +48,8 @@ export default function VisuelCoffret({
             alt={nom}
             fill
             sizes={sizes}
-            className="object-cover"
+            preload={preload}
+            className={groupe ? "object-contain p-[3%]" : "object-cover"}
             repli={repli}
           />
         ) : (
@@ -46,30 +59,33 @@ export default function VisuelCoffret({
     );
   }
 
-  const mosaique = photos.slice(0, 4);
+  const flacons = photos.slice(0, 4);
+  // Chaque flacon n'occupe qu'une fraction de la largeur : on demande donc des
+  // fichiers à la mesure de cette fraction, pas de la vignette entière.
+  const tailleFlacon = sizes.replace(/(\d+(?:\.\d+)?)vw/g, (_, n: string) =>
+    `${Math.round(Number(n) / 2)}vw`,
+  );
   return (
-    <div
-      className={`absolute inset-0 grid gap-px bg-sand ${
-        mosaique.length === 2 ? "grid-cols-2" : "grid-cols-2 grid-rows-2"
-      }`}
-    >
-      {mosaique.map((url, index) => (
-        <div
-          key={`${url}-${index}`}
-          className={`relative bg-gradient-to-b from-cream to-white ${
-            mosaique.length === 3 && index === 0 ? "row-span-2" : ""
-          }`}
-        >
-          <PhotoDistante
-            src={url}
-            alt={index === 0 ? nom : ""}
-            fill
-            sizes={sizes}
-            className="object-contain p-1.5"
-            repli={null}
-          />
-        </div>
-      ))}
+    <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-cream to-white px-[4%] pb-[6%]">
+      {flacons.map((url, index) => {
+        const centre = Math.abs(index - (flacons.length - 1) / 2) < 0.6;
+        return (
+          <div
+            key={`${url}-${index}`}
+            className={`relative -mx-[3%] flex-1 ${centre ? "z-10 h-[88%]" : "h-[78%]"}`}
+          >
+            <PhotoDistante
+              src={url}
+              alt={index === 0 ? nom : ""}
+              fill
+              sizes={tailleFlacon}
+              preload={preload}
+              className="origin-bottom scale-[1.45] object-contain object-bottom"
+              repli={null}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

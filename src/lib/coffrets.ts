@@ -1,5 +1,6 @@
 import { pourcentageRemise } from "@/lib/format";
 import type { Coffret, Produit } from "@/lib/supabase/types";
+import { VISUELS_COFFRETS } from "@/lib/visuels-coffrets";
 
 /**
  * Ce qu'un coffret sait de lui-même, une fois croisé avec le catalogue.
@@ -58,12 +59,58 @@ export function prixBarreDuCoffret(coffret: Coffret, produits: Produit[]): numbe
   return valeurSepareeDuCoffret(coffret, produits);
 }
 
-/** Les photos à montrer : celle du coffret, sinon celles de ses flacons. */
+/**
+ * Les photos à montrer, de la meilleure à la moins bonne :
+ *
+ *  1. la photo du coffret, déposée dans le panneau ;
+ *  2. sa photo de groupe, assemblée par `scripts/visuels-coffrets.mjs` — tant
+ *     qu'elle a été faite avec les flacons que le coffret contient encore ;
+ *  3. à défaut, les photos de ses flacons, que `VisuelCoffret` range ensemble.
+ */
 export function visuelsDuCoffret(coffret: Coffret, produits: Produit[]): string[] {
   if (coffret.image_url) return [coffret.image_url];
-  return produitsDuCoffret(coffret, produits)
+  const photos = produitsDuCoffret(coffret, produits)
     .map((p) => p.image_url)
     .filter((url): url is string => Boolean(url));
+  const groupe = VISUELS_COFFRETS[coffret.id];
+  if (
+    groupe &&
+    groupe.sources.length === photos.length &&
+    groupe.sources.every((url, i) => url === photos[i])
+  ) {
+    return [groupe.src];
+  }
+  return photos;
+}
+
+/** Vrai pour une photo de groupe assemblée : transparente, à ne jamais recadrer. */
+export function estPhotoDeGroupe(url: string): boolean {
+  return url.startsWith("/visuels-coffrets/");
+}
+
+/**
+ * L'ordre de la vitrine : du moins cher au plus cher, les épuisés à la fin —
+ * un coffret qu'on ne peut pas commander n'a rien à faire en tête de page.
+ *
+ * `epingle` (le `?coffret=<id>` d'un lien publicitaire) passe devant tout le
+ * reste : la cliente qui a touché la publicité d'un coffret le trouve en
+ * premier, sans le chercher.
+ */
+export function trierCoffrets(
+  coffrets: Coffret[],
+  produits: Produit[],
+  epingle?: string | null,
+): Coffret[] {
+  const disponible = new Map(coffrets.map((c) => [c.id, stockDuCoffret(c, produits) > 0]));
+  const tries = [...coffrets].sort(
+    (a, b) =>
+      Number(disponible.get(b.id)) - Number(disponible.get(a.id)) ||
+      a.prix - b.prix ||
+      a.ordre - b.ordre,
+  );
+  const index = epingle ? tries.findIndex((c) => c.id === epingle) : -1;
+  if (index > 0) tries.unshift(...tries.splice(index, 1));
+  return tries;
 }
 
 /** La fiche du coffret. */

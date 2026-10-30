@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { annoncerCaisse, trackMeta } from "@/lib/meta/track";
+import { trackMeta } from "@/lib/meta/track";
 import { ajouterCoffretAuPanier } from "@/lib/panier-boutique";
 
 /**
  * Les boutons d'une carte coffret : « Commander » dépose le coffret et ouvre
  * le panier, où se remplit la livraison ; « Ajouter au panier » le dépose et
  * laisse la cliente continuer ses achats.
+ *
+ * Taillés pour une carte sur deux colonnes, à 375 px : à peine 160 px de large.
  */
 export default function BoutonCoffret({
   coffretId,
@@ -33,22 +35,21 @@ export default function BoutonCoffret({
   if (epuise) {
     return (
       <p className="rounded-full border border-sand py-2.5 text-center text-xs text-muted">
-        Épuisé pour le moment
+        Épuisé
       </p>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <button
         type="button"
         onClick={() => {
           deposer();
-          annoncerCaisse();
           router.push("/boutique/panier");
         }}
         aria-label={`Commander ${nom}`}
-        className="gold-gradient w-full rounded-full py-2.5 font-serif text-sm text-noir"
+        className="gold-gradient w-full rounded-full py-2.5 font-serif text-[0.95rem] text-noir"
       >
         Commander
       </button>
@@ -56,9 +57,9 @@ export default function BoutonCoffret({
       {ajoute ? (
         <Link
           href="/boutique/panier"
-          className="block rounded-full border border-gold-deep bg-gold/15 py-2 text-center font-serif text-sm text-gold-deep"
+          className="block rounded-full border border-gold-deep bg-gold/15 py-1.5 text-center font-serif text-[0.8rem] text-gold-deep"
         >
-          Ajouté ✓ — voir mon panier
+          Ajouté ✓ — panier
         </Link>
       ) : (
         <button
@@ -68,7 +69,7 @@ export default function BoutonCoffret({
             setAjoute(true);
           }}
           aria-label={`Ajouter ${nom} au panier`}
-          className="w-full rounded-full border border-gold-deep/40 py-2 font-serif text-sm text-gold-deep"
+          className="w-full rounded-full border border-gold-deep/40 py-1.5 font-serif text-[0.8rem] text-gold-deep"
         >
           Ajouter au panier
         </button>

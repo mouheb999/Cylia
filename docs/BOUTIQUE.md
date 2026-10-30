@@ -7,6 +7,80 @@ la description, le prix, l'état du stock et permet de choisir une quantité.
 `/boutique/panier` récapitule, demande les coordonnées de livraison et
 enregistre la commande.
 
+## Le premier écran, sur téléphone
+
+Les publicités Meta font arriver sur `/boutique`, sur un téléphone. Sur un
+écran de 375 × 812, la cliente doit voir sans défiler un coffret, son prix et
+« Commander » :
+
+- le bandeau « Notre boutique » tient en 180 px au plus — titre sur une ligne,
+  et la promesse « Livraison partout en Tunisie · Paiement à la livraison » ;
+- les coffrets viennent juste dessous, en **grille** (deux colonnes sur
+  téléphone, trois puis quatre sur grand écran), du **moins cher au plus
+  cher**, les épuisés à la fin ;
+- `/boutique?coffret=<id>` met ce coffret en tête : c'est le lien à donner à
+  une publicité qui montre un coffret précis ;
+- les images des deux premières cartes sont préchargées (`preload`, qui
+  remplace `priority` depuis Next 16), les autres chargées au défilement ; leur
+  `sizes` demande environ 400 px de large sur téléphone.
+
+Sur la fiche d'un coffret, une barre collée en bas de l'écran (téléphone
+seulement) reprend le prix et « Commander » dès que le bouton principal est
+passé au-dessus de l'écran.
+
+## La photo d'un coffret
+
+Une carte de coffret montre **une seule image**, le coffret entier :
+
+1. la photo déposée dans le panneau, si elle existe ;
+2. sinon, sa **photo de groupe**, assemblée par `npm run visuels:coffrets`
+   (`scripts/visuels-coffrets.mjs`) : chaque packshot est rogné à son contour
+   — les fichiers du catalogue ont de grandes marges transparentes —, puis les
+   flacons sont rangés ensemble, chevauchés, sur une même ligne de sol. Le
+   groupe remplit la vignette ;
+3. sinon — coffret composé depuis, script pas encore relancé —, les flacons
+   côte à côte, agrandis pour compenser leurs marges.
+
+Les photos de groupe sont des fichiers du dépôt (`public/visuels-coffrets/`),
+listés dans `src/lib/visuels-coffrets.ts` avec les packshots dont elles sont
+faites. Un coffret dont les produits ont changé ne correspond plus à sa photo,
+qui est alors ignorée : **après avoir créé ou recomposé un coffret, relancer
+`npm run visuels:coffrets` et pousser le résultat.**
+
+## Le formulaire de commande
+
+Trois champs obligatoires : **Nom**, **Téléphone**, **Gouvernorat** (liste des
+24 gouvernorats, `lib/gouvernorats.ts`). L'adresse est facultative : le salon
+la demande à l'appel de confirmation, et la commande porte alors « À préciser
+lors de l'appel » — `creer_commande` exige toujours une adresse, la mention en
+tient lieu. Le gouvernorat est enregistré dans la colonne `ville`.
+
+Le téléphone doit être un mobile tunisien : 8 chiffres commençant par 2, 4, 5
+ou 9, avec ou sans +216. L'erreur s'affiche sous le champ, en français, et la
+commande ne part pas tant qu'elle n'est pas corrigée. L'action serveur refait
+la vérification.
+
+Juste au-dessus de « Commander », les garanties (paiement à la livraison,
+livraison, revendeur officiel Keune, délai 24–72 h). « Livraison offerte »
+n'y est écrit que si c'est vrai pour ce panier ; sinon, « Livraison offerte dès
+… », d'après les réglages. Dessous, « Commander sur WhatsApp » ouvre une
+conversation avec le panier et ce qui est déjà rempli, écrits d'avance.
+
+## Mesure Meta
+
+Un seul pixel, `1006831132445584`, écrit dans `lib/meta/track.ts`. Chaque
+évènement part aussi par l'API Conversions avec le même `event_id`, pour que
+Meta n'en garde qu'un :
+
+- **AddToCart** — « Commander » ou « Ajouter au panier » ;
+- **InitiateCheckout** — une fois, au premier champ du formulaire touché ;
+  jamais à l'ouverture du panier ;
+- **Purchase** — commande enregistrée : pixel sur la page de confirmation,
+  et API Conversions depuis `passerCommande`, avec les montants relus en base.
+  Même `event_id` des deux côtés, `order_<référence>`, unique par commande.
+
+Les montants sont en dollars (`TND_TO_USD`), Meta ne connaissant pas le dinar.
+
 Le paiement se fait **à la livraison**. Aucun moyen de paiement en ligne n'est
 intégré, et le site le dit à la cliente à chaque étape.
 

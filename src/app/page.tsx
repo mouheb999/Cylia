@@ -81,7 +81,7 @@ export default async function Page() {
         <Promotions offres={offres} groupes={groupes} devise={reglages.devise} />
         {reglages.boutique_active && (
           <>
-            <Coffrets coffrets={coffrets} produits={produits} devise={reglages.devise} />
+            <Coffrets coffrets={coffrets} produits={produits} devise={reglages.devise} limite={4} />
             <EncartBoutique produits={produits} devise={reglages.devise} />
           </>
         )}

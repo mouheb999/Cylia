@@ -50,7 +50,7 @@ export const CONTENUS_DEFAUT = {
   "boutique.surtitre": "Cosmétiques",
   "boutique.titre": "Notre",
   "boutique.titre_script": "boutique",
-  "boutique.texte": "Livraison partout en Tunisie · paiement à la livraison.",
+  "boutique.texte": "Livraison partout en Tunisie · Paiement à la livraison",
   "boutique.partenaire_libelle": "Distribué par Maison Keune Tunisie",
   "boutique.partenaire_lien": "https://www.maisonkeune.tn/",
 

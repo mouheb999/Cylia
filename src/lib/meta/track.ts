@@ -22,25 +22,16 @@
 export const TND_TO_USD = 0.34;
 
 /**
- * Identifiant du pixel du salon (Events Manager → « cylia »).
+ * L'unique pixel du site : celui du compte publicitaire qui diffuse les
+ * campagnes.
  *
- * La variable d'environnement permet d'en viser un autre — un pixel de test,
- * par exemple — sans redéploiement de code ; sans elle, c'est celui du salon.
+ * Écrit en dur, et volontairement sans variable d'environnement : l'ancien
+ * pixel du salon vivait dans `NEXT_PUBLIC_META_PIXEL_ID`, et une variable
+ * oubliée sur Vercel suffirait à le faire revenir à côté de celui-ci. Deux
+ * pixels sur la page, c'est chaque évènement compté deux fois, dans deux
+ * comptes. Changer de pixel est donc un changement de code, relu.
  */
-export const ID_PIXEL = process.env.NEXT_PUBLIC_META_PIXEL_ID || "4465663150349853";
-
-/**
- * Second pixel, facultatif : celui du compte publicitaire qui diffuse les
- * campagnes (portefeuille de l'agence). Le pixel Meta envoie chaque `track`
- * à tous les pixels initialisés sur la page, et l'API Conversions envoie à
- * chacun avec son propre jeton — voir `lib/meta/capi.ts`.
- */
-export const ID_PIXEL_SECONDAIRE = process.env.NEXT_PUBLIC_META_PIXEL_ID_2 || "";
-
-/** Tous les pixels actifs sur le site, le salon d'abord. */
-export const IDS_PIXELS = [ID_PIXEL, ID_PIXEL_SECONDAIRE].filter(
-  (id, i, liste) => id && liste.indexOf(id) === i,
-);
+export const ID_PIXEL = "1006831132445584";
 
 export const EVENEMENTS_META = ["ViewContent", "AddToCart", "InitiateCheckout", "Purchase"] as const;
 export type EvenementMeta = (typeof EVENEMENTS_META)[number];
@@ -110,9 +101,6 @@ export function parametresMeta(articles: ArticleMeta[], valeurTnd?: number): Par
 
 /** Commandes déjà remontées comme achat, sur cet appareil. */
 const CLE_ACHATS = "cylia.meta.achats";
-
-/** Posé par « Commander maintenant », lu par le panier. */
-const CLE_CAISSE = "cylia.meta.caisse";
 
 /** Le pixel arrive après l'hydratation : on l'attend jusqu'à cette limite. */
 const ATTENTE_PIXEL_MS = 4000;
@@ -201,28 +189,5 @@ export function trackMeta(
     });
   } catch {
     // Idem : rien de ce qui précède ne doit remonter jusqu'au bouton.
-  }
-}
-
-/**
- * « Commander maintenant » mène au panier : c'est là, avec tous les articles
- * sous la main, que la mise en caisse est signalée.
- */
-export function annoncerCaisse(): void {
-  try {
-    window.sessionStorage.setItem(CLE_CAISSE, "1");
-  } catch {
-    // Sans stockage, la caisse sera signalée au premier champ touché.
-  }
-}
-
-/** Vrai une seule fois après `annoncerCaisse`. */
-export function caisseAnnoncee(): boolean {
-  try {
-    if (window.sessionStorage.getItem(CLE_CAISSE) !== "1") return false;
-    window.sessionStorage.removeItem(CLE_CAISSE);
-    return true;
-  } catch {
-    return false;
   }
 }

@@ -2,10 +2,20 @@
 
 import { cookies, headers } from "next/headers";
 import { after } from "next/server";
+import { estGouvernorat } from "@/lib/gouvernorats";
 import { adresseIp, decouperNom, envoyerEvenementMeta } from "@/lib/meta/capi";
 import { parametresMeta } from "@/lib/meta/track";
 import { clientPublic } from "@/lib/supabase/public";
 import { DELAI_ECRITURE } from "@/lib/supabase/config";
+import { mobileTunisienValide } from "@/lib/telephone";
+
+/**
+ * L'adresse est facultative au panier : la cliente donne son gouvernorat, et
+ * le salon lui demande le reste à l'appel de confirmation. `creer_commande`
+ * exige pourtant une adresse d'au moins cinq caractères — cette mention en
+ * tient lieu, et dit au salon ce qu'il lui reste à faire.
+ */
+const ADRESSE_A_PRECISER = "À préciser lors de l'appel";
 
 export type ArticleCommande = {
   /** Nul pour un coffret, qui porte alors `coffret_id`. */
@@ -36,9 +46,10 @@ export type ReponseCommande =
 const MESSAGES: Record<string, string> = {
   BOUTIQUE_FERMEE: "La boutique est momentanément fermée.",
   NOM_INVALIDE: "Indiquez votre nom.",
-  TELEPHONE_INVALIDE: "Numéro à 8 chiffres, ex. 54 395 168.",
+  TELEPHONE_INVALIDE:
+    "Numéro de mobile tunisien à 8 chiffres, commençant par 2, 4, 5 ou 9 — ex. 54 395 168.",
   ADRESSE_INVALIDE: "Indiquez une adresse de livraison complète.",
-  VILLE_INVALIDE: "Indiquez votre ville.",
+  VILLE_INVALIDE: "Choisissez votre gouvernorat.",
   EMAIL_INVALIDE: "Cette adresse e-mail semble incorrecte.",
   PANIER_INVALIDE: "Votre panier est vide ou n'est plus valable.",
   PRODUIT_INTROUVABLE: "Un produit de votre panier n'est plus disponible.",
@@ -100,6 +111,10 @@ async function signalerAchat(commande: CommandeConfirmee, email: string | undefi
  * Le navigateur n'envoie que des identifiants et des quantités : `creer_commande`
  * relit les prix, applique les frais de livraison et décrémente le stock dans
  * la même transaction.
+ *
+ * `ville` porte le gouvernorat choisi dans la liste. Téléphone et gouvernorat
+ * sont revérifiés ici : le formulaire les contrôle déjà, mais une action
+ * serveur s'appelle sans passer par lui.
  */
 export async function passerCommande(demande: {
   articles: (({ produit_id: string } | { coffret_id: string }) & { quantite: number })[];
@@ -110,6 +125,14 @@ export async function passerCommande(demande: {
   email?: string;
   note?: string;
 }): Promise<ReponseCommande> {
+  if (!mobileTunisienValide(demande.telephone)) {
+    return { ok: false, message: MESSAGES.TELEPHONE_INVALIDE };
+  }
+  if (!estGouvernorat(demande.ville)) {
+    return { ok: false, message: MESSAGES.VILLE_INVALIDE };
+  }
+  const adresse = demande.adresse.trim();
+
   try {
     const { data, error } = await clientPublic().rpc("creer_commande", {
       p_articles: demande.articles.map((a) =>
@@ -119,7 +142,7 @@ export async function passerCommande(demande: {
       ),
       p_nom: demande.nom,
       p_telephone: demande.telephone,
-      p_adresse: demande.adresse,
+      p_adresse: adresse.length >= 5 ? adresse : [adresse, ADRESSE_A_PRECISER].filter(Boolean).join(" — "),
       p_ville: demande.ville,
       p_email: demande.email || null,
       p_note: demande.note || null,

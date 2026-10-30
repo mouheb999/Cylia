@@ -3,7 +3,6 @@ import { createHash } from "node:crypto";
 import { numeroInternational } from "@/lib/telephone";
 import {
   ID_PIXEL,
-  ID_PIXEL_SECONDAIRE,
   type EvenementMeta,
   type ParametresMeta,
   type UtilisateurMeta,
@@ -99,27 +98,30 @@ export function decouperNom(nom: string): { firstName?: string; lastName?: strin
 }
 
 /**
- * Chaque pixel avec son jeton. Un pixel sans jeton est ignoré ici (le pixel du
- * navigateur continue de l'alimenter) : un jeton n'ouvre l'API Conversions
- * que pour le pixel qui l'a généré.
+ * Le jeton de l'API Conversions du pixel.
+ *
+ * Un jeton n'ouvre l'API que pour le pixel qui l'a généré. Celui du pixel
+ * actuel a d'abord été déclaré comme « second » jeton, à côté de celui de
+ * l'ancien pixel du salon : `META_CAPI_TOKEN_2` passe donc devant, tant qu'il
+ * existe. Une fois le jeton recopié dans `META_CAPI_TOKEN` sur Vercel, la
+ * seconde variable peut disparaître.
  */
-function pixelsServeur(): { pixel: string; jeton: string }[] {
-  const paires = [
-    { pixel: ID_PIXEL, jeton: process.env.META_CAPI_TOKEN },
-    { pixel: ID_PIXEL_SECONDAIRE, jeton: process.env.META_CAPI_TOKEN_2 },
-  ];
-  return paires.filter((p): p is { pixel: string; jeton: string } => Boolean(p.pixel && p.jeton));
+function jetonCapi(): string | undefined {
+  return process.env.META_CAPI_TOKEN_2 || process.env.META_CAPI_TOKEN || undefined;
 }
 
-/** Envoie un évènement à Meta, à chaque pixel. Ne lève jamais ; journalise les refus. */
+/** Envoie un évènement à Meta. Ne lève jamais ; journalise les refus. */
 export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise<ReponseCapi> {
-  const cibles = pixelsServeur();
-  if (cibles.length === 0) {
+  const jeton = jetonCapi();
+  if (!jeton) {
     return { ok: false, status: 503, message: "META_CAPI_TOKEN absent" };
   }
 
   const { navigateur, user } = evenement;
-  const villeNormalisee = normaliser(user?.city)?.replace(/\s+/g, "");
+  // Meta veut des lettres a-z seules : « Béja » → « beja », « Le Kef » → « lekef ».
+  const villeNormalisee = normaliser(user?.city)
+    ?.normalize("NFD")
+    .replace(/[^a-z]/g, "");
 
   const userData = {
     client_ip_address: navigateur.ip ?? undefined,
@@ -150,19 +152,12 @@ export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise
     ],
   };
 
-  const resultats = await Promise.all(
-    cibles.map(({ pixel, jeton }) =>
-      envoyerAuPixel(
-        pixel,
-        jeton,
-        // Le code de test vient du pixel du salon : il ne vaut que pour lui.
-        testEventCode && pixel === ID_PIXEL ? { ...charge, test_event_code: testEventCode } : charge,
-        evenement.event,
-      ),
-    ),
+  return envoyerAuPixel(
+    ID_PIXEL,
+    jeton,
+    testEventCode ? { ...charge, test_event_code: testEventCode } : charge,
+    evenement.event,
   );
-  // Réussi dès qu'un pixel a accepté : les refus sont déjà journalisés.
-  return resultats.find((r) => r.ok) ?? resultats[0];
 }
 
 async function envoyerAuPixel(

@@ -73,3 +73,15 @@ export function lienWhatsApp(brut: string, message?: string): string | null {
 export function prenom(nomComplet: string): string {
   return nomComplet.trim().split(/\s+/)[0] ?? nomComplet.trim();
 }
+
+/**
+ * Mobile tunisien : 8 chiffres commençant par 2, 4, 5 ou 9, avec ou sans
+ * indicatif (+216, 00216). Espaces, points et tirets sont tolérés.
+ *
+ * Plus strict que la base, qui accepte 8 à 15 chiffres de n'importe où : la
+ * boutique livre en Tunisie, et un numéro fixe ou mal tapé est une commande
+ * que le livreur ne pourra pas confirmer.
+ */
+export function mobileTunisienValide(brut: string): boolean {
+  return /^(?:(?:\+|00)?216)?[2459]\d{7}$/.test(brut.replace(/[\s.\-()]/g, ""));
+}

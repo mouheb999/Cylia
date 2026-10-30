@@ -7,6 +7,7 @@ import {
   prixBarreDuCoffret,
   produitsDuCoffret,
   stockDuCoffret,
+  trierCoffrets,
   visuelsDuCoffret,
 } from "@/lib/coffrets";
 import { CONTENUS_DEFAUT } from "@/lib/contenu";
@@ -16,12 +17,19 @@ import type { Coffret, Produit } from "@/lib/supabase/types";
 /**
  * « Nos coffrets » — des produits de la boutique vendus ensemble.
  *
- * Posée juste au-dessus de l'encart boutique : c'est la même vitrine, livrée
- * de la même façon, et le coffret s'ajoute au même panier que les flacons.
+ * Une grille, pas une rangée qui défile : deux colonnes sur téléphone, trois
+ * puis quatre sur grand écran. La cliente arrivée d'une publicité voit dès le
+ * premier écran une photo, un prix et « Commander », sans deviner qu'il faut
+ * glisser sur le côté pour trouver la suite.
  *
- * Même rangée que l'encart — défilement natif, une carte qui dépasse du bord
- * pour dire qu'il y a la suite. Un coffret seul prend toute la largeur.
+ * Du moins cher au plus cher (`trierCoffrets`) ; `epingle` met en tête le
+ * coffret d'un lien publicitaire (`/boutique?coffret=<id>`).
  *
+ * Sur la carte, à deux colonnes, rien que l'essentiel : la photo, le nom, le
+ * prix, les boutons. Le détail du contenu attend la fiche, à un geste — ou
+ * s'affiche sur grand écran, où la place ne manque pas.
+ *
+ * `limite` : l'accueil n'en montre que quelques-uns et renvoie à la boutique.
  * Sans aucun coffret, la section n'existe pas : une vitrine vide se lirait
  * comme une panne.
  */
@@ -29,17 +37,28 @@ export default function Coffrets({
   coffrets,
   produits,
   devise,
+  epingle,
+  limite,
+  compact = false,
 }: {
   coffrets: Coffret[];
   produits: Produit[];
   devise: string;
+  epingle?: string | null;
+  limite?: number;
+  /** En-tête resserré : sur `/boutique`, la page a déjà son titre au-dessus. */
+  compact?: boolean;
 }) {
   if (coffrets.length === 0) return null;
-  const seul = coffrets.length === 1;
+  const tries = trierCoffrets(coffrets, produits, epingle);
+  const affiches = limite ? tries.slice(0, limite) : tries;
 
   return (
-    <section id="coffrets" className="scroll-mt-24 bg-cream px-4 pb-10 pt-4">
-      <div className="mb-5 text-center">
+    <section
+      id="coffrets"
+      className={`scroll-mt-24 bg-cream px-4 pb-10 ${compact ? "pt-3" : "pt-4"}`}
+    >
+      <div className={`text-center ${compact ? "mb-3" : "mb-5"}`}>
         <Texte
           cle="coffrets.surtitre"
           titre="Sur-titre des coffrets"
@@ -52,7 +71,7 @@ export default function Coffrets({
           titre="Titre des coffrets"
           defaut={CONTENUS_DEFAUT["coffrets.titre"]}
           balise="h2"
-          className="mt-2 font-serif text-2xl font-light text-ink"
+          className={`font-serif font-light text-ink ${compact ? "mt-1 text-xl" : "mt-2 text-2xl"}`}
         />
         <Texte
           cle="coffrets.texte"
@@ -60,19 +79,15 @@ export default function Coffrets({
           type="multiligne"
           defaut={CONTENUS_DEFAUT["coffrets.texte"]}
           balise="p"
-          className="mx-auto mt-2 max-w-[24rem] whitespace-pre-line text-[0.8rem] font-light leading-relaxed text-muted"
+          className={`mx-auto mt-2 max-w-[24rem] whitespace-pre-line text-[0.8rem] font-light leading-relaxed text-muted ${
+            compact ? "hidden sm:block" : ""
+          }`}
         />
-        <div className="gold-rule mx-auto mt-3 h-px w-16" aria-hidden="true" />
+        <div className={`gold-rule mx-auto h-px w-16 ${compact ? "mt-2" : "mt-3"}`} aria-hidden="true" />
       </div>
 
-      <ul
-        tabIndex={0}
-        role="region"
-        aria-label="Nos coffrets, à faire défiler sur le côté"
-        className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-1
-          [scrollbar-width:none] focus-visible:outline-none [&::-webkit-scrollbar]:hidden"
-      >
-        {coffrets.map((coffret) => {
+      <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+        {affiches.map((coffret, index) => {
           const contenu = produitsDuCoffret(coffret, produits);
           const prixBarre = prixBarreDuCoffret(coffret, produits);
           const remise = pourcentageRemise(coffret.prix, prixBarre);
@@ -81,22 +96,24 @@ export default function Coffrets({
           return (
             <li
               key={coffret.id}
-              className={`flex shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-sand bg-white ${
-                seul ? "w-full" : "w-[16rem]"
-              }`}
+              className="flex flex-col overflow-hidden rounded-2xl border border-sand bg-white"
             >
               <Link
                 href={cheminCoffret(coffret)}
                 aria-label={`Voir le coffret ${coffret.nom}`}
-                className="relative block aspect-[4/3] overflow-hidden"
+                className="relative block aspect-square overflow-hidden"
               >
                 <VisuelCoffret
                   nom={coffret.nom}
                   photos={visuelsDuCoffret(coffret, produits)}
-                  sizes={seul ? "100vw" : "256px"}
+                  // La carte fait la moitié de l'écran sur téléphone (≈ 400 px
+                  // utiles sur un écran 2x), un tiers puis un quart au-delà —
+                  // dans la limite de `max-w-6xl`.
+                  sizes="(min-width: 1152px) 288px, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                  preload={index < 2}
                 />
                 {remise !== null && (
-                  <span className="absolute left-2.5 top-2.5 rounded-full bg-noir/80 px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.18em] text-gold">
+                  <span className="absolute left-2 top-2 rounded-full bg-noir/80 px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.18em] text-gold">
                     −{remise} %
                   </span>
                 )}
@@ -107,11 +124,16 @@ export default function Coffrets({
                 )}
               </Link>
 
-              <div className="flex flex-1 flex-col p-3.5">
-                <h3 className="font-serif text-lg leading-snug text-ink">
+              <div className="flex flex-1 flex-col p-2.5 sm:p-3.5">
+                <h3 className="font-serif text-base leading-tight text-ink sm:text-lg">
                   <Link href={cheminCoffret(coffret)}>{coffret.nom}</Link>
                 </h3>
-                <Link href={cheminCoffret(coffret)} tabIndex={-1} className="block">
+                {contenu.length > 0 && (
+                  <p className="mt-0.5 text-[0.65rem] font-light text-muted sm:hidden">
+                    {contenu.length} produits
+                  </p>
+                )}
+                <Link href={cheminCoffret(coffret)} tabIndex={-1} className="hidden sm:block">
                   {coffret.description && (
                     <p className="mt-1 line-clamp-3 text-[0.75rem] font-light leading-relaxed text-muted">
                       {coffret.description}
@@ -133,18 +155,18 @@ export default function Coffrets({
                   )}
                 </Link>
 
-                <div className="mt-auto pt-3">
-                  <p className="flex items-baseline gap-2">
-                    <span className="font-serif text-xl font-semibold leading-none text-gold-deep lining-nums">
+                <div className="mt-auto pt-2 sm:pt-3">
+                  <p className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="font-serif text-lg font-semibold leading-none text-gold-deep lining-nums sm:text-xl">
                       {formatPrix(coffret.prix, devise)}
                     </span>
                     {prixBarre !== null && (
-                      <span className="text-xs font-light text-muted line-through lining-nums">
+                      <span className="text-[0.7rem] font-light text-muted line-through lining-nums">
                         {formatPrix(prixBarre, devise)}
                       </span>
                     )}
                   </p>
-                  <div className="mt-3">
+                  <div className="mt-2 sm:mt-3">
                     <BoutonCoffret
                       coffretId={coffret.id}
                       nom={coffret.nom}
@@ -158,6 +180,15 @@ export default function Coffrets({
           );
         })}
       </ul>
+
+      {affiches.length < tries.length && (
+        <Link
+          href="/boutique#coffrets"
+          className="mx-auto mt-5 flex w-full max-w-[20rem] items-center justify-center rounded-full border border-gold-deep/40 py-3 font-serif text-base text-gold-deep"
+        >
+          Voir les {tries.length} coffrets
+        </Link>
+      )}
     </section>
   );
 }
