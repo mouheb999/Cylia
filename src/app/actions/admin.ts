@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { after } from "next/server";
 import { adminConnecte, clientServeur } from "@/lib/supabase/serveur";
-import { TAG_SITE } from "@/lib/donnees";
+import { chargerDonnees, TAG_SITE } from "@/lib/donnees";
+import { decouperNom, envoyerEvenementMeta } from "@/lib/meta/capi";
+import { idEvenementVisite, parametresMeta } from "@/lib/meta/track";
 import {
   CLE_CATEGORIES_PACKS,
   CLE_COMPOSITIONS_PACKS,
@@ -14,6 +17,7 @@ import type { CategoriePack } from "@/lib/supabase/types";
 import type {
   EmplacementPhoto,
   Reglages,
+  Reservation,
   StatutCommande,
   StatutReservation,
 } from "@/lib/supabase/types";
@@ -905,6 +909,64 @@ export async function changerStatutReservation(
     const { error } = await supabase.from("reservations").update({ statut }).eq("id", id);
     if (error) throw error;
   }, rafraichirPanneau);
+}
+
+/**
+ * La cliente est venue : le rendez-vous passe à « terminé », et Meta reçoit
+ * l'achat réel — ce qu'elle a payé au salon, pas le prix annoncé en ligne.
+ *
+ * `Purchase` avec `action_source: "physical_store"` et l'`eventID`
+ * `visit_<id>` : rouvrir puis re-terminer le même rendez-vous ne compte
+ * qu'une vente. Le téléphone et le prénom, hachés, relient la venue au clic
+ * publicitaire et au `Schedule` du site ; ni l'adresse IP ni le navigateur
+ * de l'administratrice ne partent.
+ *
+ * Seulement d'ici, derrière la connexion du panneau : jamais du site public.
+ * Un montant nul ne remonte rien — une venue offerte n'est pas une vente.
+ */
+export async function marquerVenue(id: string, montantPaye: number): Promise<Resultat> {
+  if (!Number.isFinite(montantPaye) || montantPaye < 0 || montantPaye > 100_000) {
+    return { ok: false, message: "Indiquez le montant payé, en DT." };
+  }
+
+  let terminee: Reservation | null = null;
+  const resultat = await agir(async () => {
+    const supabase = await clientServeur();
+    const { data, error } = await supabase
+      .from("reservations")
+      .update({ statut: "terminee" })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    terminee = data as Reservation;
+  }, rafraichirPanneau);
+
+  const venue = terminee as Reservation | null;
+  if (resultat.ok && venue && montantPaye > 0) {
+    after(() => signalerVenue(venue, montantPaye));
+  }
+  return resultat;
+}
+
+async function signalerVenue(reservation: Reservation, montantPaye: number) {
+  const { prestations } = await chargerDonnees();
+  const articles = reservation.prestation_ids.map((pid, index) => {
+    const p = prestations.find((x) => x.id === pid);
+    return {
+      id: pid,
+      name: p?.nom ?? reservation.prestations_nom[index] ?? pid,
+      priceTnd: p?.prix ?? 0,
+    };
+  });
+  await envoyerEvenementMeta({
+    event: "Purchase",
+    eventId: idEvenementVisite(reservation.id),
+    params: parametresMeta(articles, montantPaye, "reservation"),
+    url: null,
+    user: { phone: reservation.telephone, ...decouperNom(reservation.nom) },
+    actionSource: "physical_store",
+  });
 }
 
 export async function changerStatutCommande(

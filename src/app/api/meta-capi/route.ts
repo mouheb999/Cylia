@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { adresseIp, envoyerEvenementMeta } from "@/lib/meta/capi";
-import type { EvenementMeta, ParametresMeta, UtilisateurMeta } from "@/lib/meta/track";
+import {
+  CATEGORIES_META,
+  type EvenementMeta,
+  type ParametresMeta,
+  type UtilisateurMeta,
+} from "@/lib/meta/track";
 
 /**
  * Relais du navigateur vers l'API Conversions de Meta.
@@ -10,10 +15,15 @@ import type { EvenementMeta, ParametresMeta, UtilisateurMeta } from "@/lib/meta/
  * cookies `_fbp`/`_fbc`) et on transmet à Meta avec le jeton, qui ne quitte
  * jamais le serveur.
  *
- * L'achat n'est pas accepté ici. Cette route est publique : n'importe qui peut
- * y poster ce qu'il veut, et un faux `Purchase` fausserait précisément ce sur
- * quoi la campagne s'optimise. L'achat part donc de `passerCommande`, une fois
- * la commande enregistrée, avec les montants relus en base.
+ * Boutique et rendez-vous passent ici de la même façon ; un évènement de
+ * rendez-vous porte `content_category: "reservation"`.
+ *
+ * L'achat et le rendez-vous ne sont pas acceptés ici. Cette route est
+ * publique : n'importe qui peut y poster ce qu'il veut, et un faux `Purchase`
+ * ou un faux `Schedule` fausserait précisément ce sur quoi la campagne
+ * s'optimise. Ils partent de `passerCommande` et de `confirmerReservation`,
+ * une fois la commande ou le rendez-vous enregistré, avec les montants relus
+ * en base.
  */
 
 const ACCEPTES: readonly EvenementMeta[] = ["ViewContent", "AddToCart", "InitiateCheckout"];
@@ -57,11 +67,15 @@ function lireParametres(brut: unknown): ParametresMeta | null {
   const value = nombre(p.value, 0, 1_000_000);
   if (value === undefined) return null;
 
+  const categorie = CATEGORIES_META.find((c) => c === p.content_category);
+  if (p.content_category !== undefined && !categorie) return null;
+
   return {
     content_ids: contents.map((c) => c.id),
     contents,
     content_name: texte(p.content_name, 500) ?? "",
     content_type: "product",
+    ...(categorie ? { content_category: categorie } : {}),
     num_items: contents.reduce((t, c) => t + c.quantity, 0),
     value,
     currency: "USD",

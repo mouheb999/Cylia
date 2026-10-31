@@ -1,5 +1,6 @@
 /**
- * Les évènements de vente remontés à Meta — vue, panier, caisse, achat.
+ * Les évènements de vente remontés à Meta — vue, panier, caisse, achat — pour
+ * la boutique comme pour les rendez-vous (où l'achat devient `Schedule`).
  *
  * Chaque évènement part deux fois, avec le même `eventID` : par le pixel du
  * navigateur, et par l'API Conversions côté serveur (`/api/meta-capi`). Meta
@@ -33,15 +34,43 @@ export const TND_TO_USD = 0.34;
  */
 export const ID_PIXEL = "1006831132445584";
 
-export const EVENEMENTS_META = ["ViewContent", "AddToCart", "InitiateCheckout", "Purchase"] as const;
+export const EVENEMENTS_META = [
+  "ViewContent",
+  "AddToCart",
+  "InitiateCheckout",
+  "Schedule",
+  "Purchase",
+] as const;
 export type EvenementMeta = (typeof EVENEMENTS_META)[number];
+
+/**
+ * Les évènements qui ne partent vers l'API Conversions que du serveur, après
+ * écriture en base : `/api/meta-capi` est public, un faux achat ou un faux
+ * rendez-vous y fausserait précisément ce sur quoi les campagnes s'optimisent.
+ * Le navigateur ne les envoie qu'au pixel, avec le même `eventID`.
+ */
+export const EVENEMENTS_SERVEUR: readonly EvenementMeta[] = ["Schedule", "Purchase"];
+
+/** `eventID` du rendez-vous pris en ligne — le même côté pixel et côté serveur. */
+export function idEvenementReservation(reservationId: string): string {
+  return `booking_${reservationId}`;
+}
+
+/** `eventID` de la venue au salon, signalée depuis le panneau. */
+export function idEvenementVisite(reservationId: string): string {
+  return `visit_${reservationId}`;
+}
+
+/** Ce que Meta lit dans `content_category` : d'où vient l'évènement. */
+export const CATEGORIES_META = ["reservation"] as const;
+export type CategorieMeta = (typeof CATEGORIES_META)[number];
 
 /**
  * Un article tel que Meta le voit.
  *
- * `id` est l'identifiant Supabase du produit ou du coffret — le même partout,
- * de la fiche à la commande, pour que Meta suive un même article d'un bout à
- * l'autre du parcours.
+ * `id` est l'identifiant Supabase du produit, du coffret ou de la prestation
+ * — le même partout, de la fiche à la commande, pour que Meta suive un même
+ * article d'un bout à l'autre du parcours.
  */
 export type ArticleMeta = {
   id: string;
@@ -64,6 +93,8 @@ export type ParametresMeta = {
   contents: { id: string; quantity: number; item_price: number }[];
   content_name: string;
   content_type: "product";
+  /** Absent pour la boutique ; « reservation » pour les rendez-vous. */
+  content_category?: CategorieMeta;
   num_items: number;
   value: number;
   currency: "USD";
@@ -77,9 +108,13 @@ function enDollars(tnd: number): number {
  * Les paramètres standard de Meta pour une liste d'articles.
  *
  * `valeurTnd` remplace la somme des articles quand le montant réel diffère —
- * le total d'une commande, livraison comprise.
+ * le total d'une commande, livraison comprise, ou le prix d'un pack.
  */
-export function parametresMeta(articles: ArticleMeta[], valeurTnd?: number): ParametresMeta {
+export function parametresMeta(
+  articles: ArticleMeta[],
+  valeurTnd?: number,
+  categorie?: CategorieMeta,
+): ParametresMeta {
   const lignes = articles.map((a) => ({ ...a, quantity: a.quantity ?? 1 }));
   const somme = lignes.reduce((t, a) => t + a.priceTnd * a.quantity, 0);
   return {
@@ -91,6 +126,7 @@ export function parametresMeta(articles: ArticleMeta[], valeurTnd?: number): Par
     })),
     content_name: lignes.map((a) => a.name).join(", "),
     content_type: "product",
+    ...(categorie ? { content_category: categorie } : {}),
     num_items: lignes.reduce((t, a) => t + a.quantity, 0),
     value: enDollars(valeurTnd ?? somme),
     currency: "USD",
@@ -99,7 +135,7 @@ export function parametresMeta(articles: ArticleMeta[], valeurTnd?: number): Par
 
 // ------------------------------------------------------------ navigateur
 
-/** Commandes déjà remontées comme achat, sur cet appareil. */
+/** Commandes et rendez-vous déjà remontés, sur cet appareil. */
 const CLE_ACHATS = "cylia.meta.achats";
 
 /** Le pixel arrive après l'hydratation : on l'attend jusqu'à cette limite. */
@@ -133,7 +169,7 @@ function quandPixelPret(travail: () => void): void {
   }, 100);
 }
 
-/** Vrai la première fois qu'on voit cette commande sur cet appareil. */
+/** Vrai la première fois qu'on voit cette commande (ou ce rendez-vous) sur cet appareil. */
 function premierAchat(idCommande: string): boolean {
   try {
     const deja = JSON.parse(window.localStorage.getItem(CLE_ACHATS) ?? "[]") as unknown;
@@ -152,22 +188,33 @@ function premierAchat(idCommande: string): boolean {
  *
  * Ne lève jamais : une mesure manquée ne doit pas empêcher un ajout au panier.
  *
- * L'achat (`Purchase`) ne part que par le pixel : son pendant serveur est
- * envoyé par `passerCommande` lui-même, avec les montants relus en base, et
- * le même `eventID` — `order_<référence>`.
+ * L'achat (`Purchase`) et le rendez-vous (`Schedule`) ne partent que par le
+ * pixel : leur pendant serveur est envoyé par `passerCommande` et
+ * `confirmerReservation` eux-mêmes, avec les montants relus en base, et le
+ * même `eventID` — `order_<référence>`, `booking_<id>`.
  */
 export function trackMeta(
   evenement: EvenementMeta,
   articles: ArticleMeta[],
-  options: { orderId?: string; user?: UtilisateurMeta; valeurTnd?: number } = {},
+  options: {
+    orderId?: string;
+    /** `Schedule` : l'`eventID` partagé avec le serveur, `idEvenementReservation`. */
+    eventId?: string;
+    user?: UtilisateurMeta;
+    valeurTnd?: number;
+    categorie?: CategorieMeta;
+  } = {},
 ): void {
   if (typeof window === "undefined" || articles.length === 0) return;
   try {
     if (evenement === "Purchase" && (!options.orderId || !premierAchat(options.orderId))) return;
+    if (evenement === "Schedule" && (!options.eventId || !premierAchat(options.eventId))) return;
 
-    const params = parametresMeta(articles, options.valeurTnd);
+    const params = parametresMeta(articles, options.valeurTnd, options.categorie);
     const eventId =
-      evenement === "Purchase" ? `order_${options.orderId}` : nouvelIdentifiant();
+      evenement === "Purchase"
+        ? `order_${options.orderId}`
+        : (options.eventId ?? nouvelIdentifiant());
     const url = window.location.href;
 
     quandPixelPret(() => {
@@ -177,7 +224,7 @@ export function trackMeta(
         // Le script de Meta n'a pas à faire tomber la page.
       }
 
-      if (evenement === "Purchase") return;
+      if (EVENEMENTS_SERVEUR.includes(evenement)) return;
       // `keepalive` : « Commander maintenant » change de page dans la foulée,
       // la requête doit survivre à la navigation.
       fetch("/api/meta-capi", {

@@ -4,13 +4,22 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   confirmerReservation,
   creneauxDisponibles,
+  joursDisponibles,
   type ReponseCreneaux,
+  type ReponseJours,
 } from "@/app/actions/reservation";
 import { boutonFantome, boutonOr } from "@/components/ui/champs";
 import { useEdition } from "@/components/edition/ContexteEdition";
 import { IconArrow } from "@/components/Icons";
-import { ajouterPrestation, basculerPrestation, usePanier, viderPanier } from "@/lib/panier";
-import { depuisCleDate, formatDuree, formatJourCourt, formatPrix } from "@/lib/format";
+import { basculerPrestation, remplacerPanier, usePanier, viderPanier } from "@/lib/panier";
+import {
+  depuisCleDate,
+  formatDateLongue,
+  formatDuree,
+  formatJourCourt,
+  formatPrix,
+} from "@/lib/format";
+import { trackMeta, type ArticleMeta } from "@/lib/meta/track";
 import { enPromo, remisePourcent, tarifDuJour } from "@/lib/promotions";
 import { track } from "@/lib/fbq";
 import VisuelPrestation from "./VisuelPrestation";
@@ -32,11 +41,27 @@ type Props = {
   telephoneSalon: string;
   reservationActive: boolean;
   categorieInitiale?: string;
-  /** Prestation arrivée par l'adresse — une offre de l'accueil, par exemple. */
-  prestationInitiale?: string;
+  /**
+   * Prestations arrivées par l'adresse — `?prestation=a,b` : une offre de
+   * l'accueil, une publicité, la fiche d'un pack. Déjà filtrées par la page.
+   */
+  prestationsInitiales?: string[];
   /** Pack arrivé par l'adresse : ses prestations, et le prix du pack. */
-  packInitial?: { nom: string; prix: number | null; prestationIds: string[] };
+  packInitial?: { slug: string; nom: string; prix: number | null; prestationIds: string[] };
 };
+
+/** Le plus bas des tarifs du jour d'une liste — `null` si aucune n'a de prix. */
+function prixMinimum(liste: Prestation[], aujourdhui: string): number | null {
+  const prix = liste
+    .map((p) => tarifDuJour(p, aujourdhui))
+    .filter((x): x is number => x != null);
+  return prix.length > 0 ? Math.min(...prix) : null;
+}
+
+/** Une prestation telle que Meta la voit : son identifiant, son tarif du jour. */
+function versMeta(p: Prestation, aujourdhui: string): ArticleMeta {
+  return { id: p.id, name: p.nom, priceTnd: tarifDuJour(p, aujourdhui) ?? 0 };
+}
 
 export default function FluxReservation({
   categories,
@@ -47,26 +72,25 @@ export default function FluxReservation({
   telephoneSalon,
   reservationActive,
   categorieInitiale,
-  prestationInitiale,
+  prestationsInitiales = [],
   packInitial,
 }: Props) {
   const edition = useEdition();
   const panier = usePanier();
 
   /*
-   * Une offre touchée sur l'accueil arrive ici par l'adresse.
+   * Une offre, une publicité ou un pack arrive ici par l'adresse.
    *
-   * Elle décide de trois choses d'un coup : la catégorie affichée, le groupe
-   * ouvert, et la prestation déjà retenue. Les deux premières sont l'état de
-   * départ du tunnel — pas une correction faite après coup, qui ferait
+   * L'adresse décide de trois choses d'un coup : la catégorie affichée, le
+   * groupe ouvert, et les prestations retenues. Les deux premières sont l'état
+   * de départ du tunnel — pas une correction faite après coup, qui ferait
    * clignoter l'écran ; la troisième va dans le panier, qui vit hors de React,
    * d'où l'effet plus bas.
    */
-  const demandee = prestationInitiale
-    ? prestations.find((p) => p.id === prestationInitiale)
-    : packInitial
-      ? prestations.find((p) => p.id === packInitial.prestationIds[0])
-      : undefined;
+  const idsDemandes = packInitial?.prestationIds ?? prestationsInitiales;
+  const demandee = idsDemandes.length > 0
+    ? prestations.find((p) => p.id === idsDemandes[0])
+    : undefined;
 
   const [etape, setEtape] = useState(0);
   const [categorie, setCategorie] = useState(() => {
@@ -84,14 +108,15 @@ export default function FluxReservation({
   const [fiche, setFiche] = useState<Prestation | null | undefined>(undefined);
   /** `null` : on voit les groupes de la catégorie. Sinon, on est entré dedans. */
   const [groupeOuvert, setGroupeOuvert] = useState<string | null>(demandee?.groupe_id ?? null);
+  /** Les prestations arrivées par l'adresse, mises en évidence un instant. */
+  const [surbrillance, setSurbrillance] = useState<readonly string[]>(idsDemandes);
+  /** Disponibilités jour par jour, pour la sélection en cours. */
+  const [jours, setJours] = useState<{ cle: string; reponse: ReponseJours } | null>(null);
 
   const parId = useMemo(
     () => new Map(prestations.map((p) => [p.id, p])),
     [prestations],
   );
-
-  // La durée n'est montrée que là où elle est sûre — voir `duree_visible`.
-  const groupeParId = useMemo(() => new Map(groupes.map((g) => [g.id, g])), [groupes]);
 
   // Le panier survit aux rechargements : une prestation retirée du catalogue
   // entre-temps ne doit pas bloquer le tunnel.
@@ -125,17 +150,69 @@ export default function FluxReservation({
   const totalDepart = selection.some((id) => parId.get(id)?.prix_a_partir_de);
 
   /*
-   * La prestation demandée entre dans le panier — celui du navigateur, qui
-   * survit aux rechargements. Une seule fois : sans ce garde, la retirer la
-   * remettrait aussitôt, et le bouton paraîtrait cassé.
+   * Les prestations demandées *remplacent* le panier — celui du navigateur,
+   * qui survit aux rechargements. Une sélection oubliée là il y a trois jours
+   * ne s'ajoute pas en douce à ce que la publicité a proposé.
+   *
+   * Une seule fois : sans ce garde, retirer une prestation la remettrait
+   * aussitôt, et le bouton paraîtrait cassé. Le dépôt compte comme un ajout
+   * pour Meta : c'est le geste « Réserver » de la publicité ou du pack.
    */
   const deposee = useRef(false);
-  const idsDemandes = (packInitial?.prestationIds ?? (demandee ? [demandee.id] : [])).join(",");
+  const cleDemandes = idsDemandes.join(",");
   useEffect(() => {
-    if (deposee.current || !idsDemandes) return;
+    if (deposee.current || !cleDemandes) return;
     deposee.current = true;
-    for (const id of idsDemandes.split(",")) ajouterPrestation(id);
-  }, [idsDemandes]);
+    const ids = cleDemandes.split(",");
+    remplacerPanier(ids);
+    const deposees = ids
+      .map((id) => prestations.find((p) => p.id === id))
+      .filter((p): p is Prestation => p !== undefined);
+    if (deposees.length > 0) {
+      trackMeta("AddToCart", deposees.map((p) => versMeta(p, aujourdhui)), {
+        valeurTnd: packInitial?.prix ?? undefined,
+        categorie: "reservation",
+      });
+    }
+  }, [cleDemandes, prestations, aujourdhui, packInitial?.prix]);
+
+  /*
+   * La prestation arrivée par l'adresse est amenée à l'écran et soulignée
+   * d'or quelques secondes : la cliente voit d'un coup d'œil ce qui est retenu.
+   */
+  useEffect(() => {
+    if (surbrillance.length === 0) return;
+    document
+      .getElementById(`prestation-${surbrillance[0]}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const minuteur = window.setTimeout(() => setSurbrillance([]), 4000);
+    return () => window.clearTimeout(minuteur);
+  }, [surbrillance]);
+
+  /*
+   * Un groupe ouvert est une fiche vue : Meta reçoit ses prestations, et le
+   * plus bas de leurs prix — celui que la carte annonce « à partir de ».
+   */
+  const groupeVu = useRef<string | null>(null);
+  useEffect(() => {
+    if (!groupeOuvert || groupeVu.current === groupeOuvert) return;
+    groupeVu.current = groupeOuvert;
+    const contenu = prestations.filter((p) => p.groupe_id === groupeOuvert);
+    if (contenu.length === 0) return;
+    trackMeta("ViewContent", contenu.map((p) => versMeta(p, aujourdhui)), {
+      valeurTnd: prixMinimum(contenu, aujourdhui) ?? 0,
+      categorie: "reservation",
+    });
+  }, [groupeOuvert, prestations, aujourdhui]);
+
+  /** Retenir ou retirer une prestation ; seul l'ajout compte pour Meta. */
+  function basculer(p: Prestation) {
+    const ajout = !selection.includes(p.id);
+    basculerPrestation(p.id);
+    if (ajout) {
+      trackMeta("AddToCart", [versMeta(p, aujourdhui)], { categorie: "reservation" });
+    }
+  }
 
   /*
    * Le pack tient tant que toutes ses prestations sont dans le panier : son
@@ -148,20 +225,61 @@ export default function FluxReservation({
       : null;
 
   const etapeCourante = selection.length === 0 ? 0 : etape;
-  const cleCalcul = dateCle && selection.length > 0 ? `${selection.join(",")}|${dateCle}` : null;
+  const cleSelection = selection.join(",");
+
+  /*
+   * Les jours où la visite tient encore, lus en une fois à l'entrée de l'étape
+   * — et relus à chaque retour, l'agenda du salon ayant pu bouger.
+   */
+  useEffect(() => {
+    if (etapeCourante !== 1 || !cleSelection) return;
+    let annule = false;
+    joursDisponibles(cleSelection.split(",")).then((reponse) => {
+      if (!annule) setJours({ cle: cleSelection, reponse });
+    });
+    return () => {
+      annule = true;
+    };
+  }, [etapeCourante, cleSelection]);
+
+  const joursAJour = jours && jours.cle === cleSelection ? jours.reponse : null;
+  // Sans réponse exploitable, aucun jour n'est grisé : mieux vaut laisser
+  // essayer que de tout fermer sur une panne.
+  const disponibles: Map<string, boolean> | null = joursAJour
+    ? joursAJour.ok
+      ? new Map(joursAJour.jours.map((j) => [j.cle, j.disponible]))
+      : new Map(joursCles.map((cle) => [cle, true]))
+    : null;
+  const premierJourLibre = disponibles
+    ? (joursCles.find((cle) => disponibles.get(cle)) ?? null)
+    : null;
+  /*
+   * Le jour affiché : celui que la cliente a touché s'il a encore de la place,
+   * sinon le premier jour qui en a. Jamais un jour vide — le calendrier ne
+   * s'ouvre plus sur « Aucun créneau ».
+   */
+  const dateEffective =
+    disponibles === null
+      ? null
+      : dateCle && disponibles.get(dateCle)
+        ? dateCle
+        : premierJourLibre;
+
+  const cleCalcul =
+    dateEffective && selection.length > 0 ? `${cleSelection}|${dateEffective}` : null;
 
   useEffect(() => {
-    if (!cleCalcul || !dateCle) return;
+    if (!cleCalcul || !dateEffective) return;
     let annule = false;
     // Pas besoin d'effacer le calcul précédent : `aJour` ne retient que celui
     // dont la clé correspond à la sélection courante, les autres sont ignorés.
-    creneauxDisponibles([...selection], dateCle).then((reponse) => {
+    creneauxDisponibles([...selection], dateEffective).then((reponse) => {
       if (!annule) setCalcul({ cle: cleCalcul, reponse });
     });
     return () => {
       annule = true;
     };
-  }, [cleCalcul, dateCle, selection]);
+  }, [cleCalcul, dateEffective, selection]);
 
   // Tant que le calcul en cours ne correspond pas à la sélection, on attend.
   const aJour = calcul && calcul.cle === cleCalcul ? calcul.reponse : null;
@@ -170,17 +288,57 @@ export default function FluxReservation({
 
   function allerAuxCreneaux() {
     setHeureMinutes(null);
-    if (!dateCle && joursCles[0]) setDateCle(joursCles[0]);
     setEtape(1);
   }
 
+  /** Ce que vaut la visite : le prix du pack s'il est complet, sinon le total. */
+  const valeurVisite = packComplet?.prix ?? prixTotal;
+  const articlesVisite = selection.flatMap((id) => {
+    const p = parId.get(id);
+    return p ? [versMeta(p, aujourdhui)] : [];
+  });
+
+  /*
+   * Le jour ouvert est ramené dans la rangée — le premier jour libre peut être
+   * le dixième, hors de l'écran. Seule la rangée défile, jamais la page.
+   */
+  const rangeeJours = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const rangee = rangeeJours.current;
+    const bouton = rangee?.querySelector<HTMLElement>(`[data-jour="${dateEffective}"]`);
+    if (!rangee || !bouton) return;
+    const marge = 20;
+    if (bouton.offsetLeft + bouton.offsetWidth > rangee.scrollLeft + rangee.clientWidth - marge) {
+      rangee.scrollLeft = bouton.offsetLeft - marge;
+    } else if (bouton.offsetLeft < rangee.scrollLeft + marge) {
+      rangee.scrollLeft = Math.max(0, bouton.offsetLeft - marge);
+    }
+  }, [dateEffective, etapeCourante]);
+
+  /*
+   * Mise en caisse : une fois, quand la cliente a choisi son créneau et passe
+   * aux coordonnées — c'est là qu'elle décide de réserver.
+   */
+  const caisseSignalee = useRef(false);
+  function continuer() {
+    if (!caisseSignalee.current) {
+      caisseSignalee.current = true;
+      trackMeta("InitiateCheckout", articlesVisite, {
+        valeurTnd: valeurVisite,
+        categorie: "reservation",
+      });
+    }
+    setEtape(2);
+  }
+
   function valider(donnees: { nom: string; telephone: string; note: string }) {
-    if (!dateCle || heureMinutes === null) return;
+    if (!dateEffective || heureMinutes === null) return;
+    const dateChoisie = dateEffective;
     setErreurEnvoi(null);
     demarrerEnvoi(async () => {
       const reponse = await confirmerReservation({
         prestationIds: [...selection],
-        dateCle,
+        dateCle: dateChoisie,
         heureMinutes,
         nom: donnees.nom,
         telephone: donnees.telephone,
@@ -194,15 +352,21 @@ export default function FluxReservation({
           ]
             .filter(Boolean)
             .join("\n") || undefined,
+        packSlug: packComplet ? packInitial?.slug : undefined,
       });
       if (!reponse.ok) {
         setErreurEnvoi(reponse.message);
         return;
       }
       viderPanier();
-      // Le rendez-vous est parti au salon : c'est là, et nulle part avant, que
-      // la publicité a produit quelque chose. Rien d'identifiant ne part avec.
-      track("Lead", { content_name: "reservation" });
+      // Le rendez-vous est écrit : `Schedule`, avec l'`eventID` et les montants
+      // que le serveur vient d'envoyer à l'API Conversions — Meta n'en garde
+      // qu'un. Aucune donnée personnelle ne part du navigateur.
+      trackMeta("Schedule", reponse.meta.articles, {
+        eventId: reponse.meta.eventId,
+        valeurTnd: reponse.meta.valeurTnd,
+        categorie: "reservation",
+      });
       setConfirmee(reponse.reservation);
     });
   }
@@ -328,6 +492,7 @@ export default function FluxReservation({
               <ul className="mt-5 space-y-3">
                 {groupesCategorie.map(({ groupe, contenu }) => {
                   const retenues = contenu.filter((p) => selection.includes(p.id)).length;
+                  const depart = prixMinimum(contenu, aujourdhui);
                   return (
                     <li key={groupe.id}>
                       <button
@@ -368,8 +533,18 @@ export default function FluxReservation({
                         <span className="flex items-center justify-between gap-3 px-4 py-2.5">
                           <span className="text-[0.72rem] font-light text-gold/75">
                             {contenu.length} soin{contenu.length > 1 ? "s" : ""}
+                            {/* Le prix se voit avant d'entrer dans le groupe. */}
+                            {depart !== null && (
+                              <>
+                                {" · "}
+                                <span className="text-white/55">à partir de </span>
+                                <span className="font-serif text-[0.95rem] font-semibold text-gold lining-nums">
+                                  {formatPrix(depart, devise)}
+                                </span>
+                              </>
+                            )}
                           </span>
-                          <span className="text-[0.72rem] font-light text-white/40">
+                          <span className="shrink-0 text-[0.72rem] font-light text-white/40">
                             Voir →
                           </span>
                         </span>
@@ -384,23 +559,20 @@ export default function FluxReservation({
           <ul className="mt-5 space-y-2.5">
             {aMontrer.map((p) => {
               const retenue = selection.includes(p.id);
-              const dureeVisible =
-                p.groupe_id && groupeParId.get(p.groupe_id)?.duree_visible
-                  ? formatDuree(p.duree_minutes)
-                  : null;
+              const soulignee = surbrillance.includes(p.id);
               // L'offre est prise de la prestation elle-même, pas d'une liste
               // à part : la carte du tunnel dit donc toujours la même chose
               // que celle de l'accueil.
               const offre = enPromo(p, aujourdhui) ? p : null;
               return (
-                <li key={p.id}>
+                <li key={p.id} id={`prestation-${p.id}`} className="scroll-mt-24">
                   <button
                     type="button"
-                    onClick={() => basculerPrestation(p.id)}
+                    onClick={() => basculer(p)}
                     aria-pressed={retenue}
-                    className={`press flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left ${
+                    className={`press flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left transition-shadow duration-500 ${
                       retenue ? "border-gold/60 bg-gold/10" : "border-white/10 bg-white/[0.03]"
-                    }`}
+                    } ${soulignee ? "ring-2 ring-gold ring-offset-2 ring-offset-noir" : ""}`}
                   >
                     <span className="min-w-0 flex-1">
                       <span
@@ -408,43 +580,37 @@ export default function FluxReservation({
                       >
                         {p.nom}
                       </span>
-                      {dureeVisible && (
-                        <span className="mt-0.5 block text-xs font-light text-white/45">
-                          {dureeVisible}
-                        </span>
-                      )}
+                      {/* Durée et prix sur une ligne — « 45 min · 40 DT » : les
+                          deux questions qu'on se pose avant de toucher le « + ». */}
+                      <span className="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xs font-light text-white/50">
+                        <span className="lining-nums">{formatDuree(p.duree_minutes)}</span>
+                        {p.prix != null && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            {p.prix_a_partir_de && <span>à partir de</span>}
+                            <span className="font-serif text-base font-semibold leading-none text-gold lining-nums">
+                              {formatPrix(offre ? offre.prix_promo : p.prix, devise)}
+                            </span>
+                            {offre && (
+                              <>
+                                <span className="text-[0.7rem] text-white/35 line-through lining-nums">
+                                  {formatPrix(offre.prix, devise)}
+                                </span>
+                                <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.6rem] text-gold">
+                                  −{remisePourcent(offre)}%
+                                </span>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </span>
                       {p.description && (
                         <span className="mt-1 block text-xs font-light leading-snug text-white/35">
                           {p.description}
                         </span>
                       )}
                     </span>
-                    {/* Le prix est ce que l'on cherche du regard avant de
-                        toucher le « + » : il se lit donc à côté de lui, en or
-                        et dans un corps qui ne se confond plus avec la durée. */}
                     <span className="flex shrink-0 items-center gap-3">
-                      {p.prix != null && (
-                        <span className="flex flex-col items-end">
-                          {p.prix_a_partir_de && (
-                            <span className="mb-0.5 text-[0.62rem] font-light uppercase tracking-[0.1em] text-white/40">
-                              À partir de
-                            </span>
-                          )}
-                          <span className="font-serif text-xl font-semibold leading-none text-gold lining-nums">
-                            {formatPrix(offre ? offre.prix_promo : p.prix, devise)}
-                          </span>
-                          {offre && (
-                            <span className="mt-1 flex items-center gap-1.5">
-                              <span className="text-[0.7rem] font-light text-white/35 line-through lining-nums">
-                                {formatPrix(offre.prix, devise)}
-                              </span>
-                              <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.6rem] text-gold">
-                                −{remisePourcent(offre)}%
-                              </span>
-                            </span>
-                          )}
-                        </span>
-                      )}
                       <span
                         aria-hidden="true"
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm ${
@@ -582,29 +748,41 @@ export default function FluxReservation({
             {selection.length} prestation{selection.length > 1 ? "s" : ""} · {formatDuree(duree)}
           </p>
 
-          <div className="-mx-5 mt-5 overflow-x-auto px-5">
+          <div ref={rangeeJours} className="relative -mx-5 mt-5 overflow-x-auto px-5">
             <div className="flex gap-2">
               {joursCles.map((cle) => {
                 const { jourSemaine, jour, mois } = formatJourCourt(depuisCleDate(cle));
-                const actif = cle === dateCle;
+                const actif = cle === dateEffective;
+                // Grisé et inactif quand la visite n'y tient plus. Tant que les
+                // disponibilités se lisent, rien n'est grisé ni touchable.
+                const complet = disponibles !== null && !disponibles.get(cle);
                 return (
                   <button
                     key={cle}
                     type="button"
+                    data-jour={cle}
+                    disabled={disponibles === null || complet}
                     onClick={() => {
                       setDateCle(cle);
                       setHeureMinutes(null);
                     }}
                     aria-pressed={actif}
+                    aria-label={`${formatDateLongue(cle)}${complet ? ", complet" : ""}`}
                     className={`press w-[3.9rem] shrink-0 rounded-xl border py-2.5 text-center ${
-                      actif ? "border-gold bg-gold/15" : "border-white/12 bg-white/[0.03]"
+                      actif
+                        ? "border-gold bg-gold/15"
+                        : complet
+                          ? "cursor-not-allowed border-white/5 bg-transparent opacity-35"
+                          : "border-white/12 bg-white/[0.03]"
                     }`}
                   >
                     <span className={`block text-[0.65rem] uppercase ${actif ? "text-gold" : "text-white/45"}`}>
                       {jourSemaine}
                     </span>
                     <span
-                      className={`block font-serif text-lg lining-nums ${actif ? "text-gold" : "text-cream"}`}
+                      className={`block font-serif text-lg lining-nums ${
+                        actif ? "text-gold" : complet ? "text-white/40 line-through" : "text-cream"
+                      }`}
                     >
                       {jour}
                     </span>
@@ -618,7 +796,22 @@ export default function FluxReservation({
           </div>
 
           <div className="mt-6" aria-live="polite">
-            {messageCreneaux ? (
+            {disponibles !== null && premierJourLibre === null ? (
+              <p className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-light leading-relaxed text-white/55">
+                Plus aucun créneau de {formatDuree(duree)} dans les {joursCles.length} prochains
+                jours.
+                <br />
+                Appelez le salon au{" "}
+                <a
+                  href={`tel:${telephoneSalon}`}
+                  onClick={() => track("Contact", { method: "phone" })}
+                  className="text-gold"
+                >
+                  {telephoneSalon}
+                </a>{" "}
+                : on vous trouve une place.
+              </p>
+            ) : messageCreneaux ? (
               <p className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-light text-white/55">
                 {messageCreneaux}
               </p>
@@ -664,7 +857,7 @@ export default function FluxReservation({
             <button
               type="button"
               disabled={heureMinutes === null}
-              onClick={() => setEtape(2)}
+              onClick={continuer}
               className={`${boutonOr} flex-1 disabled:opacity-35`}
             >
               Continuer
@@ -673,11 +866,25 @@ export default function FluxReservation({
         </section>
       )}
 
-      {etapeCourante === 2 && dateCle && heureMinutes !== null && (
+      {etapeCourante === 2 && dateEffective && heureMinutes !== null && (
         <EtapeCoordonnees
-          prestationsNom={selection.map((id) => parId.get(id)?.nom ?? id)}
+          lignes={selection.map((id) => {
+            const p = parId.get(id);
+            return {
+              id,
+              nom: p?.nom ?? id,
+              prix: p ? tarifDuJour(p, aujourdhui) : null,
+              aPartirDe: Boolean(p?.prix_a_partir_de),
+            };
+          })}
+          total={
+            packComplet
+              ? { libelle: packComplet.nom, montant: packComplet.prix, aPartirDe: false }
+              : { libelle: null, montant: prixConnu ? prixTotal : null, aPartirDe: totalDepart }
+          }
+          devise={devise}
           dureeMinutes={duree}
-          dateCle={dateCle}
+          dateCle={dateEffective}
           heure={
             creneaux?.find((c) => c.minutes === heureMinutes)?.heure ??
             `${String(Math.floor(heureMinutes / 60)).padStart(2, "0")}:${String(heureMinutes % 60).padStart(2, "0")}`

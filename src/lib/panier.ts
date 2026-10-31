@@ -85,3 +85,14 @@ export function retirerPrestation(id: string): void {
 export function viderPanier(): void {
   definir(VIDE);
 }
+
+/**
+ * Remplace toute la sélection — un lien publicitaire ou « Réserver ce pack ».
+ *
+ * La cliente qui touche une publicité pour un soin veut ce soin, pas celui
+ * qu'elle avait laissé dans son panier il y a trois jours : l'ajouter à la
+ * suite lui ferait réserver deux heures au lieu d'une, sans qu'elle le voie.
+ */
+export function remplacerPanier(ids: readonly string[]): void {
+  definir([...new Set(ids)]);
+}

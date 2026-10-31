@@ -2,7 +2,7 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { changerStatutReservation } from "@/app/actions/admin";
+import { changerStatutReservation, marquerVenue } from "@/app/actions/admin";
 import { IconPhone, IconWhatsApp } from "@/components/Icons";
 import {
   formatDateLongue,
@@ -89,6 +89,17 @@ export default function ListeReservations({
     });
   }
 
+  /** « Terminé » : la cliente est venue, et a payé `montant` DT au salon. */
+  function terminer(id: string, montant: number) {
+    setErreur(null);
+    demarrer(async () => {
+      prevoir({ id, statut: "terminee" });
+      const reponse = await marquerVenue(id, montant);
+      if (!reponse.ok) setErreur(reponse.message);
+      else router.refresh();
+    });
+  }
+
   if (reservations.length === 0) {
     return (
       <p className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm font-light text-white/45">
@@ -130,6 +141,7 @@ export default function ListeReservations({
                 devise={devise}
                 enRetard={r.statut === "en_attente" && r.date < aujourdhui}
                 onChanger={changer}
+                onTerminer={terminer}
               />
             ))}
           </ul>
@@ -144,14 +156,23 @@ function CarteReservation({
   devise,
   enRetard,
   onChanger,
+  onTerminer,
 }: {
   reservation: Reservation;
   devise: string;
   enRetard: boolean;
   onChanger: (id: string, statut: StatutReservation) => void;
+  onTerminer: (id: string, montant: number) => void;
 }) {
   // `null` au rendu serveur, l'heure réelle une fois monté : voir `lib/horloge`.
   const maintenant = useMinute();
+  /*
+   * « Marquer terminé » demande d'abord ce que la cliente a payé : c'est ce
+   * montant, pas le prix annoncé en ligne, que Meta reçoit comme vente.
+   * Proposé d'office au prix du rendez-vous — le cas de tous les jours.
+   */
+  const [montant, setMontant] = useState<string | null>(null);
+  const montantSaisi = montant === null ? NaN : Number(montant.replace(",", "."));
 
   const whatsapp = lienWhatsApp(r.telephone, messageWhatsApp(gesteParDefaut(r.statut), r));
 
@@ -237,24 +258,68 @@ function CarteReservation({
         </a>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-2">
-        {SUITES[r.statut].map((suite) => (
-          <button
-            key={suite}
-            type="button"
-            onClick={() => onChanger(r.id, suite)}
-            className={`press flex-1 rounded-full border px-3.5 py-2.5 text-xs ${
-              suite === "annulee"
-                ? "border-red-400/30 text-red-300"
-                : suite === "confirmee" && r.statut === "en_attente"
-                  ? "border-gold bg-gold/15 text-gold"
-                  : "border-gold/35 text-gold"
-            }`}
-          >
-            {libelleSuite(r.statut, suite)}
-          </button>
-        ))}
-      </div>
+      {montant !== null ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!Number.isFinite(montantSaisi) || montantSaisi < 0) return;
+            onTerminer(r.id, montantSaisi);
+            setMontant(null);
+          }}
+          className="mt-2 rounded-xl border border-gold/30 bg-gold/[0.05] p-3"
+        >
+          <label className="block text-xs font-light text-white/60">
+            Montant payé au salon ({devise})
+            <input
+              type="text"
+              inputMode="decimal"
+              value={montant}
+              onChange={(e) => setMontant(e.target.value)}
+              autoFocus
+              className="mt-1.5 w-full rounded-lg border border-white/15 bg-white/[0.04] px-3 py-2 text-base text-cream lining-nums focus:border-gold focus:outline-none"
+            />
+          </label>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMontant(null)}
+              className="press flex-1 rounded-full border border-white/15 px-3 py-2 text-xs text-white/60"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={!Number.isFinite(montantSaisi) || montantSaisi < 0}
+              className="press flex-1 rounded-full border border-gold bg-gold/15 px-3 py-2 text-xs text-gold disabled:opacity-40"
+            >
+              Valider la venue
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {SUITES[r.statut].map((suite) => (
+            <button
+              key={suite}
+              type="button"
+              onClick={() =>
+                suite === "terminee"
+                  ? setMontant(r.prix_total != null ? String(r.prix_total) : "")
+                  : onChanger(r.id, suite)
+              }
+              className={`press flex-1 rounded-full border px-3.5 py-2.5 text-xs ${
+                suite === "annulee"
+                  ? "border-red-400/30 text-red-300"
+                  : suite === "confirmee" && r.statut === "en_attente"
+                    ? "border-gold bg-gold/15 text-gold"
+                    : "border-gold/35 text-gold"
+              }`}
+            >
+              {libelleSuite(r.statut, suite)}
+            </button>
+          ))}
+        </div>
+      )}
     </li>
   );
 }

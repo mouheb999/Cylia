@@ -38,7 +38,14 @@ export type EvenementServeur = {
   params: ParametresMeta;
   url: string | null;
   user?: UtilisateurMeta;
-  navigateur: ContexteNavigateur;
+  /**
+   * La requête de la cliente. Absent pour un évènement au salon
+   * (`physical_store`) : la requête est alors celle du panneau, et l'adresse
+   * IP ou le navigateur de l'administratrice ne disent rien de la cliente.
+   */
+  navigateur?: ContexteNavigateur;
+  /** `website` par défaut ; `physical_store` pour une venue au salon. */
+  actionSource?: "website" | "physical_store";
 };
 
 export type ReponseCapi = { ok: true } | { ok: false; status: number; message: string };
@@ -118,16 +125,17 @@ export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise
   }
 
   const { navigateur, user } = evenement;
+  const auSalon = evenement.actionSource === "physical_store";
   // Meta veut des lettres a-z seules : « Béja » → « beja », « Le Kef » → « lekef ».
   const villeNormalisee = normaliser(user?.city)
     ?.normalize("NFD")
     .replace(/[^a-z]/g, "");
 
   const userData = {
-    client_ip_address: navigateur.ip ?? undefined,
-    client_user_agent: navigateur.userAgent ?? undefined,
-    fbp: navigateur.fbp ?? undefined,
-    fbc: navigateur.fbc ?? fbcDepuisAdresse(evenement.url) ?? undefined,
+    client_ip_address: navigateur?.ip ?? undefined,
+    client_user_agent: navigateur?.userAgent ?? undefined,
+    fbp: navigateur?.fbp ?? undefined,
+    fbc: navigateur ? (navigateur.fbc ?? fbcDepuisAdresse(evenement.url) ?? undefined) : undefined,
     ph: hacherSi(normaliserTelephone(user?.phone)),
     em: hacherSi(normaliser(user?.email)),
     fn: hacherSi(normaliser(user?.firstName)),
@@ -144,8 +152,8 @@ export async function envoyerEvenementMeta(evenement: EvenementServeur): Promise
         event_name: evenement.event,
         event_time: Math.floor(Date.now() / 1000),
         event_id: evenement.eventId,
-        action_source: "website",
-        event_source_url: evenement.url ?? undefined,
+        action_source: auSalon ? "physical_store" : "website",
+        event_source_url: auSalon ? undefined : (evenement.url ?? undefined),
         user_data: userData,
         custom_data: evenement.params,
       },

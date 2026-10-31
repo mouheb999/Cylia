@@ -37,8 +37,15 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
 
   const site = infosSite(contenus);
   const categorieDemandee = parametres.categorie;
-  // Une offre touchée sur l'accueil arrive avec sa prestation dans l'adresse.
-  const prestationDemandee = parametres.prestation;
+  // Une offre de l'accueil ou une publicité arrive avec sa ou ses prestations
+  // dans l'adresse : `?prestation=a` ou `?prestation=a,b`. Les identifiants
+  // inconnus sont écartés ici, avant d'atteindre le panier.
+  const connues = new Set(prestations.map((p) => p.id));
+  const prestationsDemandees = [parametres.prestation]
+    .flat()
+    .flatMap((v) => (typeof v === "string" ? v.split(",") : []))
+    .map((id) => id.trim())
+    .filter((id) => connues.has(id));
   // « Réserver ce pack » arrive avec le pack : toutes ses prestations entrent
   // dans le panier, et son prix remplace leur somme.
   const packDemande =
@@ -47,6 +54,7 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
   const packInitial =
     packDemande && incluses.length > 0
       ? {
+          slug: typeof parametres.pack === "string" ? parametres.pack : "",
           nom: packDemande.nom,
           prix: packDemande.prix,
           prestationIds: incluses.map((p) => p.id),
@@ -57,7 +65,12 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
     <>
       <Header />
       <main className="flex-1 bg-noir">
-        <div className="px-5 pb-8 pt-8 text-center">
+        {/*
+          Bandeau court sur téléphone — 120 px au plus, titre sur une ligne :
+          la barre d'étapes et les premiers choix doivent tenir dans le
+          premier écran, sans défiler.
+        */}
+        <div className="max-h-[120px] overflow-hidden px-5 pb-4 pt-4 text-center sm:max-h-none sm:pb-8 sm:pt-8">
           <Texte
             cle="reserver.surtitre"
             titre="Sur-titre de la page réservation"
@@ -65,21 +78,21 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
             balise="p"
             className="text-[10px] uppercase tracking-[0.3em] text-gold"
           />
-          <h1 className="mt-3 font-serif text-3xl font-light text-cream">
+          <h1 className="mt-1.5 font-serif text-[1.65rem] font-light leading-tight text-cream sm:mt-3 sm:text-3xl">
             <Texte
               cle="reserver.titre"
               titre="Titre de la page réservation"
               defaut={CONTENUS_DEFAUT["reserver.titre"]}
-            />
+            />{" "}
             <Texte
               cle="reserver.titre_script"
               titre="Titre manuscrit de la page réservation"
               defaut={CONTENUS_DEFAUT["reserver.titre_script"]}
               balise="span"
-              className="mt-0.5 block font-script text-4xl text-gold"
+              className="font-script text-[2rem] text-gold sm:mt-0.5 sm:block sm:text-4xl"
             />
           </h1>
-          <div className="gold-rule mx-auto mt-4 h-px w-16" aria-hidden="true" />
+          <div className="gold-rule mx-auto mt-2 h-px w-16 sm:mt-4" aria-hidden="true" />
         </div>
 
         <FluxReservation
@@ -91,9 +104,7 @@ export default async function PageReservation({ searchParams }: PageProps<"/rese
           telephoneSalon={site.telephoneLien}
           reservationActive={reglages.reservation_active}
           categorieInitiale={typeof categorieDemandee === "string" ? categorieDemandee : undefined}
-          prestationInitiale={
-            typeof prestationDemandee === "string" ? prestationDemandee : undefined
-          }
+          prestationsInitiales={prestationsDemandees}
           packInitial={packInitial}
         />
       </main>

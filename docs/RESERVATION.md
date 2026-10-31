@@ -176,3 +176,43 @@ rendez-vous enregistré en erreur affichée.
   planning individuel. Deux clientes peuvent réserver la même coiffeuse.
 - **Pas d'acompte** ni de paiement en ligne, donc rien ne décourage un
   rendez-vous non honoré.
+
+## Conversion sur téléphone
+
+- **Premier écran** : le bandeau « Réservez votre moment » tient en 120 px sur
+  téléphone ; la barre d'étapes et la première carte de groupe sont visibles
+  sans défiler. Chaque carte de groupe annonce « à partir de X DT », chaque
+  prestation « 45 min · 40 DT ».
+- **Dates** : `joursDisponibles` calcule, pour la sélection, quels jours ont
+  encore un créneau assez long. Le calendrier s'ouvre sur le premier d'entre
+  eux ; les autres sont grisés et inactifs (`aria-label` « samedi 31 octobre,
+  complet »). Il ne s'ouvre plus sur « Aucun créneau ».
+- **Liens profonds** : `/reserver?prestation=a` ou `?prestation=a,b`
+  *remplacent* la sélection enregistrée (`cylia.panier.v1`), puis amènent la
+  prestation à l'écran et la soulignent. `?pack=<slug>` fait de même avec les
+  prestations du pack.
+- **Coordonnées** : même validation du téléphone que la boutique (mobile
+  tunisien, 2/4/5/9, +216 facultatif), refaite dans `confirmerReservation`. Le
+  détail prix par prix et le total sont juste au-dessus de « Confirmer » ;
+  dessous, « Réserver sur WhatsApp » avec la visite écrite d'avance.
+
+## Mesure Meta
+
+Pixel `1006831132445584`, valeurs en dollars au taux de la boutique
+(`TND_TO_USD`), `content_type: "product"`, `content_category: "reservation"`,
+`content_ids` = identifiants des prestations.
+
+| Évènement | Quand | Navigateur | Serveur |
+|---|---|---|---|
+| ViewContent | un groupe ou un pack s'ouvre (valeur : le plus bas prix) | ✓ | ✓ (`/api/meta-capi`) |
+| AddToCart | une prestation est ajoutée, ou déposée par un lien | ✓ | ✓ (`/api/meta-capi`) |
+| InitiateCheckout | « Continuer » après le choix du créneau, une fois | ✓ | ✓ (`/api/meta-capi`) |
+| Schedule | rendez-vous enregistré | ✓ | ✓ (`confirmerReservation`) |
+| Purchase (`physical_store`) | « Marquer terminé » dans le panneau, montant payé | — | ✓ (`marquerVenue`) |
+
+`Schedule` porte l'`eventID` `booking_<id>` des deux côtés, avec les mêmes
+montants (renvoyés au navigateur par `confirmerReservation`) : Meta n'en garde
+qu'un. La venue au salon porte `visit_<id>`. Les envois serveur de `Schedule`
+et de la venue contiennent le téléphone (`216XXXXXXXX`) et le prénom, hachés.
+`/api/meta-capi` refuse `Schedule` et `Purchase` : ils ne partent que du
+serveur, après écriture en base. Plus aucun `Lead`.

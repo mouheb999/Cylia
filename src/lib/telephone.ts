@@ -85,3 +85,7 @@ export function prenom(nomComplet: string): string {
 export function mobileTunisienValide(brut: string): boolean {
   return /^(?:(?:\+|00)?216)?[2459]\d{7}$/.test(brut.replace(/[\s.\-()]/g, ""));
 }
+
+/** L'erreur affichée sous le champ quand `mobileTunisienValide` refuse. */
+export const MESSAGE_MOBILE_INVALIDE =
+  "Numéro de mobile tunisien à 8 chiffres, commençant par 2, 4, 5 ou 9 — ex. 54 395 168.";

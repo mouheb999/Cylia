@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { IconClock } from "@/components/Icons";
 import DiaporamaPack from "@/components/packs/DiaporamaPack";
+import VueMetaPack from "@/components/reservation/VueMetaPack";
 import GrillePacks from "@/components/packs/GrillePacks";
 import LienSuivi from "@/components/LienSuivi";
 import {
@@ -25,6 +26,7 @@ import {
   prestationsDuPack,
   valeurALUnite,
 } from "@/lib/packs";
+import { tarifDuJour } from "@/lib/promotions";
 import { infosSite } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -84,10 +86,17 @@ export default async function PagePack({ params }: PageProps<"/packs/[slug]">) {
     (p) => p.id !== pack.id && (!categorie || p.categorie_id === categorie.id),
   );
 
+  // Pour Meta : les prestations que le pack réserve, et ce qu'il coûte — son
+  // prix, ou à défaut le plus bas des prix qu'il réunit.
+  const articlesMeta = incluses.map((p) => ({ id: p.id, name: p.nom, priceTnd: tarifDuJour(p) ?? 0 }));
+  const prixConnus = incluses.map((p) => tarifDuJour(p)).filter((x): x is number => x != null);
+  const valeurMeta = pack.prix ?? (prixConnus.length > 0 ? Math.min(...prixConnus) : 0);
+
   return (
     <>
       <Header />
       <main className="flex-1 bg-cream">
+        <VueMetaPack cle={pack.id} articles={articlesMeta} valeurTnd={valeurMeta} />
         <DiaporamaPack photos={photos} nom={pack.nom} />
 
         <div className="px-5 pb-10 pt-6">
